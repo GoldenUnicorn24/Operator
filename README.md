@@ -1,30 +1,54 @@
-# EINSATZLEITSTELLE 110: DEUTSCHLAND
+# EINSATZLEITSTELLE 110: DEUTSCHLAND – Geo-Alpha 0.4
 
-Android-Leitstellensimulation mit **Realismus + Sandbox**. Entwicklungsrepository für die erste echte Spielversion **v1.0**.
+**Status:** Spielbarer Android-Entwicklungsstand. **Keine fertig verifizierte Version 1.0.**
 
-> **Wichtige Nutzeränderung:** Nicht nur Hamburg oder einzelne Städte: Jede Region zeigt das ganze jeweilige Bundesland mit allen aktuellen Einsatzfahrzeugen und Einsätzen. Schichten wählbar: **8, 12 oder 24 Stunden** in beiden Modi. Siehe [verbindliche Spezifikation](docs/STATEWIDE_MAP_AND_SHIFTS.md).
+## Neu gegenüber Alpha 0.2
 
-## Ausgangslage
-- **Alpha 0.2** ist ein spielbarer, offline-fähiger HTML-/JavaScript-Prototyp.
-- Der **vollständige Alpha-0.2-Stand einschließlich eingebetteter Grafiken** liegt unter `prototype/alpha-0.2-offline.html`. **Nicht löschen**; er dient als funktionale Referenz für die Migration.
-- In Alpha 0.2 vorhanden: Karriere/Sandbox, Schichttag + Schichtende, Personalporträts, Ausrüstung, Ausbildung, SEK/MEK, Einsatzeditor, 16 Bundesländer (nur schematische Karte), Save/Load.
-- **Nicht vorhanden bzw. nicht verifiziert:** geografisch präzise Live-Karte, Straßennetzrouting, fertiger Android-Release-Build, native Audioengine, vollständig funktionsgetrennte Codebasis.
+- Offline-Gesamtkarte **aller 16 Bundesländer** auf Basis geografischer (vereinfachter) Ländergrenzen; echte Ortskoordinaten für 100+ regionale Einsatzorte.
+- Die jeweilige **gesamte Landesfläche** wird als Kartenansicht geöffnet. Zoom, Verschieben, auf ganzes Land zurückstellen, Einsatz-/Fahrzeug-Filter, Gruppenmarker, interaktive Orte/Einsätze/Einheiten.
+- Fahrzeuge stehen an unterschiedlichen Orten, fahren nach Disposition **sichtbar auf simulierten Ortskorridoren** und erreichen den Einsatz mit plausibel approximierter Reisezeit. Mehrere Einsatzfahrzeuge und Vorfälle können gleichzeitig gezeigt werden.
+- **Schichtdauer:** 8h, 12h oder 24h; frei wählbarer Beginn in ganzen Stunden. Karriere und Sandbox haben Schichtplanung, Tagesauswertung, Ausbildung und Fortsetzung am Folgetag. Mitternacht löst keine falsche Schichtbeendigung aus.
+- **48 Einsatzvorlagen**, **19 Start-Einheiten**, **8 Lehrgänge**, Personalporträts, optionale Ausbildung, Ausrüstungsplätze, Budget, eigene Vorlagen, eigene Einheiten und Fahrzeugkonfiguration/Wartung.
+- **Original synthetisierte Sounds** per WebAudio: Notruf, P1/P2-Alarm, Funkimpuls, Entsendung, Abfahrt, Erfolg, Misserfolg, Schichtende. Sound optional und stumm beim App-Hintergrund.
+- JSON-Saves und Import/Export der Alpha-0.2-Spielstände bleiben erhalten (Schema 2, zusätzliche Felder optional).
 
-## Codex: Hier beginnen
-1. `AGENTS.md` vollständig lesen.
-2. `docs/CODEX_MASTER_PROMPT.md` als primären Arbeitsauftrag lesen.
-3. `docs/V1_PRODUCT_SPEC.md`, `docs/TECHNICAL_ARCHITECTURE.md`, `docs/ACCEPTANCE_TESTS.md` beachten.
-4. Den laufenden Prototyp analysieren, seine Spielstände/Features erhalten, dann das **v1.0-Projekt** implementieren.
-5. Auf eigenem Feature-Branch arbeiten, CI grün bekommen, signierbares Debug-APK-Artefakt bereitstellen und einen PR eröffnen.
+## Karten- und Routing-Ehrlichkeit
 
-## Ziel für v1.0
-Eine echte offline-fähige Android-Spielversion mit **vollständiger Live-Gesamtkarte für jedes der 16 Bundesländer** (Fit-to-Bounds der realen Landesfläche), sichtbaren landesweit verteilten Fahrzeugen und Notrufen, Routen, Cluster-/Kartenfiltern sowie tiefem Hamburg-Detailgrad. **8/12/24-Stunden-Schichten** in Karriere und Sandbox, Ausbildung, Personal-/Ausrüstungsverwaltung, Editor, Sound und robustem Speichern. Verbindliche Präzisierung: `docs/STATEWIDE_MAP_AND_SHIFTS.md`.
+**Wichtig:** Die Gesamtansicht ist auf echten, vereinfachten Bundesland-Grenzgeometrien aufgebaut. **Es handelt sich nicht um vollständige Straßenkarten oder Echtzeit-Polizeiverkehr.** Städte/Orte sind geografisch platziert, schmale Linien sind **nur abstrahierte Ortskorridore**, Fahrzeugwege eine vereinfachte Anfahrts-Simulation. Die ETA ist keine Straßennavigation und wird in der Benutzeroberfläche als Simulation gekennzeichnet. Ein detaillierter lizenzierter Offline-Straßenroutinggraph und weitere Einsatzorganisationssysteme gehören zum v1.0-Ausbau.
 
-## Quellstand
-Die HTML-Demo kann im Desktop-Browser direkt geöffnet werden. Ihre Logik ist noch monolithisch; die Migration in klar testbare Module ist Teil des Auftrags.
+## Start im Browser
 
-## Rechtliches
-Eigenständiges Spiel. Keine kopierten Grafiken, Karten, Sounds oder Marken aus *911 Operator* / *112 Operator*. OSM-Daten und Drittassets nur mit passender Attribution/Lizenz, Lizenznachweise im Repository.
+`app/src/main/assets/index.html` mit den danebenliegenden Skripten, CSS-, Daten- und Bilddateien öffnen. Zusätzlich liegt die Einzeldatei `Einsatzleitstelle110_GeoAlpha04_Offline.html` als von Android unabhängige Testfassung vor (nur im Downloadpaket).
 
-## Status
-**Vorbereitung für Codex**, nicht als veröffentlichte v1.0 oder geprüfte APK zu betrachten.
+## Android-APK
+
+Das Android-Studio-Projekt über Gradle 8.9, AGP 8.7.3, JDK 17, SDK 35 bauen:
+
+```
+gradle :app:assembleDebug
+```
+
+CI baut bei jedem Push in `codex/operator-v1` eine Debug-APK und prüft die Node-Simulations-Tests. Das Test-APK ist nicht für die Veröffentlichung im Play Store signiert.
+
+## Tests
+
+```
+node tests/simulation.test.cjs
+node --check app/src/main/assets/game.js
+node --check app/src/main/assets/map.js
+node --check app/src/main/assets/audio.js
+```
+
+Zusätzlich wurde die Oberfläche im Headless-Chromium-Browser mit einer über WebView-analogen HTML-Einbettung getestet. Ein Endgerätetest auf einem realen Smartphone ist weiterhin erforderlich.
+
+## Datenrechte
+
+Grenzgeometrien aus [isellsoap/deutschlandGeoJSON](https://github.com/isellsoap/deutschlandGeoJSON) (Repository-Lizenz Unlicense), ursprüngliche Quelle GIS-DATA (diva-gis.org/gdata). Die Geometrien wurden für die Gesamtübersicht vereinfacht. Originale Spielgrafiken aus Alpha 0.2 bleiben erhalten. Der Quellenvermerk wird in der Kartenansicht und in `THIRD_PARTY_NOTICES.md` angezeigt.
+
+## Folgende Schritte bis zu v1.0
+
+Straßenkarten und Offline-Routing in mehreren Detailebenen; vollständige regionale Einsatzprofile; stärkere Simulationslogik für komplexe Großlagen; native Audio-Einstellungen; ausführlichere Fahrzeug-/Dienststellendaten; komplexer grafischer Ketteneditor; Performance-/APK-/Endgerätetests.
+
+
+## Volles v1.0-Lastenheft
+Siehe `docs/CODEX_MASTER_PROMPT.md` und `docs/STATEWIDE_MAP_AND_SHIFTS.md` im GitHub-Repository. Diese Geo-Alpha implementiert einen wesentlichen Teil, nicht die vollständigen v1.0-Releasekriterien.

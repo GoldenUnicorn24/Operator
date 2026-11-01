@@ -1,11 +1,13 @@
-# Third Party Notices / Attribution
+# Quellen und Lizenzhinweise
 
-Dieses Repository enthält derzeit den eigenen Alpha-0.2-Prototyp mit eingebetteten illustrativen Grafiken. Details zur Asset-Erzeugung und etwaigen Drittquellen vor v1.0 kontrollieren und pflegen.
+## Bundesländer-Grenzgeometrien
+Daten aus [isellsoap/deutschlandGeoJSON](https://github.com/isellsoap/deutschlandGeoJSON), Repository-Lizenz **Unlicense**, ursprünglicher Datenlieferant **GIS-DATA** (diva-gis.org/gdata). Vereinfachte Datengenauigkeit; diese Grenze ersetzt keine amtliche Geodatenkarte. UI-Quellenhinweis in der Landesansicht.
 
-## Karten (zukünftig)
-Wenn OpenStreetMap-Daten verwendet werden: `© OpenStreetMap contributors`, ODbL und zugehörige Attribution/Weitergabepflichten einhalten. Kartentiles müssen aus einer berechtigt nutzbaren Quelle stammen, nicht aus massenhaften Downloads des öffentlichen OSM-Tile-Servers.
+## Spielgrafiken
+Eigene für die vorherige Alpha 0.2 generierte und integrierte illustrative Porträts/Fahrzeug-/Equipmentgrafiken. Keine Originalassets anderer Spiele.
 
-## Grafik und Sound
-Vor v1.0 jede übernommene Grafik, Schriftart, Icon- und Soundbibliothek mit Lizenz, Quelle, Copyright und erforderlicher Attribution hier aufführen. Nichts aus bestehenden Operator-Spielen kopieren.
+## Sound
+Alle Töne zur Laufzeit mit eigener WebAudio-Syntheselogik aus \`audio.js\` generiert; keine Aufnahmen Dritter.
 
-Keine Drittanbieterressourcen ohne entsprechende Lizenz in den Release aufnehmen.
+## Kartenstraßen
+Keine OSM-Straßenkacheln enthalten: die Linien sind ausdrücklich nur simulierte Verbindungskorridore.

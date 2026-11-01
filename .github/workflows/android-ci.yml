@@ -1,4 +1,4 @@
-name: Android Debug APK
+name: Android Debug APK / Simulation Tests
 on:
   push:
     branches: [main, 'codex/**', 'feature/**']
@@ -24,6 +24,12 @@ jobs:
           packages: 'platform-tools'
       - name: Install SDK
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - name: Simulationstests
+        run: |
+          node --check app/src/main/assets/map.js
+          node --check app/src/main/assets/audio.js
+          node --check app/src/main/assets/game.js
+          node tests/simulation.test.cjs
       - name: Gradle 8.9
         uses: gradle/actions/setup-gradle@v4
         with:
@@ -33,6 +39,6 @@ jobs:
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: Einsatzleitstelle110-debug
+          name: Einsatzleitstelle110-GeoAlpha04-debug
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
