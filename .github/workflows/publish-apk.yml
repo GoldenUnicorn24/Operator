@@ -1,59 +1,35 @@
-name: Publish installable Android APK
+name: Publish native verification evidence
 on:
   workflow_dispatch:
+    inputs:
+      run_id:
+        description: Completed native Android verification run
+        required: true
+        type: string
 permissions:
+  actions: read
   contents: write
 jobs:
-  release-apk:
-    runs-on: ubuntu-latest
-    timeout-minutes: 40
+  evidence:
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          packages: 'platform-tools'
-      - name: Android SDK platforms and build tools
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
-      - name: Verify native Android implementation
-        run: |
-          if grep -RE 'import android\.webkit|WebView\(' app/src/main/java; then echo 'WebView forbidden in native app' >&2; exit 1; fi
-      - name: Gradle 8.9
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.9'
-      - name: Build and test native Android app
-        run: gradle --no-daemon :app:testDebugUnitTest :app:assembleDebug
-      - name: Name APK
-        shell: bash
-        run: |
-          test -s app/build/outputs/apk/debug/app-debug.apk
-          mkdir -p release
-          cp app/build/outputs/apk/debug/app-debug.apk release/Einsatzleitstelle110-NativeV1.apk
-          sha256sum release/*.apk > release/SHA256SUMS.txt
-      - name: Archive APK in Actions
-        uses: actions/upload-artifact@v4
-        with:
-          name: Einsatzleitstelle110-NativeV1-APK
-          path: release/
-          if-no-files-found: error
-      - name: Upload APK directly to GitHub Release
+      - name: Validate source run and collect evidence
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: v1.0.0-native
-        shell: bash
+          SOURCE_RUN: ${{ inputs.run_id }}
         run: |
-          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release upload "$RELEASE_TAG" release/*.apk release/SHA256SUMS.txt --clobber
+          gh api "repos/$GH_REPO/actions/runs/$SOURCE_RUN" > run.json
+          python3 -c "import json; r=json.load(open('run.json')); assert r['status']=='completed' and r['head_branch']=='codex/operator-v1' and r['path']=='.github/workflows/android-ci.yml'"
+          mkdir -p evidence
+          gh run view "$SOURCE_RUN" --log > evidence/workflow.log
+          gh run download "$SOURCE_RUN" -n native-device-screenshots -D evidence/device || true
+          cp run.json evidence/run.json
+          zip -r Native-Android-Pruefnachweise.zip evidence
+          TAG=operator-native-v2-evidence
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" Native-Android-Pruefnachweise.zip --clobber
           else
-            gh release create "$RELEASE_TAG" release/*.apk release/SHA256SUMS.txt \
-              --target "$GITHUB_SHA" \
-              --title "EINSATZLEITSTELLE 110 — Operator Native 1.0 (Android)" \
-              --notes "Vollständig native Android-Anwendung in Kotlin ohne WebView. 16 geografische Bundeslandgrenzen, taktische Canvas-Karte, Fahrzeuge und Einsätze, 8/12/24-Stunden-Schichten, Personal und Ausbildung, Ausrüstung, Editor, Sound und lokale Spielstände. Wegenetz und Fahrzeiten sind simuliert, nicht GPS-Straßendaten. Debug-APK, nicht Play-Store-signiert." \
-              --prerelease
+            gh release create "$TAG" Native-Android-Pruefnachweise.zip --target "$GITHUB_SHA" --prerelease --title "Native Android-Prüfnachweise" --notes "Automatisierte Android-Screenshots und Prüfprotokoll. Das Ergebnis steht in run.json; dieser Nachweis ist keine eigenständige Spielversion."
           fi
