@@ -1,0 +1,28 @@
+# Android / Gradle
+.gradle/
+.idea/
+**/build/
+local.properties
+*.iml
+captures/
+.externalNativeBuild/
+.cxx/
+# JS
+node_modules/
+dist/
+coverage/
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+# secrets / signatures
+*.jks
+*.keystore
+*.p12
+*.pem
+.env
+.env.*
+!.env.example
+# screenshot artifacts
+playwright-report/
+test-results/
