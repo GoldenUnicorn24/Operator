@@ -33,3 +33,35 @@ jobs:
           else
             gh release create "$TAG" Native-Android-Pruefnachweise.zip --target "$GITHUB_SHA" --prerelease --title "Native Android-Prüfnachweise" --notes "Automatisierte Android-Screenshots und Prüfprotokoll. Das Ergebnis steht in run.json; dieser Nachweis ist keine eigenständige Spielversion."
           fi
+      - name: Promote the exact APK only when build and all native tests passed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          SOURCE_RUN: ${{ inputs.run_id }}
+        run: |
+          gh api "repos/$GH_REPO/actions/runs/$SOURCE_RUN/jobs" > jobs.json
+          python3 - <<'PYTHON'
+          import json
+          from pathlib import Path
+          jobs=json.load(open('jobs.json'))['jobs']
+          assert any(j['name']=='build' and j['conclusion']=='success' for j in jobs)
+          t=Path('evidence/device/instrumentation.txt').read_text()
+          if 'OK (3 tests)' not in t or 'FAILURES!!!' in t:
+              raise SystemExit('Native device acceptance did not pass; no APK promotion')
+          PYTHON
+          gh run download "$SOURCE_RUN" -n Einsatzleitstelle110-native-build -D verified
+          python3 - <<'PYTHON'
+          import hashlib,json
+          from pathlib import Path
+          p=Path('verified/Einsatzleitstelle110-Native-Leitstelle.apk')
+          audit=json.load(open('verified/package-audit.json'))
+          assert audit['nativeOnly'] and audit['webDocuments']==[]
+          assert hashlib.sha256(p.read_bytes()).hexdigest()==audit['sha256']
+          PYTHON
+          TAG=operator-native-v2-preview
+          SOURCE_SHA=$(python3 -c "import json; print(json.load(open('run.json'))['head_sha'])")
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" verified/Einsatzleitstelle110-Native-Leitstelle.apk verified/SHA256SUMS.txt verified/package-audit.json --clobber
+          else
+            gh release create "$TAG" verified/Einsatzleitstelle110-Native-Leitstelle.apk verified/SHA256SUMS.txt verified/package-audit.json --target "$SOURCE_SHA" --prerelease --title "Native Leitstelle: neue Grafik, Bezirke und persönliche Ausstattung" --notes-file docs/NATIVE_PREVIEW_RELEASE.md
+          fi
