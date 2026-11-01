@@ -1,54 +1,41 @@
-# EINSATZLEITSTELLE 110: DEUTSCHLAND – Geo-Alpha 0.4
+# EINSATZLEITSTELLE 110: DEUTSCHLAND — Native Android V1
 
-**Status:** Spielbarer Android-Entwicklungsstand. **Keine fertig verifizierte Version 1.0.**
+**Eine echte Kotlin-Android-App, KEINE WebView.** Für Android ab API 26, ohne Registrierung oder Account. Die Karten-Engine, das Spielmodell, die Dialoge, die Audioausgabe und die Speicherung sind native Android-Implementierungen.
 
-## Neu gegenüber Alpha 0.2
+## APK herunterladen
+**[Installierbare APK auf GitHub Releases](https://github.com/GoldenUnicorn24/Operator/releases/tag/v1.0.0-native)**. Die veröffentlichte Datei heißt \`Einsatzleitstelle110-NativeV1.apk\`. Es handelt sich um eine Debug-APK für Tests, nicht um ein im Play Store zertifiziertes Release.
 
-- Offline-Gesamtkarte **aller 16 Bundesländer** auf Basis geografischer (vereinfachter) Ländergrenzen; echte Ortskoordinaten für 100+ regionale Einsatzorte.
-- Die jeweilige **gesamte Landesfläche** wird als Kartenansicht geöffnet. Zoom, Verschieben, auf ganzes Land zurückstellen, Einsatz-/Fahrzeug-Filter, Gruppenmarker, interaktive Orte/Einsätze/Einheiten.
-- Fahrzeuge stehen an unterschiedlichen Orten, fahren nach Disposition **sichtbar auf simulierten Ortskorridoren** und erreichen den Einsatz mit plausibel approximierter Reisezeit. Mehrere Einsatzfahrzeuge und Vorfälle können gleichzeitig gezeigt werden.
-- **Schichtdauer:** 8h, 12h oder 24h; frei wählbarer Beginn in ganzen Stunden. Karriere und Sandbox haben Schichtplanung, Tagesauswertung, Ausbildung und Fortsetzung am Folgetag. Mitternacht löst keine falsche Schichtbeendigung aus.
-- **48 Einsatzvorlagen**, **19 Start-Einheiten**, **8 Lehrgänge**, Personalporträts, optionale Ausbildung, Ausrüstungsplätze, Budget, eigene Vorlagen, eigene Einheiten und Fahrzeugkonfiguration/Wartung.
-- **Original synthetisierte Sounds** per WebAudio: Notruf, P1/P2-Alarm, Funkimpuls, Entsendung, Abfahrt, Erfolg, Misserfolg, Schichtende. Sound optional und stumm beim App-Hintergrund.
-- JSON-Saves und Import/Export der Alpha-0.2-Spielstände bleiben erhalten (Schema 2, zusätzliche Felder optional).
+## Spielbare Funktionen
+- **Alle 16 Bundesländer** mit **geografisch plausiblen Ländergrenzen**, automatisch auf die Gesamtkarte gezoomt, mit Zoom/Drag, Einsatzpins und landesweit verteilten Einsatzfahrzeugen.
+- **Taktische Karte auf Android Canvas**, inklusive interaktiver Fahrzeugmarker, SEK/MEK, Streife/Kripo, Einsatzfahrten und ETAs. Bei Internetverbindung kann optional eine **echte dunkle OSM-Straßenkartenebene** angezeigt werden; ansonsten funktioniert eine eigene Offline-Kartenzeichnung.
+- **Kein WebView** und keine HTML/CSS/JS-Dateien in der veröffentlichten App. Der Alt-Prototyp bleibt im Repository unter \`prototype/\` zu Archivzwecken.
+- **Karriere und Sandbox**, Tagesschichten **8, 12 oder 24 Stunden** mit wählbarer Startstunde, Pause, Simulationstempo und Tagesabschluss.
+- **48 Einsatzvorlagen**, P1–P3, Einheitenzuweisung, Anfahrt, Bearbeitung, Auswertung, Übergabe am Schichtende und Folgetag.
+- **Spezialisierte Polizeieinheiten** (SEK, MEK, Kripo, Streife) sowie abstrahiert Rettung/Feuerwehr.
+- **Personalporträts, Ausrüstung, Kauf, Fortbildung (8 Lehrgänge) und Budget/Reputation**.
+- **Einsatz- und Einheiteneditor**, Speicherung und manuelles JSON-Export/Import über das native Android-Dateisystem.
+- **Originale synthetisierte Funk-/Alarm-Signale** aus \`AudioTrack\`, offline.
 
-## Karten- und Routing-Ehrlichkeit
+## Architektur
+- \`MainActivity.kt\` — native Android-Menüs, Formulare und Dialoge.
+- \`TacticalMapView.kt\` — native Canvas-Zeichenfläche, Marker und Kartensteuerung.
+- \`NativeStreetTiles.kt\` — **optionale** interaktive OSM-Rasterkacheln mit User-Agent, Cache, 2 Downloadthreads, ohne Bulk-/Offline-Prefetching; offline stets eigene Vektordarstellung.
+- \`GeoData.kt\` — GeoJSON-Parser für alle 16 Länder, Städte und Entfernungsmessung.
+- \`GameState.kt\` — Domänenobjekte, Tick/Disposition/Auswertung, Fortbildung, Inventar.
+- \`GameStore.kt\` — lokale versionierte JSON-Spielstände.
+- \`NativeAudio.kt\` — synthetisierte Audiosignale.
+- \`app/src/main/native_assets/states.geojson\` — Bundeslandgrenzen; \`app/src/main/assets/images/\` — grafische Personalassets.
+- \`app/src/test/\` — native Spielmechaniktests; \`.github/workflows/\` — APK-Build und Emulator-Test.
 
-**Wichtig:** Die Gesamtansicht ist auf echten, vereinfachten Bundesland-Grenzgeometrien aufgebaut. **Es handelt sich nicht um vollständige Straßenkarten oder Echtzeit-Polizeiverkehr.** Städte/Orte sind geografisch platziert, schmale Linien sind **nur abstrahierte Ortskorridore**, Fahrzeugwege eine vereinfachte Anfahrts-Simulation. Die ETA ist keine Straßennavigation und wird in der Benutzeroberfläche als Simulation gekennzeichnet. Ein detaillierter lizenzierter Offline-Straßenroutinggraph und weitere Einsatzorganisationssysteme gehören zum v1.0-Ausbau.
+## Grenzen dieser Version
+Die Karten-Gesamtansicht und die Bundeslandgrenzen sind georeferenziert. Die Fahrwege und ETAs sind **spielerische Simulationen und keine echte Straßenrouting-Engine**. Die echte Straßenkarte wird online geladen; standardmäßig sind offline nur vereinfachte Verbindungsnetze gespeichert. Noch nicht umgesetzt sind ein vollwertiger 911-Operator-artiger Straßenroutinggraph für ganz Deutschland, komplexe mehrstufige Einsatztabellen, alle spezialisierten Behördenabläufe, ein großer Fahrzeuge-/Wachenbaukasten oder ein externer Community-Szenariokatalog. **Dies ist eine native erste Spielversion mit diesen Grenzen**, kein vollständiger realistischer Polizeileitstellen-Nachbau.
 
-## Start im Browser
+## Build
+In Android Studio Projekt öffnen oder per GitHub Actions testen:
+\`\`\`bash
+gradle :app:testDebugUnitTest :app:assembleDebug
+\`\`\`
+Java 17, Android SDK 35, Gradle 8.9. Für öffentliche Veröffentlichung separate Signatur und Lizenzprüfung nötig. Die V1 verwendet für Spieleinsatzentscheidungen ausschließlich abstrakte Managementregeln, keine echten taktischen Anleitungen.
 
-`app/src/main/assets/index.html` mit den danebenliegenden Skripten, CSS-, Daten- und Bilddateien öffnen. Zusätzlich liegt die Einzeldatei `Einsatzleitstelle110_GeoAlpha04_Offline.html` als von Android unabhängige Testfassung vor (nur im Downloadpaket).
-
-## Android-APK
-
-Das Android-Studio-Projekt über Gradle 8.9, AGP 8.7.3, JDK 17, SDK 35 bauen:
-
-```
-gradle :app:assembleDebug
-```
-
-CI baut bei jedem Push in `codex/operator-v1` eine Debug-APK und prüft die Node-Simulations-Tests. Das Test-APK ist nicht für die Veröffentlichung im Play Store signiert.
-
-## Tests
-
-```
-node tests/simulation.test.cjs
-node --check app/src/main/assets/game.js
-node --check app/src/main/assets/map.js
-node --check app/src/main/assets/audio.js
-```
-
-Zusätzlich wurde die Oberfläche im Headless-Chromium-Browser mit einer über WebView-analogen HTML-Einbettung getestet. Ein Endgerätetest auf einem realen Smartphone ist weiterhin erforderlich.
-
-## Datenrechte
-
-Grenzgeometrien aus [isellsoap/deutschlandGeoJSON](https://github.com/isellsoap/deutschlandGeoJSON) (Repository-Lizenz Unlicense), ursprüngliche Quelle GIS-DATA (diva-gis.org/gdata). Die Geometrien wurden für die Gesamtübersicht vereinfacht. Originale Spielgrafiken aus Alpha 0.2 bleiben erhalten. Der Quellenvermerk wird in der Kartenansicht und in `THIRD_PARTY_NOTICES.md` angezeigt.
-
-## Folgende Schritte bis zu v1.0
-
-Straßenkarten und Offline-Routing in mehreren Detailebenen; vollständige regionale Einsatzprofile; stärkere Simulationslogik für komplexe Großlagen; native Audio-Einstellungen; ausführlichere Fahrzeug-/Dienststellendaten; komplexer grafischer Ketteneditor; Performance-/APK-/Endgerätetests.
-
-
-## Volles v1.0-Lastenheft
-Siehe `docs/CODEX_MASTER_PROMPT.md` und `docs/STATEWIDE_MAP_AND_SHIFTS.md` im GitHub-Repository. Diese Geo-Alpha implementiert einen wesentlichen Teil, nicht die vollständigen v1.0-Releasekriterien.
+## Datenschutz & Attribution
+Es gibt kein Login, keine Werbung und keine Cloudspielstände. Falls die optionale Straßenkarte aktiviert ist, sendet das Gerät normale Kachelanfragen für den aktuell sichtbaren Ausschnitt an OpenStreetMap. © OpenStreetMap contributors. Es findet **kein Bulk-/Hintergrund-Download** ganzer Regionen statt. Weitere Quellenhinweise: \`THIRD_PARTY_NOTICES.md\`.
