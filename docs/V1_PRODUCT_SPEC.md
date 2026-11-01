@@ -1,5 +1,8 @@
 # EINSATZLEITSTELLE 110 – verbindliche v1.0-Produktspezifikation
 
+
+> **Vorrangige Aktualisierung (01.11.2026):** `docs/STATEWIDE_MAP_AND_SHIFTS.md` ist verbindlich. Im Spiel **immer das ganze gewählte Bundesland** auf der Livekarte darstellen; 8/12/24-Stunden-Schichten in beiden Modi.
+
 ## Vision
 Hochwertiges Android-Leitstellen-Strategiespiel aus Deutschland: **911-Operator-Prinzip + tiefes Personal-/Ausrüstungsmanagement + lebendige Echtzeitkarte + Karriere/Sandbox**. Keine Kopie bestehender Spiele.
 
@@ -9,19 +12,19 @@ Hochwertiges Android-Leitstellen-Strategiespiel aus Deutschland: **911-Operator-
 ### Muss-Systeme (v1.0)
 **A. Spielmodi und Schichttag**
 - Karriere und Sandbox von Anfang an auswählbar; mehrere Save-Slots.
-- Früh 06–14, Spät 14–22, Nacht 22–06 Uhr; von Nutzer variabel wählbare Startzeiten erst nach v1.0 optional.
+- **Schichtdauer frei wählen: 8, 12 oder 24 Stunden** in Karriere und Sandbox. 8h: z. B. 06–14, 14–22, 22–06; 12h: 06–18 oder 18–06; 24h: z. B. 06–06 Folgetag. Startstunde im Schichtplan wählbar. Eine Schicht = ein abgeschlossener Management-Spieltag, trotz Mitternacht.
 - Tages-Countdown, Pause, Geschwindigkeiten 1×/4×/8×, manuelles Schichtende nur nach klarer Regel; offene Einsätze kontrolliert an Folgeschicht übergeben.
 - Tagesreport mit Einsätzen, Gefahrenlagen, Erfolgsquote, Personalbelastung, Budget, Ruf/Reputation, Schichtstatistik, Ausbildung und Fahrzeugzustand.
 - **Nächster Tag**: weiterhin bestehende Beamte/Einheiten/ausgewählte Ausrüstung, laufende Lehrgänge, Geld, Ruf, Dienststellen, selbst erstellte Inhalte.
 
 **B. Deutschland und Karte**
-- Alle **16 Bundesländer** im Regionenmenü; reale landesspezifische Namen, fiktive Spielbehörden optional.
-- **Hamburg**: in v1.0 geographisch plausibel mit nutzbarer Straßenkarte, konkreten Bezirken, Straßen und angetäuschter Live-Bewegung entlang Routen (keine nur schematische Karte).
+- Alle **16 Bundesländer** als **vollständig dargestellte geografische Gesamtkarte des jeweiligen Bundeslandes**: echte Grenzen, regionale Städte, sämtliche dort aktiven Einheiten und Vorfälle. Automatische Fit-Bounds-Kameraposition beim Wechsel, „Ganzes Bundesland“-Button und Touch-Zoom.
+- **Landesweite Livekarte statt Stadt-Ausschnitt**: Karte zeigt auch in Niedersachsen/Bayern/NRW usw. das gesamte Bundesland; Einsatzorte, Wachen, SEK-/MEK-Standorte, Fahrzeuge, Route und Live-Status im Bundesland verteilt. Hamburg erhält zusätzlich höhere örtliche Detailtiefe, aber ist nicht die einzige funktionsfähige Karte.
 - Kartendarstellung Tag/Nacht und Zoom, Pinch/Drag, gute FPS, Kartenfilter (Streifen/SEK/MEK/Kripo/Notrufe/Wachen), Overlay für Einsatzdichte, Warnbereiche.
 - Einheitenpins kontinuierlich bewegen, Ziellinie/Route anzeigen, Anfahrt/Rückfahrt simulieren, ETA mit Grundlage im Simulationsmodell; im Pausenmodus friert alles ein.
 - Pin → interaktiver Detailbereich → Einheiten zuweisen/zurückrufen; Einsatzpriorität und Zuständigkeiten sichtbar.
-- Routing offline, zumindest hamburgzentriert auf einem reduzierten Straßengraphen oder lizenzierten kleinen Datensatz; wenn unmöglich, klar benannte Näherung, aber dennoch sichtbare Bewegung.
-- Andere Bundesländer dürfen bei v1.0 auf generischen Regionendatensätzen basieren; müssen spielbar sein, jedoch keine Fake-Kartendetails behaupten.
+- Landesweite geografisch plausible Positionen und sichtbare Fahrzeugbewegung, lizenzierte/offline-fähige Basis-Geodaten je Bundesland; Routing wenn Daten vorhanden, sonst gekennzeichnete Simulation. Mehrere parallele Orte eines Bundeslandes gleichzeitig in der Übersicht sehen; bei Dichte Clustering und Filter mit Zählern.
+- Für andere Länder kann der lokale Straßen-Detailgrad zunächst geringer sein als in Hamburg, **nicht aber der geografische Umfang**: korrekte Ländergrenzen/Bundesland-Gesamtansicht, Ereignisse und Einsatzfahrzeuge über die gesamte Region sind v1.0-Pflicht. Siehe `docs/STATEWIDE_MAP_AND_SHIFTS.md`.
 
 **C. Einsätze / Disposition**
 - Mindestens 40 datengetriebene Vorlagen über P1–P3, mit Hamburg-spezifischen und allgemeinen Ereignissen.
