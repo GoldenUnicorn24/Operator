@@ -1,25 +1,27 @@
-# Quellnachweise und Lizenzen — Einsatzleitstelle 110 Native V1
+# Quellen und Lizenzen der nativen Fassung
 
-## OpenStreetMap-Straßenkarte (optional)
-- Daten, gerenderte Tiles: **© OpenStreetMap contributors**; Datennutzung nach ODbL.
-- Tiles werden bei aktiver Kartenansicht optional per HTTPS von https://tile.openstreetmap.org/{z}/{x}/{y}.png abgerufen.
-- Policy: https://operations.osmfoundation.org/policies/tiles/
-- App verwendet identifizierenden User-Agent, lediglich aktuell sichtbare Tiles, maximal zwei Downloadthreads, eine lokale Cache-Gültigkeit von mindestens sieben Tagen, keine Massendownloads und keine Offline-Prefetch-Funktion.
-- Die Kachelserver sind Community-finanziert, ohne SLA. Für eine umfangreich verteilte oder kommerzielle Veröffentlichung muss eine skalierbare, entsprechend lizenzierte Alternative bzw. eigener Tile-Server vorgesehen werden.
-- Wird das Netz deaktiviert / fehlt Internet, funktioniert weiterhin die native Offline-Gesamtkarte mit Spielobjekten und vereinfachtem Wegenetz.
+## Offline-Karten
 
-## Bundesland-Grenzgeometrie
-- Die im Spiel vorliegenden vereinfachten Grenzen basieren auf dem ursprünglichen Datensatz aus **isellsoap/deutschlandGeoJSON**, Quelle laut Projekt **GIS-DATA / DIVA-GIS**: https://github.com/isellsoap/deutschlandGeoJSON
-- Diese Quelldaten sind für eine nichtkommerzielle, private Alpha-/V1-Testentwicklung verwendet. Die exakte Lizenz-/Weitergabefähigkeit der ursprünglichen Datenquelle muss **vor öffentlicher kommerzieller Distribution** endgültig geprüft oder durch klar lizenzierte Verwaltungsgrenzen ersetzt werden.
-- Die 16 Bundeslandkonturen sind vereinfacht und nicht für Kataster- oder Leitstellenentscheidungen geeignet.
+**Landesgrenzen:** © GeoBasis-DE / BKG2021, NUTS250 über geoBoundaries gbOpen DEU ADM1. Datenlizenz Deutschland Namensnennung2.0, https://www.govdata.de/dl-de/by-2-0. Gepinnte Quelle und SHA-256: `app/src/main/native_assets/sources/states-source.json`. Attribute reduziert, Koordinaten auf fünf Nachkommastellen gerundet; Inseln/Exklaven und Polygonlöcher erhalten.
 
-## Personenbilder und Ausrüstungsgrafiken
-- Aus der zuvor für das Projekt generierten Alpha 0.2 übernommen: fiktive Beamtenporträts, Einsatz-/Fahrzeugillustrationen und SVG-Ausrüstungsgrafiken unter \`app/src/main/assets/images/\`.
-- Keine echten Personen oder realen Polizeiinternen Inhalte im Spiel.
-- Vor wirtschaftlicher Veröffentlichung sämtliche Nutzungsrechte der erzeugten Assets und ihrer etwaigen Quellen kontrollieren.
+**Hamburger Bezirke:** amtlicher WFS Verwaltungsgrenzen/ALKIS, Freie und Hansestadt Hamburg, Landesbetrieb Geoinformation und Vermessung. Der WFS nennt unter Fees ausdrücklich „Datenlizenz Deutschland Namensnennung2.0, Quellenvermerk: Freie und Hansestadt Hamburg, Landesbetrieb Geoinformation und Vermessung“. GML-GetFeature für `app:bezirke`, Abruf2026-11-01. Sieben Bezirke mit allen Ringen, auf fünf Nachkommastellen gerundet. Quelle, Änderungen und SHA-256 unter `sources/districts-source.json` im Assetverzeichnis.
 
-## Sounds
-- Alle nativen Alarm-/UI-Töne werden zur Laufzeit **original durch Kotlin/AudioTrack synthetisiert**, ohne fremde Audio-Samples.
+**Hauptstraßen Hamburg:** Freie und Hansestadt Hamburg, Behörde für Wirtschaft, Verkehr und Innovation, WFS Hauptverkehrsstraßen, Datenlizenz Deutschland Namensnennung2.0.3.735 Straßenfeatures, Attribute reduziert/gerundet/vereinfacht. Quellenmetadaten: `sources/roads-source.json`.
 
-## Abgrenzung
-Eine unabhängig entwickelte fiktionale Managementsimulation. Weder \`911 Operator\` noch \`112 Operator\` stellt Assets, Logos, Interface oder Sound dieses Spiels bereit.
+Routen sind ausdrücklich Simulationsnäherungen. Keine echte Navigation und keine heruntergeladenen OSM-Tiles im nativen Spiel. Der ehemalige optionale Online-Tileadapter bleibt nur unter `prototype/previous-native/` als Referenz erhalten und wird nicht kompiliert. Die App besitzt keine Internetberechtigung.
+
+Früher mitgelieferte, inzwischen inaktive Geometrie aus isellsoap/deutschlandGeoJSON: Unlicense, ursprünglicher Anbieter GIS-DATA/diva-gis.org. Diese Quelle bleibt als Repository-Referenz erhalten; die aktuelle native Karte nutzt die oben genannten amtlichen Daten.
+
+## Originalgrafiken
+
+Die vier Atlanten `art/gear-atlas.png`, `art/portrait-atlas.png`, `art/vehicle-atlas.png`, `art/vehicle-extras-atlas.png` wurden eigens am2026-11-01 mit dem OpenAI-Bildgenerator aus Textbeschreibungen erzeugt. Keine fremde Bildvorlage, keine Assets eines bestehenden Spiels, keine realen Personen. Acht fiktive Beamtenporträts, zehn fiktive Fahrzeugansichten,16 Inventarmotive. Die Atlanten bleiben als Originaldateien erhalten; einzelne Ansichten werden in Android nativ als Bitmapbereiche gerendert. Bildhashes unter `sources/art-source.json`. Die Nutzung richtet sich nach den geltenden OpenAI-Nutzungsbedingungen; keine fremde CC-Lizenz oder Herstellerpartnerschaft wird behauptet. Waffennamen dienen der Beschreibung abstrahierter Spielgegenstände, nicht einer Produktzertifizierung.
+
+Die ursprünglichen Alpha-0.2-Bilder stammen aus der vom Nutzer bereitgestellten Referenz, welche sie als KI-generierte Spielgrafiken bezeichnet. Sie bleiben für Rückwärtskompatibilität und einzelne Hintergrundansichten erhalten. `art/mek_team.webp` ist eine zusätzliche frühere eigene OpenAI-Generierung aus diesem Arbeitsauftrag.
+
+Die Kartenfahrzeuge sind eigenständige native Canvas-Zeichnungen; keine kopierten Symbole, UI oder Sounds aus 911Operator/112Operator.
+
+## Audio und Bibliotheken
+
+Zehn WAVs sind eigens mathematisch synthetisierte Originale ohne Funkmitschnitte oder Fremdsamples. Quelle: `tools/generate_audio.py`; Dateien unter `app/src/main/native_assets/audio/`. Diese zehn WAVs stehen unter CC01.0 Universal (https://creativecommons.org/publicdomain/zero/1.0/). Die Engine nutzt Android SoundPool und AudioFocus.
+
+Kotlin Standard Library2.0.21: JetBrains, Apache License2.0. Android SDK: Android Open Source Project. Der Apache-Lizenztext wird in der App unter „Quellen und Lizenzen“ mitgeliefert. AndroidX Test, JUnit4 und org.json20240303 dienen nur der Verifikation und werden nicht als Testbibliotheken in die Spiel-APK gepackt. Gradle-Wrapper8.9 ist Apache-2.0-lizenziert; Lizenz im JAR und in den Skript-Headern. Kein Release-Signierschlüssel im Repository.

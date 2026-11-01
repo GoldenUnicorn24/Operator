@@ -1,11 +1,5 @@
 name: Native Android Emulator Smoke Test
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'app/src/main/java/**'
-      - 'app/src/main/native_assets/**'
-      - '.github/workflows/native-emulator.yml'
   workflow_dispatch:
 permissions:
   contents: read

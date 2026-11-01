@@ -24,7 +24,7 @@ import kotlin.math.*
  * for public distribution, a dedicated provider is recommended.
  */
 class NativeStreetTiles(private val context:Context,private val onReady:()->Unit) {
- var enabled=true
+ var enabled=false
  private val downloader=Executors.newFixedThreadPool(2)
  private val cache=object:LruCache<String,Bitmap>(72) {}
  private val loading=Collections.synchronizedSet(mutableSetOf<String>())

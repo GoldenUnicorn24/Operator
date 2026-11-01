@@ -26,3 +26,5 @@ Thumbs.db
 # screenshot artifacts
 playwright-report/
 test-results/
+
+.kotlin/

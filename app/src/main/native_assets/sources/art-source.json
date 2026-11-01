@@ -1,0 +1,25 @@
+{
+  "generator": "OpenAI image generation, original text prompts, 2026-11-01",
+  "images": {
+    "vehicle-atlas.png": {
+      "sha256": "2ce9c1a7dd51f62c3f3442c83527ccef8f91651d2fbef70bf65a53a1591a7c84",
+      "bytes": 2350677
+    },
+    "portrait-atlas.png": {
+      "sha256": "1285e14cea23a6bd07ec7dbf4f5751a0625acbae82e6e7f61dc5e29a1625a738",
+      "bytes": 2233655
+    },
+    "gear-atlas.png": {
+      "sha256": "1e986158fa28bc888bdc65bc43c2b2b4aa2f83064c9e4207be481bebeec75a6a",
+      "bytes": 2081346
+    },
+    "mek_team.webp": {
+      "sha256": "1166bf961560c8572f36486503b0934110520105e8cd522bbb7a1e0b5cced03b",
+      "bytes": 90640
+    },
+    "vehicle-extras-atlas.png": {
+      "sha256": "2b29dbf046da0004b4a5a89fd55e47e9faa27f7dce2c8c6d650135722607c766",
+      "bytes": 2268095
+    }
+  }
+}

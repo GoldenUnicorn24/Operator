@@ -12,3 +12,7 @@
 - Echte Android CI-/Geräte-Abnahme. Die CI-Konfiguration wurde angelegt, aber hier **noch nicht überprüft, ob der Build erfolgreich läuft**.
 
 Codex: Fortlaufende Umsetzung und Testergebnisse mit Datumsstempel dokumentieren. Niemals ungeprüfte Fertigmeldungen übernehmen.
+
+
+## Native Überarbeitung 2026-11-01
+Explizite Nutzerkorrektur umgesetzt: eigene native Leitstelle statt WebView oder unveränderter fremder nativer Zwischenfassung. Neue Grafik, persönliche kostenlose P99, Bezirkszuständigkeit, flexible SEK/MEK-Disposition, portierte Einsätze und Spielstandmigration. Details und ehrliche Grenzen: NATIVE_REVISION.md. Lokaler Gradle-Lauf für Unit-Tests, beide APKs und Lint erfolgreich; Android-Gerätetest folgt als verpflichtender CI-Schritt vor Release-Upload.

@@ -1,11 +1,5 @@
 name: Publish installable Android APK
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'app/**'
-      - 'tests/**'
-      - '.github/workflows/publish-apk.yml'
   workflow_dispatch:
 permissions:
   contents: write

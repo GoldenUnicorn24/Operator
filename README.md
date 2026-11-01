@@ -1,41 +1,41 @@
-# EINSATZLEITSTELLE 110: DEUTSCHLAND — Native Android V1
+# EINSATZLEITSTELLE 110: DEUTSCHLAND
 
-**Eine echte Kotlin-Android-App, KEINE WebView.** Für Android ab API 26, ohne Registrierung oder Account. Die Karten-Engine, das Spielmodell, die Dialoge, die Audioausgabe und die Speicherung sind native Android-Implementierungen.
+**Native Android-Leitstellensimulation.** Die entwickelte Spielversion wird als Kotlin-App mit nativen Views, Canvas-Karte und SoundPool weitergeführt. Die installierbare App enthält keine HTML-, JavaScript- oder CSS-Dateien, keine WebView und benötigt weder Internet noch eine eigene Domäne.
 
-## APK herunterladen
-**[Installierbare APK auf GitHub Releases](https://github.com/GoldenUnicorn24/Operator/releases/tag/v1.0.0-native)**. Die veröffentlichte Datei heißt \`Einsatzleitstelle110-NativeV1.apk\`. Es handelt sich um eine Debug-APK für Tests, nicht um ein im Play Store zertifiziertes Release.
+## Aktueller nativer Stand
 
-## Spielbare Funktionen
-- **Alle 16 Bundesländer** mit **geografisch plausiblen Ländergrenzen**, automatisch auf die Gesamtkarte gezoomt, mit Zoom/Drag, Einsatzpins und landesweit verteilten Einsatzfahrzeugen.
-- **Taktische Karte auf Android Canvas**, inklusive interaktiver Fahrzeugmarker, SEK/MEK, Streife/Kripo, Einsatzfahrten und ETAs. Bei Internetverbindung kann optional eine **echte dunkle OSM-Straßenkartenebene** angezeigt werden; ansonsten funktioniert eine eigene Offline-Kartenzeichnung.
-- **Kein WebView** und keine HTML/CSS/JS-Dateien in der veröffentlichten App. Der Alt-Prototyp bleibt im Repository unter \`prototype/\` zu Archivzwecken.
-- **Karriere und Sandbox**, Tagesschichten **8, 12 oder 24 Stunden** mit wählbarer Startstunde, Pause, Simulationstempo und Tagesabschluss.
-- **48 Einsatzvorlagen**, P1–P3, Einheitenzuweisung, Anfahrt, Bearbeitung, Auswertung, Übergabe am Schichtende und Folgetag.
-- **Spezialisierte Polizeieinheiten** (SEK, MEK, Kripo, Streife) sowie abstrahiert Rettung/Feuerwehr.
-- **Personalporträts, Ausrüstung, Kauf, Fortbildung (8 Lehrgänge) und Budget/Reputation**.
-- **Einsatz- und Einheiteneditor**, Speicherung und manuelles JSON-Export/Import über das native Android-Dateisystem.
-- **Originale synthetisierte Funk-/Alarm-Signale** aus \`AudioTrack\`, offline.
+- 16 vollständige Offline-Bundeslandkarten mit echten Grenzen, Städten, fiktiven Wachen, Fahrzeugen, Notrufen, Clustern, Filtern und Routen. Hamburg mit amtlichem Hauptstraßennetz und einem A*-Spielgraph.
+- Optional **ganz Hamburg oder ein echter Bezirk**, z.B. **Wandsbek**. Acht lokale Kräfte statt der landesweiten Startflotte; Vorfälle innerhalb der gewählten Zuständigkeit. Bestehende Fahrzeuge bleiben an ihren Standorten. „Land“ zeigt jederzeit die vollständige Landesübersicht, ohne die Zuständigkeit zu ändern.
+- **Persönliche kostenlose P99 für jeden Polizeibeamten**, einschließlich Ablösungen und importierter Profile. Kein Einzelkauf und kein zusätzlicher Ausrüstungsslot. Zusätzliche MP5/G36 und andere Ausrüstung als abstrakte Spielwerte; keine Waffenbedienung oder realen taktischen Abläufe.
+- Neue generierte **acht Personenporträts**, vier Fahrzeugansichten und 16 Ausrüstungsbilder. Die Karte verwendet eigenständig gezeichnete, bewegte Fahrzeugsilhouetten mit Fahrtrichtung, Organisation und Status.
+- **SEK und MEK können auch Streifenaufträge übernehmen**; umgekehrt ersetzt eine Streife keine Spezialkräfte. Direkte, nach Fahrzeit sortierte Disposition mit Unterstützung von außerhalb des Bezirks.
+- 48 Szenarien, zehn freiwillige mehrtägige Lehrgänge, acht Polizeiorganisationen plus koordinierte Hilfsdienste, individuelle Inventare, Erfahrung, Ermüdung, Fahrzeugwartung und Dienstplan.
+- 8/12/24h-Schichten in Karriere und Sandbox, Beginn0–23 Uhr, Pause und1/4/8/16×. Absolute Simulationszeit, einmaliger Tagesabschluss, interne Ablösungsteams und gespeicherte offene Lagen über mehrere Tage.
+- Native Editoren für Einheiten/Fahrzeuge, eigene Einsätze und verzweigte Ketten, JSON-Import/Export. Alpha-0.2-/Geo-v2-/vorherige Web-Schema3-Exporte sowie ältere native Spielstände werden in das native Schema5 übernommen. Laufende Anfahrten und verbleibende Bearbeitung werden erhalten.
+- Zehn originale WAV-Signale, Master/Funk/SFX/Ambiente, Mute, AudioFocus und Hintergrundpause. Keine Pflicht-CDNs, Kartenserver, Registrierung oder Telemetrie.
+
+## Bauen
+
+JDK17, Android SDK35 / Build Tools35.0.0 und Python3 für die Paketprüfung.
+
+```sh
+./gradlew --no-daemon :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest :app:lintDebug
+python3 scripts/verify_native_apk.py app/build/outputs/apk/debug/app-debug.apk
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+```
+
+Version: **0.9.0-native-preview**, minSdk26, targetSdk35. Kein Release-Signing-Schlüssel im Repository. `app/src/main/native_assets` und die Bildressourcen sind die einzigen APK-Assetquellen. Frühere Alpha-/Webquellen bleiben als Entwicklungs- und Migrationsreferenz erhalten; sie werden nicht mit dem Spiel ausgeführt oder als Web-App ausgeliefert.
+
+Der CI-Workflow baut das APK, führt Unit-Tests/Lint/Paketprüfung aus und startet einen nativen Android-Emulatorablauf inklusive Wandsbek, P99, Spezialkräfte-Disposition,24h, Folgetag und Screenshots. Ein verifizierter Preview-Build wird als APK-Artefakt und separater GitHub-Preview-Download bereitgestellt. [Actions](https://github.com/GoldenUnicorn24/Operator/actions/workflows/android-ci.yml).
 
 ## Architektur
-- \`MainActivity.kt\` — native Android-Menüs, Formulare und Dialoge.
-- \`TacticalMapView.kt\` — native Canvas-Zeichenfläche, Marker und Kartensteuerung.
-- \`NativeStreetTiles.kt\` — **optionale** interaktive OSM-Rasterkacheln mit User-Agent, Cache, 2 Downloadthreads, ohne Bulk-/Offline-Prefetching; offline stets eigene Vektordarstellung.
-- \`GeoData.kt\` — GeoJSON-Parser für alle 16 Länder, Städte und Entfernungsmessung.
-- \`GameState.kt\` — Domänenobjekte, Tick/Disposition/Auswertung, Fortbildung, Inventar.
-- \`GameStore.kt\` — lokale versionierte JSON-Spielstände.
-- \`NativeAudio.kt\` — synthetisierte Audiosignale.
-- \`app/src/main/native_assets/states.geojson\` — Bundeslandgrenzen; \`app/src/main/assets/images/\` — grafische Personalassets.
-- \`app/src/test/\` — native Spielmechaniktests; \`.github/workflows/\` — APK-Build und Emulator-Test.
 
-## Grenzen dieser Version
-Die Karten-Gesamtansicht und die Bundeslandgrenzen sind georeferenziert. Die Fahrwege und ETAs sind **spielerische Simulationen und keine echte Straßenrouting-Engine**. Die echte Straßenkarte wird online geladen; standardmäßig sind offline nur vereinfachte Verbindungsnetze gespeichert. Noch nicht umgesetzt sind ein vollwertiger 911-Operator-artiger Straßenroutinggraph für ganz Deutschland, komplexe mehrstufige Einsatztabellen, alle spezialisierten Behördenabläufe, ein großer Fahrzeuge-/Wachenbaukasten oder ein externer Community-Szenariokatalog. **Dies ist eine native erste Spielversion mit diesen Grenzen**, kein vollständiger realistischer Polizeileitstellen-Nachbau.
+`GameState.kt`: reine native Engine und Modelle; `GameStore.kt`/`NativeMigration.kt`: validierte atomare Speicherung und Datenübernahme; `OperationsAreas.kt`/`GeoData.kt`: echte Regionen und Bezirke; `NativeRouting.kt`/`MapClustering.kt`/`TacticalMapView.kt`: Offline-Routing und Canvas-Karte; `MainActivity.kt`: native Bedienung; `EquipmentArt.kt`: Bitmap-Atlanten; `NativeAudio.kt`: native Audiosignale.
 
-## Build
-In Android Studio Projekt öffnen oder per GitHub Actions testen:
-\`\`\`bash
-gradle :app:testDebugUnitTest :app:assembleDebug
-\`\`\`
-Java 17, Android SDK 35, Gradle 8.9. Für öffentliche Veröffentlichung separate Signatur und Lizenzprüfung nötig. Die V1 verwendet für Spieleinsatzentscheidungen ausschließlich abstrakte Managementregeln, keine echten taktischen Anleitungen.
+Die Ausgabe wird zusätzlich direkt auf HTML-/Script-Dateien und WebView-Klassenreferenzen geprüft. Vor einem Wechsel von einer anders signierten Debug-APK den Spielstand exportieren; nach Installation über „Spielstand importieren“ übernehmen. Eine native App kann den alten Chromium-localStorage nicht ohne Browserkomponente automatisch ausführen; vorhandene Daten werden deshalb über den JSON-Export übernommen.
 
-## Datenschutz & Attribution
-Es gibt kein Login, keine Werbung und keine Cloudspielstände. Falls die optionale Straßenkarte aktiviert ist, sendet das Gerät normale Kachelanfragen für den aktuell sichtbaren Ausschnitt an OpenStreetMap. © OpenStreetMap contributors. Es findet **kein Bulk-/Hintergrund-Download** ganzer Regionen statt. Weitere Quellenhinweise: \`THIRD_PARTY_NOTICES.md\`.
+## Grenzen und Nachweise
+
+Hauptstraßengraph und Fahrzeiten sind **Spielnäherungen**: keine Einbahn-/Abbiege-/Verkehrsdaten. Andere Bundesländer verwenden geografische Distanzkorridore. Alle Wachen, Personen, Einsätze und Ausstattungswerte sind fiktiv. Die Fahrzeug- und Ausrüstungsbilder sind generierte Illustrationen und keine Herstellerproduktdokumentation. Die visuelle Abnahme und Leistung auf physischen Mittelklassegeräten bleiben eigene Releasegates; kein vorzeitiges v1.0-Fertiglabel.
+
+[Native Änderungsanforderungen und Nachweise](docs/NATIVE_REVISION.md) · [Implementierungslog](docs/IMPLEMENTATION_LOG.md) · [Quellen/Lizenzen](THIRD_PARTY_NOTICES.md).
