@@ -1,0 +1,10 @@
+{
+  "source": "https://geodienste.hamburg.de/HH_WFS_Hauptverkehrsstrassen?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=app:hauptverkehrsstrassen&SRSNAME=EPSG:4326&OUTPUTFORMAT=application/geo%2Bjson",
+  "sourceSHA256": "e1a3c25b43c2c0c032db078d6882453762cf7699fac71806a2f4b12875385852",
+  "attribution": "Freie und Hansestadt Hamburg, Behörde für Wirtschaft, Verkehr und Innovation",
+  "license": "Datenlizenz Deutschland Namensnennung 2.0",
+  "licenseURL": "https://www.govdata.de/dl-de/by-2-0",
+  "features": 3735,
+  "retrieved": "2026-11-01",
+  "modifications": "LineString properties reduced to name/class; Douglas-Peucker 0.000035 degree tolerance; WGS84 coordinates rounded to five decimals."
+}

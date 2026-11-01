@@ -1,0 +1,11 @@
+{
+  "objects": 184,
+  "medianUpdateMs": 0.4000000001396984,
+  "p95UpdateMs": 1.6000000000931323,
+  "browserAnimationFps": 53.160561508435045,
+  "viewport": [
+    412,
+    915
+  ],
+  "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/141.0.7390.37 Safari/537.36"
+}
