@@ -1,0 +1,45 @@
+# CODEX-MASTERPROMPT: EINSATZLEITSTELLE 110 – DEUTSCHLAND, v1.0
+
+Du arbeitest im GitHub-Repository **GoldenUnicorn24/Operator** am Android-Spiel **EINSATZLEITSTELLE 110: DEUTSCHLAND**. Ziel ist die **erste echte, hochwertig spielbare Version**, nicht ein Konzept oder ein UI-Mockup. Bitte implementiere Features direkt im Repository, committe systematisch und erstelle einen Pull Request mit nachvollziehbaren Tests und einer in CI erzeugten Debug-APK.
+
+## Deine Rolle und dein Auftrag
+Handle als erfahrenes Android-/Game-Engineering-Team mit Kompetenzen für Mobile UI/UX, 2D-Kartenvisualisierung, taktische Managementsimulation, Audio und Game-Art. Erhalte die bisherigen Spielstände und entwickle Alpha 0.2 konsequent weiter. Du hast die Entscheidungsfreiheit, die Architektur zu verbessern, musst aber funktionierendes Gameplay tatsächlich liefern.
+
+Lies **zuerst** `AGENTS.md`, `README.md`, `docs/V1_PRODUCT_SPEC.md`, `docs/TECHNICAL_ARCHITECTURE.md`, `docs/ART_SOUND_BRIEF.md`, `docs/ACCEPTANCE_TESTS.md` und `docs/BASELINE_AND_RISKS.md`. Starte dann `prototype/alpha-0.2-offline.html` und inspiziere `app/`. Die HTML-Datei enthält sämtliche Grafiken eingebettet; sie ist die verbindliche Gameplay-Referenz. Die vorhandene App ist Alpha 0.2, **keine** fertige v1.0.
+
+### Fokus 1 – Hochwertige Live-Karte (höchste Priorität)
+Ersetze die schematische Karte durch eine geografisch plausible und flüssige Hamburger Einsatzkarte. Nutze vorzugsweise MapLibre + eigene/lizenzierte OSM-basierte Daten und **offline-fähige Assets**. Karte muss in Android zuverlässig rendern. Hamburg-Startregion mit sinnvollen Bereichen/Bezirken, Einsatzorten, Stationspins, Fahrzeugpins, Zoom/Drag/Filtern, Tag/Nacht-Look, Einsatzdichte und Prioritätsmarkern. Einheiten müssen **sichtbar auf tatsächlichen oder plausibel datenbasierten Straßenrouten fahren**; ETA/Anfahrt/Fortschritt, blinkender Alarmmarker und Streckenverlauf gehören dazu. Bei Pause stoppt die komplette Simulation; Geschwindigkeiten 1×/4×/8× wirken überall. Baue eine robuste Offline-Fallback-Karte ohne falsche Genauigkeitsversprechen. Alle 16 Bundesländer im Spiel auswählen können, mit deklariertem Umfang (Hamburg zuerst tief, andere Basisspielregionen). Vermeide Fake-Standorte echter Wachen.
+
+### Fokus 2 – Spielerisches Leitstellen-Gameplay
+Mindestens 40 datengetriebene Einsätze, mehrere parallel, P1–P3, Notrufe mit Beschreibungen, Entscheidungen, Eskalationen und Folgeeinsätzen. Zuweisung durch Touch/Einheitenliste, Fahrzeugstati, Funkmeldungen, Live-Einsatzstatus und Resultate, die vom verfügbaren Personal, Ausrüstung, Eignung, Zeit und Trainingsstand abhängen. Realistische, aber spielerisch abstrahierte Unterschiede für Streifenpolizei, SEK, MEK und Kripo; erweitere sinnvoll um Bereitschaftspolizei, Hundeführer, Verkehrspolizei, Hubschrauber etc. Ein SEK darf **nicht** bloß ein schnellerer Streifenwagen sein und ein MEK hat gesonderte Observationsaufgaben. Spieleinsatzentscheidungen bleiben strategisch, keine reale Anleitung für Zugriffsoperationen.
+
+### Fokus 3 – Sichtbare Beamte, Fahrzeuge und konfigurierbare Ausstattung
+Erstelle ein modernes Personal-/Einheitenmenü mit individuellen, realistisch anmutenden **fiktiven** Beamtenbildern, Dienstgraden, Werten, Erfahrung, Müdigkeit, Einsatzfähigkeit und Ausbildung. Originale grafische Assets für Streife, SEK, MEK, Kripo sowie Fahrzeugtypen und Ausrüstungsgegenstände. Jede Person und jede Einheit hat sinnvoll auswählbare Ausrüstung: Funk, Westen, Helme, Bodycams, Erste Hilfe, Lampen, Schutz-/Spezialausrüstung. Inventar mit Kosten und Grenzen, ausrüsten/ablegen, sichtbare Auswirkungen, Fahrzeug- und Einheiteneditor. Nutzerbilder lokal importierbar. Die vorhandenen Porträts und Bilder aus Alpha 0.2 nutzen oder qualitativ konsistent ersetzen, **nicht bloß Emoji-Kacheln**.
+
+### Fokus 4 – Ein echter Tag pro Schicht (Karriere und Sandbox)
+Der Kern des Spiels: Spieler absolvieren jeweils **eine Schicht als Spieltag** (Früh 06–14, Spät 14–22, Nacht 22–06). Schichtplanung → Einsätze → **Schichtende** → detaillierte Tagesauswertung → nächster Tag. Beide Modi unterstützen vollständig das Schichtende. Offene Einsätze müssen sauber übergeben werden; über Mitternacht darf kein fehlerhafter Tagessprung entstehen. Budget, Reputation, Personalmüdigkeit, Equipment, Fahrzeuge, Ausbildungsfortschritt, Einsätze und benutzerdefinierte Vorlagen werden persistent übernommen. Ausbildungen sind **optional**, dauern mehrere Tage und beeinflussen Verfügbarkeit und Skills; mindestens 8 Kurse. Neue Kräfte einstellen, Dienstpläne planen, Fahrzeuge kaufen/warten und Stationen ausbauen. Karriere: Kosten, Einnahmen, Entscheidungen, Freischaltungen. Sandbox: Unendlichgeld optional, eigene Regeln, Trainingspflicht deaktivierbar, Einsatztakt regelbar.
+
+### Fokus 5 – Mächtige Editoren
+Voll funktionsfähige Editoren für **Einsätze, Einsatzketten, Einheiten und Fahrzeuge**, mit Bildern/Icons, Region, Kompetenzen, Fahrzeugplätzen, Prioritäten, Zeitlimits, Belohnungen, bedingten Folgeereignissen und Regeln. Szenarien können lokal gespeichert, ausgeführt, als versioniertes JSON exportiert und später fehlergeprüft importiert werden. Keine reinen Textfelder ohne spürbare Gameplay-Wirkung. Auch im Karrieremodus dürfen eigene Vorlagen bewusst aktiviert werden.
+
+### Fokus 6 – Grafisch und akustisch nächstes Level
+Ziel ist ein visuell dichter, sauber lesbarer Premium-Look statt einfacher Formulare: dunkles Polizei-Leitstellen-Design, animierte Einsatzpins, Live-Fahrzeuge, Typografie, hochwertige Grafiken, subtile Übergänge, responsive Android-Touchsteuerung. Sounddesign mit mindestens **acht originalen** Signalen: Notruf, P1/P2-Alarm, Funk-Knacken, Entsendung, Fahrzeugabfahrt, Erfolg/Misserfolg, Schichtende und optional Leitstellenambiente. Eigenständige Sounds synthetisieren/generieren oder ausschließlich passend lizenzierte Assets verwenden. Separate Regler für Master/Funk/SFX/Ambiente, Mute, barrierefreie Textfunkmeldungen, AudioFocus und Verhalten bei App-Hintergrund. **Keine kopierten Bilder, Sounds oder UI aus 911 Operator/112 Operator.**
+
+## Konkretes technisches Ergebnis
+Implementiere eine modularisierte, testbare Game-Engine, UI, Kartenvisualisierung, Asset- und Audioverwaltung, versioniertes Save-System mit Migration aus Alpha 0.2, Android-Host und Editoren. Bevorzugter Weg: auf dem vorhandenen Kotlin/WebView-Prototyp aufbauen, bestehende Logik in TypeScript-Module auslagern, Android-Systemintegration sauber machen; weiche nur mit dokumentiertem Grund ab. MapLibre + Offline-Daten und explizite OSM-Attribution prüfen; fehlende Karten-/Audioassets durch rechtssichere eigene Daten ersetzen. Performance auf Mittelklasse-Smartphones priorisieren. Halte die Daten lokal, keine Registrierung, keine Cloudpflicht.
+
+## Arbeitsplan – in dieser Reihenfolge tatsächlich abarbeiten
+1. **Audit und Build:** Projektdateien, Prototyp und Code untersuchen. Gradle-Wrapper ergänzen, reproduzierbaren Build/CI herstellen und Baseline-APK starten. Bugs zuerst korrigieren.
+2. **Hamburg Vertical Slice:** Live-Karte mit sinnvollen Straßen/Bezirken und 3 disponierbaren Einheiten, 3 verschiedenen Einsätzen, interpolierter Anfahrt, bearbeiteten Ergebnissen, Schichtende und sauberem Folgetag. Screenshot und Test.
+3. **Domänenmodule:** Clock, Dispatch, Incidents, Personnel, Training, Inventory, Vehicles, Economy, Editor, Persistence samt Unit-Tests. Retrokompatibilität für Alpha 0.2.
+4. **Art & Audio:** vorhandene Porträts extrahieren, neue konsistente Assets und Audio-Cues integrieren; echte interaktive Ansichten bauen. Keine synthetischen Screen-Mockups als UI.
+5. **Inhalt & Progression:** mindestens 40 Einsätze, 8 Lehrgänge, Karriere-Ränge, Sandbox-Konfiguration, Einheit-/Fahrzeug-/Einsatzeditoren, 16 Regionseinträge.
+6. **Qualität & Release:** Playwright/UI-Tests, Schicht-über-Mitternacht-Test, JSON-Migrations- und Editor-Tests, Android Debug-APK in Actions, Screenshots, README, LICENSES, Changelog. PR erstellen.
+
+## Was ich als User sehen will
+Ein **wirklich startbares Android-Spiel** mit einer **Live-Ansicht der Karte**, sichtbaren Streifenwagen/SEK/MEK, interessanten Einsätzen, Beamten- und Ausrüstungsbildern, Ausbildungsmanagement, **Schichtende und nächstem Tag** in beiden Spielmodi, starken Editoren und funktionierenden Soundeffekten. Kein bloßes Konzept, kein 'kommt bald'-Menü und keine unendliche Todo-Liste.
+
+## Akzeptanz und Transparenz
+`docs/ACCEPTANCE_TESTS.md` ist die verpflichtende DoD. Halte ein Log `docs/IMPLEMENTATION_LOG.md` mit Umsetzung, Tests, Schwierigkeiten und bewussten Abweichungen. Arbeite ohne Rückfragen, wenn die Referenzen genug Kontext bieten; wähle sinnvolle Defaults. **Kennzeichne nicht erfüllte Kriterien offen**, statt einen unfertigen Stand als fertige v1.0 auszugeben. Nutze kleine getestete Commits und stelle einen PR bereit. Release signiert erst nach gesondertem Schlüsselsetup; Debug-APK genügt zunächst.
+
+**Beginne JETZT mit der Codeanalyse und Implementierung.**
