@@ -60,7 +60,7 @@ class OperatorMapView(context: Context, attrs: AttributeSet? = null):View(contex
     private fun project(p:GeoPoint):PointF{val a=world(p,zoom);val c=world(center,zoom);return PointF(width/2f+a.x-c.x,height/2f+a.y-c.y)}
     private fun unproject(x:Float,y:Float):GeoPoint {val size=256.0*2.0.pow(zoom);val c=world(center,zoom);val xx=(c.x+(x-width/2))/size;val yy=(c.y+(y-height/2))/size
         val lat=atan(sinh(Math.PI*(1-2*yy)))*180/Math.PI;val lon=(xx*360-180).toDouble();return GeoPoint(lon,lat)}
-    private fun paint(color:Int,style:Paint.Style=Paint.Style.FILL,stroke:Float=1f){px.color=color;px.style=style;px.strokeWidth=stroke;px.shader=null;px.pathEffect=null;return px}
+    private fun paint(color:Int,style:Paint.Style=Paint.Style.FILL,stroke:Float=1f):Paint{px.color=color;px.style=style;px.strokeWidth=stroke;px.shader=null;px.pathEffect=null;return px}
     private fun text(canvas:Canvas,s:String,x:Float,y:Float,size:Float,color:Int=Color.WHITE,align:Paint.Align=Paint.Align.LEFT,bold:Boolean=false){font.color=color;font.textSize=size*resources.displayMetrics.density; font.textAlign=align;font.typeface=Typeface.create(if(bold)"sans-serif-condensed" else "sans-serif",if(bold)Typeface.BOLD else Typeface.NORMAL);font.setShadowLayer(3f,0f,1f,0xff07111e.toInt());canvas.drawText(s,x,y,font);font.clearShadowLayer()}
     private fun polygonPath(points:List<GeoPoint>):Path {val p=Path();points.forEachIndexed{index,q->val v=project(q);if(index==0)p.moveTo(v.x,v.y) else p.lineTo(v.x,v.y)};p.close();return p}
     override fun onDraw(c:Canvas){super.onDraw(c);c.drawColor(0xff0a1421.toInt());if(!::game.isInitialized)return
