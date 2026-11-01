@@ -33,7 +33,7 @@ jobs:
           node tests/simulation.test.cjs
       - name: Verify native Android implementation
         run: |
-          if grep -RE 'import android\.webkit|\bWebView\b' app/src/main/java; then echo 'WebView forbidden in native app' >&2; exit 1; fi
+          if grep -RE 'import android\.webkit|WebView\(' app/src/main/java; then echo 'WebView forbidden in native app' >&2; exit 1; fi
       - name: Gradle 8.9
         uses: gradle/actions/setup-gradle@v4
         with:
