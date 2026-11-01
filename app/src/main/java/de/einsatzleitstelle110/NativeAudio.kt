@@ -1,60 +1,121 @@
 package de.einsatzleitstelle110
 
+import android.content.Context
 import android.media.AudioAttributes
-import android.media.AudioFormat
-import android.media.AudioTrack
-import kotlin.math.*
-import java.util.concurrent.Executors
+import android.media.AudioFocusRequest
+import android.media.AudioManager
+import android.media.SoundPool
 
-/** Native, original, programmatically synthesised sound cues. */
-class NativeAudio {
- var muted:Boolean=false
- private val queue=Executors.newSingleThreadExecutor()
- private fun play(notes:List<Pair<Double,Int>>, volume:Double=0.12) {
-  if(muted)return
-  queue.execute {
-   try{
-    val rate=22050
-    val samples=ArrayList<Short>()
-    for((freq,length) in notes) {
-     val count=(rate*length/1000).coerceAtLeast(1)
-     for(i in 0 until count){
-      val envelope=min(1.0,i/(rate*.006)).coerceAtMost(
-        min(1.0,(count-i)/(rate*.035))
-      ).coerceAtLeast(0.0)
-      val t=i.toDouble()/rate
-      val wave=(sin(t*freq*2*PI)+.24*sin(t*freq*4*PI))*.8
-      samples.add((wave*envelope*32767*volume).toInt().coerceIn(-32767,32767).toShort())
-     }
+/** Original packaged PCM signals, native sound engine with independent channels and focus. */
+class NativeAudio(context: Context) {
+    private val manager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    private val attrs =
+        AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_GAME)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+    private val pool = SoundPool.Builder().setMaxStreams(6).setAudioAttributes(attrs).build()
+    private val sounds = mutableMapOf<String, Int>()
+    private val loaded = mutableSetOf<Int>()
+    private val streams = mutableSetOf<Int>()
+    private var active = true
+    private var focused = false
+    private var closed = false
+    var muted = false
+    private var master = .7f
+    private var radio = .7f
+    private var sfx = .7f
+    private var ambient = 0f
+    private val focus =
+        AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+            .setAudioAttributes(attrs)
+            .setOnAudioFocusChangeListener { change ->
+                focused = change == AudioManager.AUDIOFOCUS_GAIN
+                if (!focused) stop()
+            }
+            .build()
+
+    init {
+        pool.setOnLoadCompleteListener { _, id, status -> if (status == 0) loaded.add(id) }
+        for (file in
+            listOf(
+                "incoming_call",
+                "p1_alarm",
+                "p2_alarm",
+                "radio_squelch",
+                "dispatch_ack",
+                "unit_departure",
+                "incident_success",
+                "incident_failure",
+                "shift_end",
+                "ambient_dispatch",
+            )) try {
+            context.assets.openFd("audio/$file.wav").use { sounds[file] = pool.load(it, 1) }
+        } catch (_: Exception) {}
     }
-    val bytes=ByteArray(samples.size*2)
-    for(i in samples.indices) {
-     val v=samples[i].toInt();bytes[i*2]=v.toByte();bytes[i*2+1]=(v shr 8).toByte()
+
+    fun setVolumes(master: Float, radio: Float, sfx: Float, ambient: Float) {
+        this.master = master.coerceIn(0f, 1f)
+        this.radio = radio.coerceIn(0f, 1f)
+        this.sfx = sfx.coerceIn(0f, 1f)
+        this.ambient = ambient.coerceIn(0f, 1f)
+        if (this.master == 0f) stop()
     }
-    val track=AudioTrack.Builder()
-      .setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_GAME)
-        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build())
-      .setAudioFormat(AudioFormat.Builder().setSampleRate(rate).setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
-        .setEncoding(AudioFormat.ENCODING_PCM_16BIT).build())
-      .setBufferSizeInBytes(bytes.size.coerceAtLeast(1024))
-      .setTransferMode(AudioTrack.MODE_STATIC).build()
-    track.write(bytes,0,bytes.size);track.play()
-    Thread.sleep(notes.sumOf{it.second}.toLong()+70)
-    track.stop();track.release()
-   }catch(_:Exception){}
-  }
- }
- fun cue(name:String) {
-  when(name){
-   "CALL"->play(listOf(620.0 to 90,0.0 to 70,750.0 to 100))
-   "P1"->play(listOf(660.0 to 140,440.0 to 130,660.0 to 140,440.0 to 130))
-   "DISPATCH"->play(listOf(430.0 to 75,660.0 to 105))
-   "ARRIVAL"->play(listOf(510.0 to 90,735.0 to 80))
-   "SUCCESS"->play(listOf(490.0 to 75,680.0 to 75,870.0 to 120))
-   "FAILED"->play(listOf(420.0 to 110,310.0 to 165))
-   "SHIFT"->play(listOf(440.0 to 130,550.0 to 130,660.0 to 220))
-   else->play(listOf(530.0 to 75))
-  }
- }
- fun close(){queue.shutdownNow()}
+
+    fun cue(name: String) {
+        if (!active || muted || closed) return
+        if (!focused)
+            focused = manager.requestAudioFocus(focus) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
+        if (!focused) return
+        val key =
+            when (name) {
+                "CALL" -> "incoming_call"
+                "P1" -> "p1_alarm"
+                "P2" -> "p2_alarm"
+                "DISPATCH" -> "dispatch_ack"
+                "RADIO" -> "radio_squelch"
+                "DEPARTURE" -> "unit_departure"
+                "SUCCESS" -> "incident_success"
+                "FAILED" -> "incident_failure"
+                "SHIFT" -> "shift_end"
+                "AMBIENT" -> "ambient_dispatch"
+                else -> name
+            }
+        val id = sounds[key] ?: return
+        if (id !in loaded) return
+        val volume =
+            master *
+                when (key) {
+                    "radio_squelch",
+                    "dispatch_ack" -> radio
+                    "ambient_dispatch" -> ambient
+                    else -> sfx
+                }
+        if (volume <= 0) return
+        if (streams.size >= 12) stop()
+        val stream = pool.play(id, volume, volume, 1, 0, 1f)
+        if (stream > 0) streams.add(stream)
+    }
+
+    private fun stop() {
+        for (id in streams) pool.stop(id)
+        streams.clear()
+    }
+
+    fun pause() {
+        active = false
+        stop()
+        if (focused) manager.abandonAudioFocusRequest(focus)
+        focused = false
+    }
+
+    fun resume() {
+        if (!closed) active = true
+    }
+
+    fun close() {
+        pause()
+        closed = true
+        pool.release()
+    }
 }

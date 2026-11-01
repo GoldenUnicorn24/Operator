@@ -1,0 +1,26 @@
+{
+  "name": "einsatzleitstelle-110",
+  "version": "0.3.0-dev",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build:web": "tsc --noEmit && vite build",
+    "test": "tsx --test tests/*.test.ts",
+    "test:ui": "playwright test",
+    "check": "npm test && npm run build:web && npm run test:ui",
+    "format:check": "prettier --check \"web/**/*.ts\" \"web/**/*.css\" \"tests/**/*.ts\" \"*.ts\"",
+    "format": "prettier --write \"web/**/*.ts\" \"web/**/*.css\" \"tests/**/*.ts\" \"*.ts\""
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "@types/node": "22.18.10",
+    "prettier": "3.6.2",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3",
+    "vite": "6.4.1"
+  },
+  "dependencies": {
+    "lz-string": "1.5.0"
+  }
+}

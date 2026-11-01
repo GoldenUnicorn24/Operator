@@ -1,0 +1,8 @@
+{
+  "source": "https://geodienste.hamburg.de/HH_WFS_Verwaltungsgrenzen?service=WFS&version=2.0.0&request=GetFeature&typeNames=app:bezirke&srsName=EPSG:4326",
+  "retrieved": "2026-11-01",
+  "sourceSHA256": "69a86ceee3f202ad6a30b4d8516395c1e767a9c3d86d5d374bcaa63c80bf6505",
+  "license": "Datenlizenz Deutschland Namensnennung2.0",
+  "attribution": "Freie und Hansestadt Hamburg, Landesbetrieb Geoinformation und Vermessung",
+  "modifications": "GML polygon rings preserved, coordinates rounded to5 decimals, properties reduced to district ID/name."
+}

@@ -1,0 +1,8 @@
+{
+  "source": "https://media.githubusercontent.com/media/wmgeolab/geoBoundaries/f6920d43375832a91201bdb7954a200beaa40202/releaseData/gbOpen/DEU/ADM1/geoBoundaries-DEU-ADM1_simplified.geojson",
+  "sourceSHA256": "511b3625ad4568d12a6bfcb1bdea4e877199e1923e502cb80224b8164128eb05",
+  "attribution": "© GeoBasis-DE / BKG 2021; geoBoundaries (William & Mary)",
+  "license": "Datenlizenz Deutschland – Namensnennung – Version 2.0",
+  "licenseURL": "https://www.govdata.de/dl-de/by-2-0",
+  "modifications": "Properties reduced; WGS84 coordinates rounded to five decimal places (~1 m). Upstream simplified geometry retained, including islands and exclaves."
+}

@@ -1,0 +1,345 @@
+.live-map {
+  --map-bg: #081725;
+  --map-land: #15384a;
+  --map-line: #3f7280;
+  position: relative;
+  border: 1px solid #34586b;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--map-bg);
+  color: #dceefa;
+}
+.live-map.day {
+  --map-bg: #cbdde1;
+  --map-land: #e3eee7;
+  --map-line: #668f8f;
+  color: #183541;
+}
+.map-toolbar,
+.map-filters {
+  display: flex;
+  gap: 6px;
+  padding: 9px;
+  flex-wrap: wrap;
+  background: #0b1d2e;
+  border-bottom: 1px solid #28485f;
+  color: #dceefa;
+}
+.map-toolbar button {
+  min-height: 44px;
+  padding: 6px 12px;
+}
+.map-toolbar .map-fit {
+  flex: 1;
+  min-width: 150px;
+}
+.map-toolbar button[aria-pressed="true"] {
+  background: #117f8c;
+  border-color: #5fe7dd;
+}
+.map-filters {
+  padding-top: 0;
+  align-items: end;
+}
+.map-filters label {
+  min-width: 94px;
+  flex: 1;
+  font-size: 11px;
+  color: #adc9d8;
+}
+.map-filters select {
+  font-size: 12px;
+  padding: 7px;
+  min-height: 44px;
+  margin: 2px 0 0;
+}
+.map-filters input[type="checkbox"] {
+  width: auto;
+  min-height: 0;
+  display: inline;
+  margin: 0 4px 0 0;
+}
+.map-filters .map-toggle {
+  min-width: 75px;
+  flex: 0 0 auto;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+.map-stage {
+  position: relative;
+}
+.map-canvas {
+  display: block;
+  width: 100%;
+  touch-action: none;
+  user-select: none;
+  outline-offset: -4px;
+  background: radial-gradient(ellipse at 40% 40%, #16334266, transparent 75%);
+}
+.map-canvas:focus-visible {
+  outline: 3px solid #55ddff;
+}
+.map-land {
+  fill: var(--map-land);
+  stroke: var(--map-line);
+  stroke-width: 1.4;
+  fill-rule: evenodd;
+  vector-effect: non-scaling-stroke;
+}
+.map-neighbor {
+  fill: var(--map-land);
+  stroke: var(--map-line);
+  stroke-width: 0.7;
+  opacity: 0.22;
+  fill-rule: evenodd;
+  vector-effect: non-scaling-stroke;
+}
+.map-city {
+  font-size: 11px;
+  fill: currentColor;
+  paint-order: stroke;
+  stroke: var(--map-bg);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+.map-city-dot {
+  fill: #82a9b6;
+  stroke: var(--map-bg);
+  stroke-width: 1;
+}
+.map-corridor {
+  fill: none;
+  stroke: #628093;
+  stroke-opacity: 0.23;
+  stroke-width: 1;
+  stroke-dasharray: 2 5;
+}
+.map-road {
+  fill: none;
+  stroke: #9aacb7;
+  stroke-opacity: 0.42;
+  stroke-width: 1.2;
+}
+.map-road-label {
+  font-size: 10px;
+  fill: #a7c4cf;
+  paint-order: stroke;
+  stroke: #081725;
+  stroke-width: 2.5;
+}
+.map-route {
+  fill: none;
+  stroke: #48d4e8;
+  stroke-width: 2;
+  stroke-dasharray: 6 5;
+  stroke-linecap: round;
+  opacity: 0.85;
+}
+.map-route.returning {
+  stroke: #9ab8e8;
+  opacity: 0.5;
+}
+.map-marker {
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.85s linear;
+}
+.live-map.paused .map-marker {
+  transition: none;
+}
+.map-marker:focus .map-marker-disc,
+.map-marker:hover .map-marker-disc {
+  stroke: #fff;
+  stroke-width: 3;
+}
+.map-marker-disc {
+  stroke: #b2e9ee;
+  stroke-width: 1.2;
+  filter: drop-shadow(0 2px 3px #0009);
+}
+.map-marker text {
+  fill: #062333;
+  font-size: 10px;
+  font-weight: 850;
+  text-anchor: middle;
+  pointer-events: none;
+  dominant-baseline: central;
+}
+.map-marker.cluster text {
+  fill: #eefaff;
+  font-size: 12px;
+}
+.map-marker .map-marker-category {
+  fill: #dde8ef;
+  font-size: 8px;
+}
+.map-marker.p1 .map-marker-disc {
+  stroke: #ffb4c0;
+  stroke-width: 2;
+}
+.map-marker.p1 .map-pulse {
+  fill: none;
+  stroke: #ff6879;
+  opacity: 0.4;
+  stroke-width: 2;
+  animation: map-ring 1.8s infinite;
+}
+.live-map.paused .map-pulse {
+  animation-play-state: paused;
+}
+.map-mini {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  width: 108px;
+  height: 82px;
+  background: #071725df;
+  border: 1px solid #42677d;
+  border-radius: 8px;
+  pointer-events: none;
+}
+.map-mini path {
+  fill: #234a5a;
+  stroke: #68adba;
+  stroke-width: 0.8;
+  fill-rule: evenodd;
+}
+.map-mini rect {
+  fill: #49d8ec22;
+  stroke: #8ce9f1;
+  stroke-width: 1;
+}
+.map-scale {
+  position: absolute;
+  left: 10px;
+  bottom: 12px;
+  font-size: 10px;
+  background: #071725df;
+  padding: 4px 8px;
+  color: #c3e0ee;
+  border-radius: 4px;
+  pointer-events: none;
+}
+.map-legend {
+  padding: 9px 12px;
+  font-size: 11px;
+  background: #0b1d2e;
+  color: #b8d3e0;
+  border-top: 1px solid #28485f;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.map-legend strong {
+  color: #e0f2ff;
+}
+.map-attribution {
+  padding: 7px 10px;
+  font-size: 10px;
+  background: #071521;
+  color: #94afbd;
+  line-height: 1.5;
+}
+.map-attribution a {
+  color: #afdce7;
+}
+.map-members {
+  background: #0c2131;
+  color: #e3f3fc;
+  max-height: 240px;
+  overflow: auto;
+  padding: 0 10px;
+}
+.map-members:empty {
+  display: none;
+}
+.map-members-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #315064;
+  position: sticky;
+  top: 0;
+  background: #0c2131;
+  z-index: 1;
+}
+.map-members-head b {
+  font-size: 13px;
+}
+.map-members-head button {
+  min-height: 44px;
+}
+.map-member {
+  display: flex !important;
+  width: 100%;
+  text-align: left;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  background: transparent !important;
+  border: 0 !important;
+  border-bottom: 1px solid #26475c !important;
+  border-radius: 0 !important;
+  color: #dceefa !important;
+}
+.map-member span {
+  flex: 1;
+}
+.map-member small {
+  font-size: 10px;
+  color: #abc4d2;
+}
+.map-placement {
+  padding: 9px 12px;
+  background: #13525c;
+  color: #dbfdff;
+  font-size: 12px;
+}
+.map-heat {
+  fill: #fb9260;
+  opacity: 0.13;
+  filter: blur(10px);
+}
+@keyframes map-ring {
+  0% {
+    r: 18;
+    opacity: 0.5;
+  }
+  100% {
+    r: 27;
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .map-marker .map-pulse {
+    animation: none;
+  }
+  .map-marker {
+    transition: none;
+  }
+}
+@media (max-width: 460px) {
+  .map-toolbar {
+    gap: 4px;
+  }
+  .map-toolbar button {
+    padding: 6px 9px;
+  }
+  .map-toolbar .map-fit {
+    min-width: 130px;
+  }
+  .map-filters label {
+    min-width: 90px;
+  }
+  .map-mini {
+    width: 88px;
+    height: 68px;
+  }
+  .map-legend {
+    font-size: 10px;
+    gap: 6px;
+  }
+}

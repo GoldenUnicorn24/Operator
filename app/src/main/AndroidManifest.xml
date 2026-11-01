@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Optional online OSM tiles; complete federal-state contour and gameplay work offline. -->
-    <uses-permission android:name="android.permission.INTERNET" />
     <application
+        android:icon="@drawable/ic_dispatch"
         android:label="Einsatzleitstelle 110"
         android:usesCleartextTraffic="false"
         android:allowBackup="true"
-        android:theme="@android:style/Theme.Material.NoActionBar">
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Dispatch">
         <activity
             android:name=".MainActivity"
-            android:exported="true"
-            android:screenOrientation="unspecified">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

@@ -1,43 +1,104 @@
-name: Android Debug APK / Simulation Tests
+name: Native Android APK and device verification
 on:
   push:
-    branches: [main, 'codex/**', 'feature/**']
+    branches: [main, 'codex/**']
   pull_request:
     branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: native-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - name: Java 17
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-      - name: Android SDK
-        uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v3
         with:
-          packages: 'platform-tools'
-      - name: Install SDK
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
-      - name: Native source checks
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Test, build and lint native app
+        run: ./gradlew --no-daemon :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest :app:lintDebug
+      - name: Audit real APK contents
         run: |
-          ! grep -RE 'import android\\.webkit|WebView\\(' app/src/main/java
-          test -s app/src/main/assets/data/states.geojson
-          test ! -e app/src/main/assets/index.html
-      - name: Gradle 8.9
-        uses: gradle/actions/setup-gradle@v4
+          mkdir -p release
+          cp app/build/outputs/apk/debug/app-debug.apk release/Einsatzleitstelle110-Native-Leitstelle.apk
+          cp app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk release/instrumentation.apk
+          python3 scripts/verify_native_apk.py release/Einsatzleitstelle110-Native-Leitstelle.apk > release/package-audit.json
+          sha256sum release/Einsatzleitstelle110-Native-Leitstelle.apk > release/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
         with:
-          gradle-version: '8.9'
-      - name: Build debug APK
-        run: gradle --no-daemon :app:testDebugUnitTest :app:assembleDebug
-      - name: Upload debug APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Einsatzleitstelle110-NativeV1-debug
-          path: app/build/outputs/apk/debug/*.apk
+          name: Einsatzleitstelle110-native-build
+          path: release/
           if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-unit-and-lint-evidence
+          path: |
+            app/build/test-results/
+            app/build/reports/
+  device:
+    needs: build
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: Einsatzleitstelle110-native-build
+          path: release/
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Offline device workflow and real screenshots
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: default
+          profile: pixel_6
+          disable-animations: true
+          script: bash .github/scripts/native-device-check.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-device-screenshots
+          path: runtime/
+          if-no-files-found: warn
+  deliver:
+    if: github.event_name == 'push'
+    needs: [build, device]
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: Einsatzleitstelle110-native-build
+          path: release/
+      - name: Upload verified native preview APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          TAG=operator-native-v2-preview
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" release/Einsatzleitstelle110-Native-Leitstelle.apk release/SHA256SUMS.txt release/package-audit.json --clobber
+          else
+            gh release create "$TAG" release/Einsatzleitstelle110-Native-Leitstelle.apk release/SHA256SUMS.txt release/package-audit.json --target "$GITHUB_SHA" --prerelease --title "Native Leitstelle: neue Grafik, Bezirke und persönliche Ausstattung" --notes-file docs/NATIVE_PREVIEW_RELEASE.md
+          fi
