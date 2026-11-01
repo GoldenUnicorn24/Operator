@@ -85,7 +85,7 @@ class MainActivity:Activity(){
         val content=vertical();content.tag="body";root.addView(content,LayoutParams(-1,0,1f))
         val bottom=horizontal().apply{setPadding(dp(2f),dp(2f),dp(2f),dp(2f));setBackgroundColor(0xff101f30.toInt())}
         val tabs=listOf("KARTE" to "▣ KARTE","EINSÄTZE" to "◉ LAGEN","EINHEITEN" to "▤ KRÄFTE","PERSONAL" to "♙ PERSONAL","EDITOR" to "+ EDITOR","SCHICHT" to "◷ SCHICHT")
-        val navScroller=HorizontalScrollView(this).apply{isHorizontalScrollBarEnabled=false;fillViewport=true}
+        val navScroller=HorizontalScrollView(this).apply{isHorizontalScrollBarEnabled=false;isFillViewport=true}
         for((name,title)in tabs){val b=button(title,{showTab(name)},if(activeTab==name)1 else 2);bottom.addView(b,LayoutParams(dp(if(name=="EINHEITEN"||name=="PERSONAL")94f else 89f),dp(53f)))}
         navScroller.addView(bottom);root.addView(navScroller,LayoutParams(-1,dp(57f)))
     }
@@ -156,7 +156,7 @@ class MainActivity:Activity(){
         AlertDialog.Builder(this).setTitle("Kartenposition").setMessage("${"%.4f".format(Locale.US,pos.lat)}, ${"%.4f".format(Locale.US,pos.lon)}\n\nHier einen eigenen Einsatz oder eine Einheit anlegen?")
             .setPositiveButton("Neuer Einsatz"){_,_->showIncidentEditor(pos)}.setNeutralButton("Neue Einheit"){_,_->showUnitEditor(pos)}.setNegativeButton("Abbrechen",null).show()
     }
-    private fun scrollBody(parent:LinearLayout):LinearLayout{val scroll=ScrollView(this).apply{fillViewport=true};val column=vertical().apply{setPadding(dp(10f),dp(10f),dp(10f),dp(12f))};scroll.addView(column);parent.addView(scroll,LayoutParams(-1,-1));return column}
+    private fun scrollBody(parent:LinearLayout):LinearLayout{val scroll=ScrollView(this).apply{isFillViewport=true};val column=vertical().apply{setPadding(dp(10f),dp(10f),dp(10f),dp(12f))};scroll.addView(column);parent.addView(scroll,LayoutParams(-1,-1));return column}
     private fun section(parent:LinearLayout,title:String,sub:String=""){addMargin(parent,txt(title,18f,ice,true),6,2);if(sub.isNotBlank())addMargin(parent,txt(sub,11f,muted),0,7)}
     private fun renderIncidentList(parent:LinearLayout){val list=scrollBody(parent);section(list,"EINSÄTZE · ${game.region.name}","Prioritäten, Lage und passende Kräfte. Disposition direkt per Antippen.")
         if(game.liveIncidents.isEmpty())addMargin(list,txt("Keine offenen Einsätze. Über KARTE kannst du Notrufe simulieren.",13f,muted))
