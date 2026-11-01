@@ -8,8 +8,48 @@ import org.json.JSONObject
 object GameStore {
     private const val FILE = "einsatzleitstelle-native-v1.json"
 
-    fun save(context: Context, state: GameState) {
-        val raw = toJson(state).toString()
+    private val writer = java.util.concurrent.Executors.newSingleThreadExecutor()
+    private val pending = java.util.concurrent.atomic.AtomicReference<Pair<Context, String>?>(null)
+    private val writing = java.util.concurrent.atomic.AtomicBoolean(false)
+    @Volatile private var latestSnapshot: String? = null
+
+    /** Snapshot on the game thread; validation, fsync and backup run in one ordered worker. */
+    fun saveAsync(context: Context, state: GameState, onError: (Exception) -> Unit) {
+        val snapshot = toJson(state).toString()
+        latestSnapshot = snapshot
+        pending.set(context.applicationContext to snapshot)
+        if (writing.compareAndSet(false, true)) writer.execute { drain(onError) }
+    }
+
+    private fun drain(onError: (Exception) -> Unit) {
+        try {
+            while (true) {
+                val next = pending.getAndSet(null) ?: break
+                try {
+                    persist(next.first, next.second)
+                } catch (e: Exception) {
+                    onError(e)
+                }
+            }
+        } finally {
+            writing.set(false)
+            if (pending.get() != null && writing.compareAndSet(false, true))
+                writer.execute { drain(onError) }
+        }
+    }
+
+    /** Test/lifecycle verification barrier. Never wait for storage on Android's UI thread. */
+    fun awaitSaves() {
+        check(android.os.Looper.myLooper() != android.os.Looper.getMainLooper())
+        do {
+            writer.submit {}.get(30, java.util.concurrent.TimeUnit.SECONDS)
+        } while (writing.get() || pending.get() != null)
+    }
+
+    fun save(context: Context, state: GameState) = persist(context, toJson(state).toString())
+
+    @Synchronized
+    private fun persist(context: Context, raw: String) {
         fromJson(JSONObject(raw))
         val temp = context.getFileStreamPath("einsatzleitstelle-native.tmp")
         java.io.FileOutputStream(temp).use {
@@ -30,6 +70,16 @@ object GameStore {
     }
 
     fun load(context: Context): GameState? {
+        // A recreation can precede the queued disk write. Prefer its exact immutable snapshot.
+        if (context.getFileStreamPath(FILE).exists() || writing.get() || pending.get() != null) {
+            latestSnapshot?.let { raw ->
+                try {
+                    return fromJson(JSONObject(raw))
+                } catch (_: Exception) {
+                    /* use durable backup */
+                }
+            }
+        }
         for (name in listOf(FILE, FILE + ".backup")) {
             val f = context.getFileStreamPath(name)
             if (f.exists())

@@ -38,6 +38,7 @@ class NativeControlRoomTest {
     }
 
     private fun reset() {
+        GameStore.awaitSaves()
         instrument.targetContext.deleteFile("einsatzleitstelle-native-v1.json")
         instrument.targetContext.deleteFile("einsatzleitstelle-native-v1.json.backup")
     }
@@ -120,8 +121,7 @@ class NativeControlRoomTest {
 
     @Test
     fun nativeJurisdictionInventoryAndFullDayWithRealImages() {
-        instrument.targetContext.deleteFile("einsatzleitstelle-native-v1.json")
-        instrument.targetContext.deleteFile("einsatzleitstelle-native-v1.json.backup")
+        reset()
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             instrument.waitForIdleSync()
             scenario.onActivity { a ->
@@ -262,9 +262,20 @@ class NativeControlRoomTest {
             scenario.moveToState(Lifecycle.State.RESUMED)
             scenario.onActivity { a ->
                 assertTrue(game(a).state.paused)
-                GameStore.save(a, game(a).state)
+                // onPause persists through the production background writer.
             }
         }
+        GameStore.awaitSaves()
+        val durable =
+            GameStore.fromJson(
+                org.json.JSONObject(
+                    instrument.targetContext
+                        .getFileStreamPath("einsatzleitstelle-native-v1.json")
+                        .readText()
+                )
+            )
+        assertEquals(2, durable.day)
+        assertEquals("WANDSBEK", durable.scope)
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             scenario.onActivity { a ->
                 val g = game(a)

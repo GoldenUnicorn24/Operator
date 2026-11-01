@@ -306,8 +306,9 @@ class MainActivity : Activity() {
                 val old = game.state.phase
                 if (foreground && old == "RUNNING" && !game.state.paused)
                     game.advance(game.state.speed)
+                if (old != game.state.phase) save()
                 updateLive()
-                if (++saveTick % 5 == 0) save()
+                if (old == "RUNNING" && !game.state.paused && ++saveTick % 15 == 0) save()
                 if (
                     old == "RUNNING" &&
                         game.state.phase == "DEBRIEF" &&
@@ -351,7 +352,9 @@ class MainActivity : Activity() {
 
     private fun save() {
         try {
-            GameStore.save(this, game.state)
+            GameStore.saveAsync(this, game.state) {
+                handler.post { toast("Speichern fehlgeschlagen: bitte Spielstand exportieren.") }
+            }
         } catch (e: Exception) {
             toast("Speichern fehlgeschlagen: bitte Spielstand exportieren.")
         }

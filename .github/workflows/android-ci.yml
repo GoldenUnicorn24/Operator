@@ -79,6 +79,7 @@ jobs:
             adb install -r release/Einsatzleitstelle110-Native-Leitstelle.apk
             adb install -r release/instrumentation.apk
             adb shell am instrument -w -r de.einsatzleitstelle110.test/androidx.test.runner.AndroidJUnitRunner | tee runtime/instrumentation.txt
+            adb pull /sdcard/Android/data/de.einsatzleitstelle110/files runtime/screens || true
             adb exec-out screencap -p > runtime/device-final.png
             adb logcat -d > runtime/logcat.txt
             adb shell dumpsys activity lastanr > runtime/last-anr.txt
