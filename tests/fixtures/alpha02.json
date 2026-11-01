@@ -1,0 +1,452 @@
+{
+  "version": 2,
+  "mode": "career",
+  "stage": "planning",
+  "region": "Hamburg",
+  "day": 1,
+  "shiftType": "early",
+  "elapsed": 0,
+  "speed": 1,
+  "paused": true,
+  "seq": 60,
+  "budget": 180000,
+  "reputation": 60,
+  "autoCalls": true,
+  "rules": {
+    "budgetLimited": true,
+    "trainingEnabled": true
+  },
+  "units": [
+    {
+      "id": 1,
+      "name": "Peter 11/1",
+      "type": "STREIFE",
+      "officers": [
+        {
+          "id": 10,
+          "name": "Jan Peters",
+          "avatar": 0,
+          "photo": null,
+          "owned": [
+            "radio",
+            "vest"
+          ],
+          "equipped": [
+            "radio",
+            "vest"
+          ],
+          "skill": 76,
+          "energy": 100,
+          "xp": 0
+        },
+        {
+          "id": 11,
+          "name": "Lena Fischer",
+          "avatar": 1,
+          "photo": null,
+          "owned": [
+            "radio",
+            "vest"
+          ],
+          "equipped": [
+            "radio",
+            "vest"
+          ],
+          "skill": 59,
+          "energy": 100,
+          "xp": 0
+        }
+      ],
+      "training": null,
+      "incidentId": null,
+      "busyUntil": null,
+      "experience": 0
+    },
+    {
+      "id": 2,
+      "name": "Peter 14/2",
+      "type": "STREIFE",
+      "officers": [
+        {
+          "id": 20,
+          "name": "Lara Stein",
+          "avatar": 1,
+          "photo": null,
+          "owned": [
+            "radio",
+            "vest"
+          ],
+          "equipped": [
+            "radio",
+            "vest"
+          ],
+          "skill": 74,
+          "energy": 100,
+          "xp": 0
+        },
+        {
+          "id": 21,
+          "name": "Erik Berger",
+          "avatar": 2,
+          "photo": null,
+          "owned": [
+            "radio",
+            "vest"
+          ],
+          "equipped": [
+            "radio",
+            "vest"
+          ],
+          "skill": 57,
+          "energy": 100,
+          "xp": 0
+        }
+      ],
+      "training": null,
+      "incidentId": null,
+      "busyUntil": null,
+      "experience": 0
+    },
+    {
+      "id": 3,
+      "name": "Peter 21/1",
+      "type": "STREIFE",
+      "officers": [
+        {
+          "id": 30,
+          "name": "Mika Yilmaz",
+          "avatar": 2,
+          "photo": null,
+          "owned": [
+            "radio",
+            "vest"
+          ],
+          "equipped": [
+            "radio",
+            "vest"
+          ],
+          "skill": 72,
+          "energy": 100,
+          "xp": 0
+        },
+        {
+          "id": 31,
+          "name": "Felix Hansen",
+          "avatar": 3,
+          "photo": null,
+          "owned": [
+            "radio",
+            "vest"
+          ],
+          "equipped": [
+            "radio",
+            "vest"
+          ],
+          "skill": 55,
+          "energy": 100,
+          "xp": 0
+        }
+      ],
+      "training": null,
+      "incidentId": null,
+      "busyUntil": null,
+      "experience": 0
+    },
+    {
+      "id": 4,
+      "name": "SEK Hamburg 1",
+      "type": "SEK",
+      "officers": [
+        {
+          "id": 40,
+          "name": "Sophie Adler",
+          "avatar": 3,
+          "photo": null,
+          "owned": [
+            "radio",
+            "vest"
+          ],
+          "equipped": [
+            "radio",
+            "vest"
+          ],
+          "skill": 70,
+          "energy": 100,
+          "xp": 0
+        },
+        {
+          "id": 41,
+          "name": "Emil Wagner",
+          "avatar": 4,
+          "photo": null,
+          "owned": [
+            "radio",
+            "vest"
+          ],
+          "equipped": [
+            "radio",
+            "vest"
+          ],
+          "skill": 77,
+          "energy": 100,
+          "xp": 0
+        },
+        {
+          "id": 42,
+          "name": "Hannah Friese",
+          "avatar": 5,
+          "photo": null,
+          "owned": [
+            "radio",
+            "vest"
+          ],
+          "equipped": [
+            "radio",
+            "vest"
+          ],
+          "skill": 60,
+          "energy": 100,
+          "xp": 0
+        },
+        {
+          "id": 43,
+          "name": "Leonie Meyer",
+          "avatar": 6,
+          "photo": null,
+          "owned": [
+            "radio",
+            "vest"
+          ],
+          "equipped": [
+            "radio",
+            "vest"
+          ],
+          "skill": 67,
+          "energy": 100,
+          "xp": 0
+        }
+      ],
+      "training": null,
+      "incidentId": null,
+      "busyUntil": null,
+      "experience": 0
+    },
+    {
+      "id": 5,
+      "name": "MEK Hamburg 1",
+      "type": "MEK",
+      "officers": [
+        {
+          "id": 50,
+          "name": "Sina Köhler",
+          "avatar": 5,
+          "photo": null,
+          "owned": [
+            "radio",
+            "vest"
+          ],
+          "equipped": [
+            "radio",
+            "vest"
+          ],
+          "skill": 68,
+          "energy": 100,
+          "xp": 0
+        },
+        {
+          "id": 51,
+          "name": "Julian Albers",
+          "avatar": 6,
+          "photo": null,
+          "owned": [
+            "radio",
+            "vest"
+          ],
+          "equipped": [
+            "radio",
+            "vest"
+          ],
+          "skill": 75,
+          "energy": 100,
+          "xp": 0
+        },
+        {
+          "id": 52,
+          "name": "Johanna Bach",
+          "avatar": 7,
+          "photo": null,
+          "owned": [
+            "radio",
+            "vest"
+          ],
+          "equipped": [
+            "radio",
+            "vest"
+          ],
+          "skill": 58,
+          "energy": 100,
+          "xp": 0
+        }
+      ],
+      "training": null,
+      "incidentId": null,
+      "busyUntil": null,
+      "experience": 0
+    },
+    {
+      "id": 6,
+      "name": "Kripo 21",
+      "type": "KRIPO",
+      "officers": [
+        {
+          "id": 60,
+          "name": "Deniz Becker",
+          "avatar": 6,
+          "photo": null,
+          "owned": [
+            "radio",
+            "vest"
+          ],
+          "equipped": [
+            "radio",
+            "vest"
+          ],
+          "skill": 66,
+          "energy": 100,
+          "xp": 0
+        },
+        {
+          "id": 61,
+          "name": "Sarah Hoffmann",
+          "avatar": 7,
+          "photo": null,
+          "owned": [
+            "radio",
+            "vest"
+          ],
+          "equipped": [
+            "radio",
+            "vest"
+          ],
+          "skill": 73,
+          "energy": 100,
+          "xp": 0
+        }
+      ],
+      "training": null,
+      "incidentId": null,
+      "busyUntil": null,
+      "experience": 0
+    }
+  ],
+  "templates": [
+    {
+      "name": "Ruhestörung",
+      "priority": 3,
+      "needs": [
+        "STREIFE"
+      ],
+      "duration": 9,
+      "description": "Mehrere Meldungen über nächtlichen Lärm.",
+      "id": 1
+    },
+    {
+      "name": "Verkehrsunfall",
+      "priority": 2,
+      "needs": [
+        "STREIFE"
+      ],
+      "duration": 22,
+      "description": "Ein Verkehrsunfall blockiert eine Straße.",
+      "id": 2
+    },
+    {
+      "name": "Ladendiebstahl",
+      "priority": 3,
+      "needs": [
+        "STREIFE"
+      ],
+      "duration": 11,
+      "description": "Eine Sicherheitskraft bittet um Unterstützung.",
+      "id": 3
+    },
+    {
+      "name": "Bewaffnete Bedrohung",
+      "priority": 1,
+      "needs": [
+        "SEK",
+        "STREIFE"
+      ],
+      "duration": 37,
+      "description": "Eine gefährliche Lage erfordert besondere Kräfte.",
+      "id": 4
+    },
+    {
+      "name": "Observation",
+      "priority": 2,
+      "needs": [
+        "MEK"
+      ],
+      "duration": 30,
+      "description": "Eine längerfristige Beobachtung wird angefordert.",
+      "id": 5
+    },
+    {
+      "name": "Einbruchserie",
+      "priority": 2,
+      "needs": [
+        "KRIPO"
+      ],
+      "duration": 26,
+      "description": "Mehrere Taten werden einem Muster zugeordnet.",
+      "id": 6
+    },
+    {
+      "name": "Großveranstaltung",
+      "priority": 2,
+      "needs": [
+        "STREIFE",
+        "STREIFE"
+      ],
+      "duration": 43,
+      "description": "Mehrere Einsatzkräfte werden vor Ort benötigt.",
+      "id": 7
+    },
+    {
+      "name": "Geisellage",
+      "priority": 1,
+      "needs": [
+        "SEK",
+        "STREIFE"
+      ],
+      "duration": 55,
+      "description": "Die Lage wird nach Eintreffen aller Kräfte bearbeitet.",
+      "id": 8
+    },
+    {
+      "name": "Tatortaufnahme",
+      "priority": 3,
+      "needs": [
+        "KRIPO"
+      ],
+      "duration": 18,
+      "description": "Kriminalpolizeiliche Arbeit wird benötigt.",
+      "id": 9
+    }
+  ],
+  "incidents": [],
+  "logs": [
+    "Tag 1: Leitstelle bereit zur Schichtplanung."
+  ],
+  "history": [],
+  "shiftStats": {
+    "total": 0,
+    "solved": 0,
+    "failed": 0,
+    "transferred": 0,
+    "income": 0,
+    "expenses": 0,
+    "trainingDone": []
+  },
+  "nextCallAt": 16
+}
