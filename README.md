@@ -2,6 +2,8 @@
 
 Android-Leitstellensimulation mit **Realismus + Sandbox**. Entwicklungsrepository für die erste echte Spielversion **v1.0**.
 
+> **Wichtige Nutzeränderung:** Nicht nur Hamburg oder einzelne Städte: Jede Region zeigt das ganze jeweilige Bundesland mit allen aktuellen Einsatzfahrzeugen und Einsätzen. Schichten wählbar: **8, 12 oder 24 Stunden** in beiden Modi. Siehe [verbindliche Spezifikation](docs/STATEWIDE_MAP_AND_SHIFTS.md).
+
 ## Ausgangslage
 - **Alpha 0.2** ist ein spielbarer, offline-fähiger HTML-/JavaScript-Prototyp.
 - Der **vollständige Alpha-0.2-Stand einschließlich eingebetteter Grafiken** liegt unter `prototype/alpha-0.2-offline.html`. **Nicht löschen**; er dient als funktionale Referenz für die Migration.
@@ -16,7 +18,7 @@ Android-Leitstellensimulation mit **Realismus + Sandbox**. Entwicklungsrepositor
 5. Auf eigenem Feature-Branch arbeiten, CI grün bekommen, signierbares Debug-APK-Artefakt bereitstellen und einen PR eröffnen.
 
 ## Ziel für v1.0
-Eine echte offline-fähige Android-Spielversion mit interaktiver Hamburg-Straßenkarte, live fahrenden Einheiten, Einsätzen, Personal und sichtbarer Ausrüstung, Fortbildungen, Schichtenden, Karriere- und Sandbox-Modus, Einsatz- und Einheiteneditor, Sound sowie robustem Speichern. Alle 16 Bundesländer auswählbar; außerhalb Hamburg zunächst Basisregionen.
+Eine echte offline-fähige Android-Spielversion mit **vollständiger Live-Gesamtkarte für jedes der 16 Bundesländer** (Fit-to-Bounds der realen Landesfläche), sichtbaren landesweit verteilten Fahrzeugen und Notrufen, Routen, Cluster-/Kartenfiltern sowie tiefem Hamburg-Detailgrad. **8/12/24-Stunden-Schichten** in Karriere und Sandbox, Ausbildung, Personal-/Ausrüstungsverwaltung, Editor, Sound und robustem Speichern. Verbindliche Präzisierung: `docs/STATEWIDE_MAP_AND_SHIFTS.md`.
 
 ## Quellstand
 Die HTML-Demo kann im Desktop-Browser direkt geöffnet werden. Ihre Logik ist noch monolithisch; die Migration in klar testbare Module ist Teil des Auftrags.
