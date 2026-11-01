@@ -72,24 +72,7 @@ jobs:
           target: default
           profile: pixel_6
           disable-animations: true
-          script: |
-            mkdir -p runtime
-            adb shell svc wifi disable
-            adb shell svc data disable
-            adb install -r release/Einsatzleitstelle110-Native-Leitstelle.apk
-            adb install -r release/instrumentation.apk
-            adb shell am instrument -w -r de.einsatzleitstelle110.test/androidx.test.runner.AndroidJUnitRunner | tee runtime/instrumentation.txt
-            adb root
-            adb wait-for-device
-            adb pull /data/anr runtime/anr || true
-            adb pull /sdcard/Android/data/de.einsatzleitstelle110/files runtime/screens || true
-            adb exec-out screencap -p > runtime/device-final.png
-            adb logcat -d > runtime/logcat.txt
-            adb shell dumpsys activity lastanr > runtime/last-anr.txt || true
-            python3 -c "from pathlib import Path; t=Path('runtime/instrumentation.txt').read_text(); assert 'OK (' in t and 'FAILURES!!!' not in t, t"
-            for FILE in native-wandsbek.png native-officer.png native-equipment.png native-24h-report.png native-niedersachsen.png native-bayern.png; do
-              adb exec-out run-as de.einsatzleitstelle110 cat /sdcard/Android/data/de.einsatzleitstelle110/files/$FILE > runtime/$FILE
-            done
+          script: bash .github/scripts/native-device-check.sh
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -2,6 +2,8 @@
 
 **Native Android-Leitstellensimulation.** Die entwickelte Spielversion wird als Kotlin-App mit nativen Views, Canvas-Karte und SoundPool weitergeführt. Die installierbare App enthält keine HTML-, JavaScript- oder CSS-Dateien, keine WebView und benötigt weder Internet noch eine eigene Domäne.
 
+[Native Android-APK herunterladen](https://github.com/GoldenUnicorn24/Operator/releases/download/operator-native-v2-preview/Einsatzleitstelle110-Native-Leitstelle.apk) · [Android-Screenshots](docs/evidence/native-v2/)
+
 ## Aktueller nativer Stand
 
 - 16 vollständige Offline-Bundeslandkarten mit echten Grenzen, Städten, fiktiven Wachen, Fahrzeugen, Notrufen, Clustern, Filtern und Routen. Hamburg mit amtlichem Hauptstraßennetz und einem A*-Spielgraph.

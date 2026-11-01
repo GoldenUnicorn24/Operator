@@ -1,0 +1,13 @@
+{
+  "run": "https://github.com/GoldenUnicorn24/Operator/actions/runs/41362143918",
+  "commit": "238ea0537fd0c884b590124b29029f2ae565e3d6",
+  "instrumentation": "OK (3 tests)",
+  "screenshots": {
+    "native-24h-report.png": "a4aa0142563e667aa193dc3418199c6cee35630edde85a514b370c0822e9fcc6",
+    "native-officer.png": "eda184b306e9a4bb8491dd5038db185de3b65990bbd3e9c3daef732905de9d05",
+    "native-wandsbek.png": "7c705c864eda6140baea2aa219ce8b36e2956393a74b922049ecc1332c03a211",
+    "native-niedersachsen.png": "46de74f395e688b2984a0ddd98755fdabc068bf1fc963a9ab3bf396cc2f2a6cf",
+    "native-equipment.png": "0b0c080ab0d84c1d106b3d06d286687d4eb24225938eb43d41eb7248c2ec7a66",
+    "native-bayern.png": "609bd37a9eac35bd0d068d0f20e5ff5414a044545f87aed0cef6e545a951306d"
+  }
+}
