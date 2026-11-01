@@ -69,7 +69,7 @@ jobs:
         with:
           api-level: 35
           arch: x86_64
-          target: google_apis
+          target: default
           profile: pixel_6
           disable-animations: true
           script: |
@@ -79,6 +79,9 @@ jobs:
             adb install -r release/Einsatzleitstelle110-Native-Leitstelle.apk
             adb install -r release/instrumentation.apk
             adb shell am instrument -w -r de.einsatzleitstelle110.test/androidx.test.runner.AndroidJUnitRunner | tee runtime/instrumentation.txt
+            adb root
+            adb wait-for-device
+            adb pull /data/anr runtime/anr || true
             adb pull /sdcard/Android/data/de.einsatzleitstelle110/files runtime/screens || true
             adb exec-out screencap -p > runtime/device-final.png
             adb logcat -d > runtime/logcat.txt

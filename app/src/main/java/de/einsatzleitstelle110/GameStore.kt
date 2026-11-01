@@ -9,13 +9,14 @@ object GameStore {
     private const val FILE = "einsatzleitstelle-native-v1.json"
 
     private val writer = java.util.concurrent.Executors.newSingleThreadExecutor()
-    private val pending = java.util.concurrent.atomic.AtomicReference<Pair<Context, String>?>(null)
+    private val pending =
+        java.util.concurrent.atomic.AtomicReference<Pair<Context, GameState>?>(null)
     private val writing = java.util.concurrent.atomic.AtomicBoolean(false)
-    @Volatile private var latestSnapshot: String? = null
+    @Volatile private var latestSnapshot: GameState? = null
 
     /** Snapshot on the game thread; validation, fsync and backup run in one ordered worker. */
     fun saveAsync(context: Context, state: GameState, onError: (Exception) -> Unit) {
-        val snapshot = toJson(state).toString()
+        val snapshot = GameSnapshots.capture(state)
         latestSnapshot = snapshot
         pending.set(context.applicationContext to snapshot)
         if (writing.compareAndSet(false, true)) writer.execute { drain(onError) }
@@ -26,7 +27,7 @@ object GameStore {
             while (true) {
                 val next = pending.getAndSet(null) ?: break
                 try {
-                    persist(next.first, next.second)
+                    persist(next.first, toJson(next.second).toString())
                 } catch (e: Exception) {
                     onError(e)
                 }
@@ -72,12 +73,8 @@ object GameStore {
     fun load(context: Context): GameState? {
         // A recreation can precede the queued disk write. Prefer its exact immutable snapshot.
         if (context.getFileStreamPath(FILE).exists() || writing.get() || pending.get() != null) {
-            latestSnapshot?.let { raw ->
-                try {
-                    return fromJson(JSONObject(raw))
-                } catch (_: Exception) {
-                    /* use durable backup */
-                }
+            latestSnapshot?.let {
+                return GameSnapshots.capture(it)
             }
         }
         for (name in listOf(FILE, FILE + ".backup")) {

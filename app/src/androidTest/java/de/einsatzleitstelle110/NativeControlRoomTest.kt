@@ -60,6 +60,16 @@ class NativeControlRoomTest {
         bmp.recycle()
     }
 
+    private fun tapText(view: View, value: String): Boolean {
+        if (view is android.widget.TextView && view.text.toString() == value) {
+            view.performClick()
+            return true
+        }
+        if (view is ViewGroup)
+            for (i in 0 until view.childCount) if (tapText(view.getChildAt(i), value)) return true
+        return false
+    }
+
     private fun assertNative(view: View) {
         assertFalse(view.javaClass.name.startsWith("android.webkit."))
         if (view is ViewGroup) for (i in 0 until view.childCount) assertNative(view.getChildAt(i))
@@ -254,8 +264,15 @@ class NativeControlRoomTest {
             screenshot("native-24h-report.png")
             scenario.onActivity { a ->
                 val g = game(a)
-                g.nextDay()
+                val dialog =
+                    MainActivity::class
+                        .java
+                        .getDeclaredField("sheet")
+                        .apply { isAccessible = true }
+                        .get(a) as android.app.Dialog
+                assertTrue(tapText(dialog.window!!.decorView, "Nächsten Tag vorbereiten"))
                 assertEquals(2, g.state.day)
+                dismiss(a)
                 invoke(a, "showTab", "MAP")
             }
             scenario.moveToState(Lifecycle.State.STARTED)

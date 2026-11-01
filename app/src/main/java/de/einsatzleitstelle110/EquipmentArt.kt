@@ -59,7 +59,14 @@ object EquipmentArt {
                         else if (bits[0].contains("vehicle")) 2 else 4
                     val w = raw.width / cols
                     val h = raw.height / rows
-                    Bitmap.createBitmap(raw, (n % cols) * w, (n / cols) * h, w, h)
+                    if (bits[0].contains("gear-atlas")) {
+                        // Original generated sheet uses slightly uneven row spacing.
+                        val limits = doubleArrayOf(0.0, .231, .490, .742, 1.0)
+                        val row = n / cols
+                        val top = (raw.height * limits[row]).toInt()
+                        val bottom = (raw.height * limits[row + 1]).toInt()
+                        Bitmap.createBitmap(raw, (n % cols) * w, top, w, bottom - top)
+                    } else Bitmap.createBitmap(raw, (n % cols) * w, (n / cols) * h, w, h)
                 }
             cache.put(path, out)
             out
