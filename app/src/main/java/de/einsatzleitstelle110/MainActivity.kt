@@ -107,7 +107,7 @@ class MainActivity:Activity() {
   }
  }
  override fun onPause(){super.onPause();GameStore.save(this,game.state)}
- override fun onDestroy(){handler.removeCallbacks(ticker);audio.close();super.onDestroy()}
+ override fun onDestroy(){handler.removeCallbacks(ticker);audio.close();map.close();super.onDestroy()}
  private fun label(txt:String,size:Float=13f,color:Int=pale,bold:Boolean=false)=TextView(this).apply{
   text=txt;textSize=size;setTextColor(color);gravity=Gravity.CENTER_VERTICAL
   setLineSpacing(dp(2f).toFloat(),1f)
@@ -202,6 +202,9 @@ class MainActivity:Activity() {
      else->showDebrief()}
   },LinearLayout.LayoutParams(dp(119f),dp(39f)))
   bottom.addView(line)
+  bottom.addView(label(if(map.useOnlineStreets)
+    "© OpenStreetMap contributors · Online-Stadtplan · Routen simuliert"
+    else "Offline-Kartennetz · Geogrenzen aus Open Data",8.4f,muted))
   val first=game.state.incidents.firstOrNull{it.region==game.state.region&&it.status=="OPEN"}
   if(first!=null){
    val r=row()
@@ -483,6 +486,7 @@ class MainActivity:Activity() {
    "Notrufe automatisch: "+if(s.autoCalls)"AN" else "AUS",
    "Sound: "+if(s.mute)"AUS" else "AN",
    "Spieltempo: ×"+s.speed,
+   "Online-Straßenkarte: "+if(map.useOnlineStreets)"AN" else "AUS",
    "Ganztageskarte / Zoom zurücksetzen",
    "Spielstand sichern / laden",
    "Neues Spiel starten"
@@ -498,14 +502,15 @@ class MainActivity:Activity() {
     3->{val speeds=intArrayOf(1,4,12,30)
      AlertDialog.Builder(this).setTitle("Spielminuten pro Sekunde")
        .setItems(speeds.map{"×"+it}.toTypedArray()){_,j->s.speed=speeds[j];refresh()}.show()}
-    4->{map.resetCamera();showTab("MAP")}
-    5->{AlertDialog.Builder(this).setItems(arrayOf("Export","Import")){_,j->
+    4->{map.useOnlineStreets=!map.useOnlineStreets;map.invalidate();refresh()}
+    5->{map.resetCamera();showTab("MAP")}
+    6->{AlertDialog.Builder(this).setItems(arrayOf("Export","Import")){_,j->
       if(j==0)exportSave()else importSave()
      }.show()}
-    6->{AlertDialog.Builder(this).setTitle("Neues Spiel?")
+    7->{AlertDialog.Builder(this).setTitle("Neues Spiel?")
      .setMessage("Gespeicherter Fortschritt wird überschrieben.")
      .setPositiveButton("NEUSTART"){_,_->
-      game=GameController(GameState(),GeoData.all);game.seedUnitsIfNeeded()
+      map.close();game=GameController(GameState(),GeoData.all);game.seedUnitsIfNeeded()
       map=TacticalMapView(this,game,{showIncident(it)},{showUnit(it)})
       audio.muted=false;refresh();showWelcome()
      }.setNegativeButton("Abbrechen",null).show()}
@@ -516,7 +521,7 @@ class MainActivity:Activity() {
   AlertDialog.Builder(this).setTitle("EINSATZLEITSTELLE 110 · V1")
    .setMessage("Native Android-Leitstellensimulation ohne WebView.\n\n"+
     "Die Karte zeigt die GESAMTE gewählte Landesgrenze mit Einsatzfahrzeugen und Notrufen. "+
-    "Das Wegenetz und die Fahrzeiten sind spielerisch simuliert.\n\n"+
+    "Online werden echte OpenStreetMap-Straßen eingeblendet; Fahrzeiten bleiben simuliert.\n\n"+
     "Spiele Karriere mit Budget oder Sandbox mit freien Ressourcen.")
    .setPositiveButton("KARRIERE"){_,_->game.state.mode="CAREER";refresh();showShiftDialog()}
    .setNeutralButton("SANDBOX"){_,_->game.state.mode="SANDBOX";refresh();showShiftDialog()}
@@ -551,7 +556,7 @@ class MainActivity:Activity() {
       ?:throw IllegalArgumentException("Leerer Spielstand")
     val restored=GameStore.fromJson(org.json.JSONObject(json))
     if(GeoData.all.none{it.code==restored.region})throw IllegalArgumentException("Unbekanntes Bundesland")
-    game=GameController(restored,GeoData.all);game.seedUnitsIfNeeded()
+    map.close();game=GameController(restored,GeoData.all);game.seedUnitsIfNeeded()
     map=TacticalMapView(this,game,{showIncident(it)},{showUnit(it)})
     audio.muted=game.state.mute;refresh()
     toast("Spielstand importiert")
