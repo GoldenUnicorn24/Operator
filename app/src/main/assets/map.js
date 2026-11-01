@@ -20,7 +20,7 @@ SL:[['Saarbrücken',7.000,49.236],['Saarlouis',6.748,49.314],['Homburg',7.333,49
 BW:[['Stuttgart',9.182,48.775],['Karlsruhe',8.404,49.007],['Mannheim',8.467,49.489],['Heidelberg',8.695,49.399],['Freiburg',7.850,47.997],['Ulm',9.991,48.400],['Heilbronn',9.219,49.143],['Konstanz',9.175,47.660],['Reutlingen',9.210,48.491],['Tübingen',9.056,48.521],['Offenburg',7.942,48.471]],
 BY:[['München',11.575,48.137],['Nürnberg',11.077,49.454],['Augsburg',10.899,48.368],['Regensburg',12.096,49.013],['Würzburg',9.936,49.792],['Bamberg',10.893,49.894],['Bayreuth',11.582,49.946],['Ingolstadt',11.430,48.766],['Passau',13.431,48.574],['Rosenheim',12.130,47.856],['Kempten',10.314,47.727],['Landshut',12.153,48.541],['Hof',11.912,50.314],['Aschaffenburg',9.150,49.980]]
 };
-let mapCamera={x:0,y:0,w:1000,h:700},mapProjection=null,mapSelected=null,mapFilter='ALL',mapPointer=null,mapGeometry=null,mapLastRegion='';
+let mapCamera={x:0,y:0,w:1000,h:700},mapBaseCamera={x:0,y:0,w:1000,h:700},mapProjection=null,mapSelected=null,mapFilter='ALL',mapPointer=null,mapGeometry=null,mapLastRegion='';
 function regionCode(){return REGIONS.find(r=>r.name===state?.region)?.code||'HH'}
 function cityList(code=regionCode()){return CITY_DATA[code]||CITY_DATA.HH}
 function cityByName(name,code=regionCode()){return cityList(code).find(x=>x[0]===name)||cityList(code)[0]}
@@ -32,17 +32,25 @@ function ensureUnitGeo(){if(!state)return;state.units.forEach((u,i)=>{if(!Array.
 function regionFeature(code=regionCode()){return (window.GEO_STATES?.features||[]).find(f=>f.properties.code==='DE-'+code)}
 function stateShapes(f){if(!f)return [];return f.geometry.type==='MultiPolygon'?f.geometry.coordinates:f.geometry.type==='Polygon'?[f.geometry.coordinates]:[]}
 function coordinateBounds(f){const pts=stateShapes(f).flat(2);return [Math.min(...pts.map(v=>v[0])),Math.min(...pts.map(v=>v[1])),Math.max(...pts.map(v=>v[0])),Math.max(...pts.map(v=>v[1]))]}
-function setupProjection(){const f=regionFeature();if(!f)return null;const [lo,la,hi,ha]=coordinateBounds(f),mid=(la+ha)/2,cos=Math.cos(mid*Math.PI/180),dx=(hi-lo)*cos,dy=ha-la;const sc=Math.min(850/Math.max(.02,dx),570/Math.max(.02,dy));const ox=500-dx*sc/2,oy=350-dy*sc/2;mapProjection={point:(a)=>[ox+(a[0]-lo)*cos*sc,oy+(ha-a[1])*sc],lon:lo,lat:la,maxLon:hi,maxLat:ha,scale:sc,cos,ox,oy};mapLastRegion=regionCode();mapCamera={x:0,y:0,w:1000,h:700};return mapProjection}
+function setupProjection(){const f=regionFeature();if(!f)return null;const [lo,la,hi,ha]=coordinateBounds(f),mid=(la+ha)/2,cos=Math.cos(mid*Math.PI/180),dx=(hi-lo)*cos,dy=ha-la;const sc=Math.min(850/Math.max(.02,dx),570/Math.max(.02,dy));const ox=500-dx*sc/2,oy=350-dy*sc/2;mapProjection={point:(a)=>[ox+(a[0]-lo)*cos*sc,oy+(ha-a[1])*sc],lon:lo,lat:la,maxLon:hi,maxLat:ha,scale:sc,cos,ox,oy};mapLastRegion=regionCode();
+ const polygonPoints=stateShapes(f).flat(2).map(v=>mapProjection.point(v));
+ const minx=Math.min(...polygonPoints.map(p=>p[0])),maxx=Math.max(...polygonPoints.map(p=>p[0]));
+ const miny=Math.min(...polygonPoints.map(p=>p[1])),maxy=Math.max(...polygonPoints.map(p=>p[1]));
+ const svg=el('stateMap'),aspect=(svg.clientWidth>0&&svg.clientHeight>0)?svg.clientWidth/svg.clientHeight:1.4;
+ let width=(maxx-minx)+60,height=(maxy-miny)+60;
+ if(width/height>aspect)height=width/aspect;else width=height*aspect;
+ const cx=(minx+maxx)/2,cy=(miny+maxy)/2;
+ mapBaseCamera={x:cx-width/2,y:cy-height/2,w:width,h:height};mapCamera={...mapBaseCamera};return mapProjection}
 function mp(point){return mapProjection?.point(point)||[0,0]}
 function pathCoords(coords){return coords.map(([x,y],i)=>{const p=mp([x,y]);return(i?'L':'M')+p[0].toFixed(2)+' '+p[1].toFixed(2)}).join(' ')+' Z'}
-function mapResetZoom(){mapCamera={x:0,y:0,w:1000,h:700};applyMapCamera()}
-function mapZoom(mult,anchor){const k=Math.min(7,Math.max(1,1000/mapCamera.w*mult));const w=1000/k,h=700/k,pt=anchor||[mapCamera.x+mapCamera.w/2,mapCamera.y+mapCamera.h/2];let x=pt[0]-w/2,y=pt[1]-h/2;x=Math.max(-100,Math.min(1100-w,x));y=Math.max(-70,Math.min(770-h,y));mapCamera={x,y,w,h};applyMapCamera();drawStateMap()}
+function mapResetZoom(){mapCamera={...mapBaseCamera};applyMapCamera();drawStateMap()}
+function mapZoom(mult,anchor){const k=Math.min(7,Math.max(1,mapBaseCamera.w/mapCamera.w*mult));const w=mapBaseCamera.w/k,h=mapBaseCamera.h/k,pt=anchor||[mapCamera.x+mapCamera.w/2,mapCamera.y+mapCamera.h/2];let x=pt[0]-w/2,y=pt[1]-h/2;x=Math.max(-100,Math.min(1100-w,x));y=Math.max(-70,Math.min(770-h,y));mapCamera={x,y,w,h};applyMapCamera();drawStateMap()}
 function applyMapCamera(){const svg=el('stateMap');if(svg)svg.setAttribute('viewBox',[mapCamera.x,mapCamera.y,mapCamera.w,mapCamera.h].map(n=>n.toFixed(2)).join(' '))}
 function mapPickRegion(name){if(state.stage==='planning'){planRegion(name);setupProjection();mapSelected=null;render()}else{el('mapRegionSelect').value=state.region;alert('Die Leitstelle kann in der nächsten Schichtplanung das Bundesland wechseln.')}}
 function mapChangeFilter(filter){mapFilter=filter;mapSelected=null;drawStateMap()}
 function mapSelect(type,id){mapSelected={type,id};drawStateMap();renderMapSelection()}
 function mapSelectCity(index){mapSelected={type:'city',id:index};drawStateMap();renderMapSelection()}
-function mapFocus(pos){const p=mp(pos);const k=Math.max(2.7,1000/mapCamera.w);const w=1000/k,h=700/k;mapCamera={x:p[0]-w/2,y:p[1]-h/2,w,h};applyMapCamera();drawStateMap()}
+function mapFocus(pos){const p=mp(pos);const k=Math.max(2.7,mapBaseCamera.w/mapCamera.w);const w=mapBaseCamera.w/k,h=mapBaseCamera.h/k;mapCamera={x:p[0]-w/2,y:p[1]-h/2,w,h};applyMapCamera();drawStateMap()}
 function drawStateMap(){const svg=el('stateMap');if(!svg||!state||!window.GEO_STATES)return;ensureUnitGeo();const code=regionCode();if(!mapProjection||mapLastRegion!==code)setupProjection();const f=regionFeature(code);if(!f)return;
  let outlines=stateShapes(f).flatMap(poly=>poly.filter(ring=>ring.length>2).map(pathCoords));const outline=outlines.map(p=>`<path d="${p}"/>`).join('');
  let html=`<defs><linearGradient id="landFill" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#246079"/><stop offset="1" stop-color="#16364e"/></linearGradient></defs><rect width="2000" height="1500" x="-500" y="-400" fill="#0b1b2a"/>`;
@@ -57,7 +65,7 @@ function drawStateMap(){const svg=el('stateMap');if(!svg||!state||!window.GEO_ST
  const incidents=state.incidents.filter(i=>['open','dispatching','enroute','working'].includes(i.status)&&i.region===state.region&&Array.isArray(i.position));
  for(const inc of incidents){const [x,y]=mp(inc.position);const active=mapSelected?.type==='incident'&&mapSelected.id===inc.id;html+=`<g class="state-incident ${active?'pulse-glow':''}" onclick="mapSelect('incident',${inc.id})"><circle class="incident-halo" cx="${x}" cy="${y}" r="${active?29:21}"/><circle class="incident-dot" cx="${x}" cy="${y}" r="${inc.priority===1?13:10}"/><text class="incident-text" x="${x}" y="${y+4}" text-anchor="middle">${inc.priority}</text></g>`}
  const units=state.units.filter(u=>(mapFilter==='ALL'||mapFilter==='INCIDENTS'?mapFilter==='ALL':u.type===mapFilter)&&Array.isArray(u.position));
- if(mapCamera.w>=700){ // Marker bei Landesübersicht verdichten; einzelne Einheiten bleiben über Klick auf Cluster erreichbar.
+ if(mapCamera.w>=mapBaseCamera.w*.72){ // Marker bei Landesübersicht verdichten; einzelne Einheiten bleiben über Klick auf Cluster erreichbar.
   const clusters=[];for(const u of units){const p=mp(u.position);let g=clusters.find(c=>Math.hypot(c.x-p[0],c.y-p[1])<22);if(g){g.units.push(u);g.x=(g.x*(g.units.length-1)+p[0])/g.units.length;g.y=(g.y*(g.units.length-1)+p[1])/g.units.length}else clusters.push({x:p[0],y:p[1],units:[u]})}
   for(let i=0;i<clusters.length;i++){const c=clusters[i];if(c.units.length>1){html+=`<g class="map-cluster" onclick="mapClusterZoom(${c.x},${c.y})"><circle class="cluster-circle" cx="${c.x}" cy="${c.y}" r="19"/><text class="cluster-number" text-anchor="middle" x="${c.x}" y="${c.y+5}">${c.units.length}</text></g>`}else html+=vehicleMarker(c.units[0]);}
  }else for(const u of units)html+=vehicleMarker(u);
