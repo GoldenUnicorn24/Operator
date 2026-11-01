@@ -145,7 +145,14 @@ class NativeControlRoomTest {
                 g.state.mode = "SANDBOX"
                 g.state.unlimitedBudget = true
                 g.state.autoCalls = false
-                for (region in g.regions) {
+            }
+            // Region changes are separate user actions; let Android process window focus and
+            // frames.
+            for (code in GeoData.all.map { it.code }) {
+                scenario.onActivity { a ->
+                    val g = game(a)
+                    val region = g.regions.first { it.code == code }
+                    android.util.Log.i("NativeCheck", "region $code")
                     g.setRegion(region.code)
                     assertTrue(g.state.units.count { it.region == region.code } >= 32)
                     val view =
@@ -172,6 +179,11 @@ class NativeControlRoomTest {
                         }
                     )
                 }
+                instrument.waitForIdleSync()
+            }
+            scenario.onActivity { a ->
+                android.util.Log.i("NativeCheck", "Wandsbek")
+                val g = game(a)
                 g.setRegion("DE-HH")
                 assertTrue(g.setScope("WANDSBEK"))
                 g.state.paused = true
@@ -213,7 +225,23 @@ class NativeControlRoomTest {
                 g.advance(20)
                 assertNotEquals(origin, GeoPoint(sek.lon, sek.lat))
                 assertTrue(call.assignedUnits.contains(sek.id))
-                g.advance(1410)
+                g.state.paused = true
+            }
+            var remaining = 1410
+            while (remaining > 0) {
+                val step = remaining.coerceAtMost(60)
+                scenario.onActivity { a ->
+                    val g = game(a)
+                    g.state.paused = false
+                    g.advance(step)
+                    g.state.paused = true
+                }
+                instrument.waitForIdleSync()
+                remaining -= step
+            }
+            scenario.onActivity { a ->
+                val g = game(a)
+                g.state.paused = false
                 g.newIncident(IncidentTemplate("Übergabe", 1, "STREIFE", 100, "Bleibt erhalten"))
                 g.advance(10)
                 assertEquals("DEBRIEF", g.state.phase)

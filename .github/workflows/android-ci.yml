@@ -79,6 +79,9 @@ jobs:
             adb install -r release/Einsatzleitstelle110-Native-Leitstelle.apk
             adb install -r release/instrumentation.apk
             adb shell am instrument -w -r de.einsatzleitstelle110.test/androidx.test.runner.AndroidJUnitRunner | tee runtime/instrumentation.txt
+            adb exec-out screencap -p > runtime/device-final.png
+            adb logcat -d > runtime/logcat.txt
+            adb shell dumpsys activity lastanr > runtime/last-anr.txt
             python3 -c "from pathlib import Path; t=Path('runtime/instrumentation.txt').read_text(); assert 'OK (' in t and 'FAILURES!!!' not in t, t"
             for FILE in native-wandsbek.png native-officer.png native-equipment.png native-24h-report.png native-niedersachsen.png native-bayern.png; do
               adb exec-out run-as de.einsatzleitstelle110 cat /sdcard/Android/data/de.einsatzleitstelle110/files/$FILE > runtime/$FILE
