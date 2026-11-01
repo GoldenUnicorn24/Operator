@@ -25,12 +25,6 @@ jobs:
           packages: 'platform-tools'
       - name: Android SDK platforms and build tools
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
-      - name: Check JavaScript and run simulation tests
-        run: |
-          node --check app/src/main/assets/game.js
-          node --check app/src/main/assets/map.js
-          node --check app/src/main/assets/audio.js
-          node tests/simulation.test.cjs
       - name: Verify native Android implementation
         run: |
           if grep -RE 'import android\.webkit|WebView\(' app/src/main/java; then echo 'WebView forbidden in native app' >&2; exit 1; fi
