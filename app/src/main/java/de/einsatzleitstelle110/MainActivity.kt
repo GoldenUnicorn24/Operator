@@ -131,7 +131,7 @@ class MainActivity:Activity() {
  private fun row():LinearLayout=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL;gravity=Gravity.CENTER_VERTICAL}
  private fun spacer(w:Float=8f)=View(this).apply{layoutParams=LinearLayout.LayoutParams(dp(w),1)}
  private fun scrollPanel():LinearLayout {
-  val scroll=ScrollView(this).apply{fillViewport=false;setBackgroundColor(dark)}
+  val scroll=ScrollView(this).apply{isFillViewport=false;setBackgroundColor(dark)}
   val inner=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(0,dp(5f),0,dp(24f))}
   scroll.addView(inner)
   body.addView(scroll,FrameLayout.LayoutParams(-1,-1))
@@ -248,7 +248,7 @@ class MainActivity:Activity() {
    b.addView(label(call.description,11.5f,pale))
    b.addView(press(if(call.status=="OPEN")"EINHEIT ZUWEISEN" else "DETAILS ANZEIGEN",11f){
     showIncident(call)
-   },LinearLayout.LayoutParams(-1,dp(37f))))
+   },LinearLayout.LayoutParams(-1,dp(37f)))
    addCard(b,list)
   }
   if(calls.isEmpty())addCard(card().apply{addView(label("Keine Einsätze. Starte deine Schicht.",14f,muted))},list)
@@ -424,11 +424,11 @@ class MainActivity:Activity() {
    LinearLayout.LayoutParams(-1,dp(43f)))
   addCard(a,list)
   val b=card();b.addView(label("EINSATZVORLAGEN",16f,pale,true))
-  b.addView(label(game.allTemplates().size+" Datenvorlagen",12f,muted))
+  b.addView(label(game.allTemplates().size.toString()+" Datenvorlagen",12f,muted))
   for(t in game.state.customTemplates){
    b.addView(press("▶ "+t.title+"   ·   P"+t.priority){if(game.state.phase=="RUNNING"){
     game.newIncident(t);refresh()
-   }else toast("Zuerst die Schicht starten")},LinearLayout.LayoutParams(-1,dp(39f))))
+   }else toast("Zuerst die Schicht starten")},LinearLayout.LayoutParams(-1,dp(39f)))
   }
   addCard(b,list)
   val c=card()
