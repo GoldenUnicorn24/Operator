@@ -15,7 +15,13 @@ import {
   stats,
   unitTypes,
 } from "../domain/engine";
-import { regions, getRegion, contains, samplePosition } from "../map/regions";
+import {
+  regions,
+  getRegion,
+  contains,
+  samplePosition,
+  routeBetween,
+} from "../map/regions";
 import { BASE_TEMPLATES } from "../data/catalog";
 import { SHIFT_OPTIONS } from "../domain/clock";
 import { validateTemplate, validateVehicle, finite } from "../editor/schema";
@@ -362,12 +368,21 @@ export function migrate(input: unknown): GameState {
     ? old.stage
     : "planning";
   s.shiftType = SHIFT_OPTIONS[old.shiftType] ? old.shiftType : "early";
-  s.startHour = SHIFT_OPTIONS[s.shiftType].start / 60;
+  s.startHour =
+    Number.isInteger(old.shiftStart) &&
+    old.shiftStart >= 0 &&
+    old.shiftStart < 1440
+      ? old.shiftStart / 60
+      : SHIFT_OPTIONS[s.shiftType].start / 60;
+  s.shiftDurationMinutes = SHIFT_OPTIONS[s.shiftType].duration;
+  (s as GameState & { legacySource: unknown }).legacySource =
+    structuredClone(old);
   s.elapsed = old.elapsed ?? 0;
   s.shiftElapsedMinutes = s.elapsed;
   s.shiftStartAbsoluteMinute = (s.day - 1) * 1440 + s.startHour * 60;
   s.absoluteSimMinutes = s.shiftStartAbsoluteMinute + s.elapsed;
-  s.shiftEndAbsoluteMinute = s.shiftStartAbsoluteMinute + 480;
+  s.shiftEndAbsoluteMinute =
+    s.shiftStartAbsoluteMinute + s.shiftDurationMinutes;
   s.reputation = old.reputation ?? 60;
   s.autoCalls = old.autoCalls ?? false;
   s.rules = {
@@ -395,7 +410,9 @@ export function migrate(input: unknown): GameState {
       "Alpha-Einheit",
     );
     const id = u.id ?? index + 1;
-    const p = samplePosition(region.id, rng);
+    const p = contains(region.id, u.position)
+      ? ([...u.position] as [number, number])
+      : samplePosition(region.id, rng);
     const crew = Array.isArray(u.officers)
       ? u.officers.map((o: Officer, j: number) =>
           upgradeOfficer(o, id * 100 + j),
@@ -426,6 +443,11 @@ export function migrate(input: unknown): GameState {
       restUntil: 0,
       readinessAt: 0,
     };
+    if (u.vehicle) {
+      migrated.vehicle.name = String(u.vehicle.name || migrated.vehicle.name);
+      migrated.vehicle.speedKmh = u.vehicle.speed ?? migrated.vehicle.speedKmh;
+      migrated.vehicle.condition = u.vehicle.condition ?? 100;
+    }
     migrated.vehicle.capacity = Math.max(
       migrated.vehicle.capacity,
       crew.length,
@@ -447,9 +469,12 @@ export function migrate(input: unknown): GameState {
         id: ++s.seq,
       } as IncidentTemplate);
   s.incidents = (old.incidents ?? []).map((i: Incident) => {
-    const p = samplePosition(region.id, rng);
+    const p = contains(region.id, i.position)
+      ? ([...i.position] as [number, number])
+      : samplePosition(region.id, rng);
     const migrated: Incident = {
       ...i,
+      status: (i.status as string) === "enroute" ? "dispatching" : i.status,
       description: i.description || "Alpha-Einsatz",
       position: p,
       regionId: region.id,
@@ -475,8 +500,18 @@ export function migrate(input: unknown): GameState {
     for (const id of i.assignedIds ?? []) {
       const u = s.units.find((u) => u.id === id);
       if (u && u.incidentId === i.id) {
-        u.position = [...p];
-        u.status = "onScene";
+        if ((i.status as string) === "enroute") {
+          u.route = {
+            ...routeBetween(u.position, p, u.vehicle.speedKmh),
+            progress: 0,
+            elapsedMinutes: 0,
+            departureAt: s.absoluteSimMinutes,
+          };
+          u.status = "responding";
+        } else {
+          u.position = [...p];
+          u.status = "onScene";
+        }
       }
     }
     return migrated;

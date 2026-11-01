@@ -50,3 +50,8 @@ Codex: Fortlaufende Umsetzung und Testergebnisse mit Datumsstempel dokumentieren
 - Reproduzierter weiterer Bedienfehler behoben: der Dispositionsselektor verlor bei einem Tick zwischen Fokuswechsel und Klick seine Auswahl. Auswahl wird jetzt pro Einsatz gehalten; deterministischer Browserregressionsfall prüft genau diesen Ablauf.
 - Browser-Leistungsprobe:132 regionale Fahrzeuge +20 Einsätze (weitere32 Fahrzeuge im anderen Land gespeichert), 60 Kartenupdates; Messwerte/Browserkennung unter `docs/evidence/browser-performance.json`. Das ist kein physischer Android-Benchmark.
 - Sieben echte Browseransichten unter `docs/evidence/`; Android-Nachweise werden separat ergänzt. Keine APK- oder Runtime-Ergebnisse aus fehlgeschlagenen Umgebungsversuchen als bestanden gezählt.
+
+### Integration paralleler GitHub-Änderungen und APK-Übergabe
+- Zwischenzeitlich eingegangene Remote-Commits regulär zusammengeführt; deren Quellmodule, Geometrie und Tests bleiben erhalten. Die aktive Oberfläche nutzt die modularisierte Implementierung. Migration zusätzlich für Geo-v2-Schichten (12/24h, freie Startzeit), Fahrzeugwerte, Koordinaten und Anfahrten erweitert; Originalobjekt zusätzlich erhalten. 46 Domänentests bestanden.
+- GitHub-Actions-Erstlauf stoppte vor Browser-/Android-Build, weil ubuntu-latest inzwischen26.04 ist und Playwright1.56 dieses System nicht unterstützt. Runner auf reproduzierbares ubuntu22.04 festgelegt.
+- Lokaler API26-Softwareemulator: drei Instrumentationstests mit JavaScript-/Start-Timeouts fehlgeschlagen. Keine native Runtime-Freigabe behauptet. Debug-APK und Lint lokal weiterhin erfolgreich; CI prüft mit KVM erneut.

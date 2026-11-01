@@ -252,3 +252,18 @@ test("career procurement unlock and unit-role edits change real requirements wit
   assert.equal(u.reserveOfficers[0].length, 3);
   validateState(s);
 });
+
+test("concurrent geo-v2 saves retain 24h duration, start hour and vehicle positions", () => {
+  const old = JSON.parse(fixture);
+  old.shiftType = "full24";
+  old.shiftStart = 1320;
+  old.elapsed = 800;
+  old.stage = "running";
+  old.units[0].position = [9.9937, 53.5511];
+  old.units[0].vehicle = { name: "Eigener Wagen", speed: 83, condition: 74 };
+  const state = parseSave(JSON.stringify(old));
+  assert.equal(state.shiftDurationMinutes, 1440);
+  assert.equal(state.startHour, 22);
+  assert.deepEqual(state.units[0].position, old.units[0].position);
+  assert.equal(state.units[0].vehicle.speedKmh, 83);
+});
