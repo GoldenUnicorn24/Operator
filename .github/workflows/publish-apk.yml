@@ -31,30 +31,33 @@ jobs:
           node --check app/src/main/assets/map.js
           node --check app/src/main/assets/audio.js
           node tests/simulation.test.cjs
+      - name: Verify native Android implementation
+        run: |
+          if grep -RE 'import android\.webkit|\bWebView\b' app/src/main/java; then echo 'WebView forbidden in native app' >&2; exit 1; fi
       - name: Gradle 8.9
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Build installable Android debug APK
-        run: gradle --no-daemon :app:assembleDebug
+      - name: Build and test native Android app
+        run: gradle --no-daemon :app:testDebugUnitTest :app:assembleDebug
       - name: Name APK
         shell: bash
         run: |
           test -s app/build/outputs/apk/debug/app-debug.apk
           mkdir -p release
-          cp app/build/outputs/apk/debug/app-debug.apk release/Einsatzleitstelle110-Operator-Alpha05.apk
+          cp app/build/outputs/apk/debug/app-debug.apk release/Einsatzleitstelle110-NativeV1.apk
           sha256sum release/*.apk > release/SHA256SUMS.txt
       - name: Archive APK in Actions
         uses: actions/upload-artifact@v4
         with:
-          name: Einsatzleitstelle110-Operator-Alpha05-APK
+          name: Einsatzleitstelle110-NativeV1-APK
           path: release/
           if-no-files-found: error
       - name: Upload APK directly to GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: v0.5.0-operator-alpha
+          RELEASE_TAG: v1.0.0-native
         shell: bash
         run: |
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
@@ -62,7 +65,7 @@ jobs:
           else
             gh release create "$RELEASE_TAG" release/*.apk release/SHA256SUMS.txt \
               --target "$GITHUB_SHA" \
-              --title "EINSATZLEITSTELLE 110 — Operator Alpha 0.5 (Android)" \
-              --notes "Installierbare Android-Debug-APK. Die Livekarte nimmt auf Smartphones mehr Platz ein; vollständige Bundesland-Gesamtansichten, Einheiten, Notrufe, 8/12/24-Stunden-Schichten, Training und Ausrüstung. Die Fahrwege sind derzeit Simulation, noch keine echten Straßendaten. Nicht Play-Store-signiert; Test auf Gerät empfohlen." \
+              --title "EINSATZLEITSTELLE 110 — Operator Native 1.0 (Android)" \
+              --notes "Vollständig native Android-Anwendung in Kotlin ohne WebView. 16 geografische Bundeslandgrenzen, taktische Canvas-Karte, Fahrzeuge und Einsätze, 8/12/24-Stunden-Schichten, Personal und Ausbildung, Ausrüstung, Editor, Sound und lokale Spielstände. Wegenetz und Fahrzeiten sind simuliert, nicht GPS-Straßendaten. Debug-APK, nicht Play-Store-signiert." \
               --prerelease
           fi
