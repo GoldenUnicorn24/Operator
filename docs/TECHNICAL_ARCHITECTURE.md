@@ -12,8 +12,8 @@ Aktuell: Android/Kotlin-Host mit lokaler WebView und monolithischer Offline-HTML
   `map/mapAdapter`, `map/vehicleAnimator`, `map/routing`, `map/regions`;
   `audio/mixer`, `audio/cues`, `storage/repository`, `storage/migrations`, `editor/schema`, `ui/*`.
 - **Data / Save**: Versionierte JSON-Schemas (z.B. `schemaVersion: 3`), Migrationsfunktion; atomare Speicherung/Backups. Altes Alpha-0.2-localStorage-Format erkennen; Nutzerinhalte nicht überschreiben. Bei Android robuste persistente Speicherung (z.B. Room oder validiertes lokales File), unveränderte Exportmöglichkeit. Keine Bilddaten unkontrolliert in LocalStorage.
-- **Region & Map**: MapLibre GL JS im sicheren Assetloader-Host oder, falls signifikant stabiler, native MapLibre Android integriert. Entscheid dokumentieren. Regionendatensätze `regions/*.json` für 16 Länder; **Hamburg**-Geographie mit lizenzierten GeoJSON/OSM-Assets und attribution. Keine hardcodierten frei erfundenen Grenzpolygone als geographisch korrekt kennzeichnen.
-- **Routing**: Offline-Gewichtungsgraph für Hamburg als kleiner Assetdatensatz; A*/Dijkstra auf Straßenknoten/vereinfachten Straßenwegen; deterministisch reproduzierbare ETA aus Weglänge × Fahrprofil × dynamischer Belegung. Kein echtes Verkehrslageversprechen. Falls Datensatz fehlt: sichtbare geradlinige Fallback-Bewegung, klar als Näherung gelabelt, aber V1-Releasegate bleibt eine bessere Kartenlösung.
+- **Region & Map**: MapLibre GL JS im sicheren AssetLoader-Host oder native MapLibre Android. **16 korrekt georeferenzierte Polygon-Assets und Bounds** für alle Bundesländer; kameraautomatisches `fitBounds(region.boundary)` mit „Ganzes Bundesland“. Landesweite Positionen und Incident-/Unit-Layer, dynamisches Clustering und Filter. Offline-fähige vereinfachte Basiskarten für alle 16; Hamburg optional höher aufgelöst. OSM/GeoJSON-Lizenzen und Attribution beachten; keine Fantasiegrenzen als korrekt deklarieren.
+- **Routing**: Getrennte Engine für landesweite Einheitenpositionen / Bewegungsanimation und verfügbare Straßen-/Wegegraphen. A*/Dijkstra bei lokal vorhandenen Wegedaten; andernfalls klar als Simulation gelabelte ETA und Live-Fahrspur. Keine falschen Echtzeit-Verkehrsdaten; bei Regionwechsel alle Positionen als georeferenzierte Daten erhalten. Landesweite Pins auch bei Zoom-out und Clustering selektierbar.
 - **Audio**: Howler/WebAudio oder natives SoundPool/AudioTrack mit Fokus- und Lebenszyklus-Behandlung. Cues, Cooldowns, SFX-Priorität, getrennte Lautstärkekanäle, keine Autoplay-Sperren umgehen.
 - **Art**: Assets nach `assets/portraits`, `assets/vehicles`, `assets/gear`, `assets/incidents`, `assets/sfx` gliedern; Placeholder durch Originalillustrationen ersetzen, Credits/Attribution in `THIRD_PARTY_NOTICES.md`.
 - **Editor**: Versionierte JSON-Schemas für `IncidentTemplate`, `UnitTemplate`, `VehicleTemplate`, `ScenarioGraph`; Referenzen prüfen, keine dynamische `eval`-Ausführung. Knoten: trigger, message, dispatchRequirement, timer, branch, effect, end.
@@ -37,3 +37,10 @@ Aktuell: Android/Kotlin-Host mit lokaler WebView und monolithischer Offline-HTML
 - Browser-Smoke (Playwright) für einen vollständigen Spieltag und eine zweite Schicht, Bild-Uploads, Grafik-Assets, Tonoptionen, Editor, Import/Export.
 - Android CI: kompilieren, minimale Start-/Lifecycle-Prüfung, APK hochladen.
 - Keine externe Datenquelle als Hard Dependency in CI.
+
+
+## Neuer Schicht- und Zeitkern (verbindlich)
+- `ShiftPlan { durationMinutes: 480|720|1440, startAbsoluteMinute, endAbsoluteMinute, elapsedMinutes, selectedPreset, onDutyTeamIds }`; Kalenderdatum/Spieluhr von `absoluteSimMinutes` ableiten. `shiftIndex` exakt einmal beim Schichtabschluss erhöhen, *nicht* bei Mitternacht.
+- 8/12/24h in Karriere/Sandbox; Report, offene Übergaben, Trainingsfortschritt und Gehälter exakt einmal beim Abschluss. 24h erfordert interne Personalrotation und Müdigkeit/Ruhephasen.
+- `RegionMap { regionId, polygonGeoJSON, bounds, cityMarkers, roadDetailLevel, facilityLocations }`; Echtzeitpositionen pro `VehicleState` mit lat/lon, route polyline, progress, assignedIncidentId, status. Zoom-out mit marker clustering/priority aggregation; Übersicht aller aktiven Orte/Einheiten auch bei großen Flächen.
+- Siehe `docs/STATEWIDE_MAP_AND_SHIFTS.md` (höhere Priorität bei Widersprüchen).
