@@ -36,3 +36,10 @@ jobs:
           name: Einsatzleitstelle110-debug
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+
+      - name: Upload map geometry for validation
+        uses: actions/upload-artifact@v4
+        with:
+          name: Bundeslaender-Geometrie
+          path: app/src/main/assets/data/states.geojson
+          if-no-files-found: error
