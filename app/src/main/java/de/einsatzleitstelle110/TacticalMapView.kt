@@ -32,6 +32,9 @@ class TacticalMapView(
  private var moved=false
  private val pinLocations=mutableListOf<Triple<Float,Float,Any>>()
  private var transform:Transform?=null
+ var useOnlineStreets=true
+ private val streetTiles=NativeStreetTiles(context){postInvalidate()}
+ fun close(){streetTiles.close()}
  private val detector=ScaleGestureDetector(context,object:ScaleGestureDetector.SimpleOnScaleGestureListener(){
   override fun onScale(detector:ScaleGestureDetector):Boolean{
    zoom=(zoom*detector.scaleFactor).coerceIn(0.8f,10f)
@@ -40,11 +43,16 @@ class TacticalMapView(
  })
  data class Transform(val region:GeoRegion,val w:Float,val h:Float,val centerX:Double,
   val centerY:Double,val fitted:Double,val zoom:Float,val panX:Float,val panY:Float) {
-  fun point(lon:Double,lat:Double):PointF {
-   val k=cos(Math.toRadians((region.bounds[1]+region.bounds[3])/2))
-   return PointF((w/2+((lon*k-centerX)*fitted*zoom+panX)).toFloat(),
-     (h/2+((-lat-centerY)*fitted*zoom+panY)).toFloat())
+  companion object {
+   fun worldX(lon:Double)=(lon+180.0)/360.0
+   fun worldY(lat:Double):Double{
+    val r=Math.toRadians(lat.coerceIn(-85.0,85.0))
+    return (1.0-ln(tan(r)+1.0/cos(r))/PI)/2.0
+   }
   }
+  fun point(lon:Double,lat:Double):PointF =
+    PointF((w/2+((worldX(lon)-centerX)*fitted*zoom+panX)).toFloat(),
+      (h/2+((worldY(lat)-centerY)*fitted*zoom+panY)).toFloat())
  }
  fun resetCamera(){zoom=1f;panX=0f;panY=0f;invalidate()}
  fun focus(lon:Double,lat:Double){
@@ -56,12 +64,11 @@ class TacticalMapView(
  }
  private fun makeTransform(z:Float,px:Float,py:Float):Transform {
   val region=game.region();val b=region.bounds
-  val k=cos(Math.toRadians((b[1]+b[3])/2))
-  val minX=b[0]*k;val maxX=b[2]*k
-  val minY=-b[3];val maxY=-b[1]
+  val minX=Transform.worldX(b[0]);val maxX=Transform.worldX(b[2])
+  val minY=Transform.worldY(b[3]);val maxY=Transform.worldY(b[1])
   val ww=max(1f,width.toFloat());val hh=max(1f,height.toFloat())
-  val scale=min((ww-50*d)/(maxX-minX).coerceAtLeast(.001),
-     (hh-76*d)/(maxY-minY).coerceAtLeast(.001)).coerceAtLeast(.001)
+  val scale=min((ww-50*d)/(maxX-minX).coerceAtLeast(.000001),
+     (hh-76*d)/(maxY-minY).coerceAtLeast(.000001)).coerceAtLeast(.001)
   return Transform(region,ww,hh,(minX+maxX)/2,(minY+maxY)/2,scale,z,px,py)
  }
  private fun paint(color:Int,stroke:Float=1f,style:Paint.Style=Paint.Style.FILL){
@@ -104,8 +111,11 @@ class TacticalMapView(
   c.drawPath(shape,p)
   c.save()
   c.clipPath(shape)
-  // Geo district/city graph: intentionally simplified, not actual street routing.
-  for(city in t.region.cities){
+  streetTiles.enabled=useOnlineStreets
+  val onlineTiles=if(useOnlineStreets)streetTiles.draw(c,t.centerX,t.centerY,t.fitted,
+    zoom,panX,panY,width,height)else 0
+  // Offline city graph fallback; do not present the simulated graph as GPS road data.
+  if(onlineTiles==0)for(city in t.region.cities){
    val center=t.point(city.lon,city.lat)
    val close=t.region.cities.filter{it!=city}.sortedBy{
     GeoData.km(GeoPoint(city.lon,city.lat),GeoPoint(it.lon,it.lat))
@@ -197,7 +207,8 @@ class TacticalMapView(
   paint(color("#07131e"));p.alpha=220
   val b=RectF(10*d,height-32*d,width-10*d,height-5*d)
   c.drawRoundRect(b,6*d,6*d,p)
-  text(c,"GEOGRENZE ECHT  •  WEGENETZ SIMULIERT  •  PINCH / ZOOM",18*d,height-15*d,
+  text(c,if(useOnlineStreets)"© OPENSTREETMAP CONTRIBUTORS  ·  ROUTING SIMULIERT"
+    else "GRENZEN ECHT  ·  NETZ SIMULIERT  ·  OFFLINE",18*d,height-15*d,
     8.1f,color("#a9bbc5"))
  }
  override fun onTouchEvent(event:MotionEvent):Boolean {
