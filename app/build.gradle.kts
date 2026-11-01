@@ -19,7 +19,7 @@ android {
 
     // Explicit native-only assets: no index.html, no CSS, no JS in the APK.
     sourceSets.getByName("main") {
-        assets.setSrcDirs(listOf("src/main/assets/data", "src/main/assets/images"))
+        assets.setSrcDirs(listOf("src/main/native_assets", "src/main/assets/images"))
     }
 }
 dependencies {
