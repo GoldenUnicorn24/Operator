@@ -2,11 +2,14 @@
 """Pack the per-state OSM road/town JSON (data/osm, ODbL) into the compact binary asset format.
 
 Format (all integers unsigned LEB128 varints, signed values zigzag-encoded):
-  magic  b"EL110R1\\0"
+  magic  b"EL110R1\\0" (legacy) or b"EL110R2\\0" (version 2)
   places: count, then per place: name (len + UTF-8), kind (0 city, 1 town, 2 suburb, 3 other),
           population, lon*1e5, lat*1e5 (signed)
   roads:  count, then per road: class (byte), ref (len + UTF-8), point count,
           first lon/lat*1e5 (signed), then signed deltas
+R2 roads additionally encode name (len + UTF-8) and direction byte (oneway + 1)
+  after ref, before point count. After roads: areas count, per area kind byte
+  (0 water, 1 park/green, 2 railway), ring count, per ring point count + deltas.
 The JSON sources stay in the repository as the open copy of the ODbL-derived database.
 """
 import json
@@ -42,7 +45,10 @@ def text(s: str, out: bytearray) -> None:
 
 
 def pack(data: dict) -> bytes:
-    out = bytearray(b"EL110R1\0")
+    version = data.get("version", 1)
+    if version not in (1, 2):
+        raise ValueError(f"Unsupported map format {version}")
+    out = bytearray(b"EL110R2\0" if version == 2 else b"EL110R1\0")
     places = data.get("places", [])
     varint(len(places), out)
     for name, kind, pop, lon, lat in places:
@@ -53,9 +59,18 @@ def pack(data: dict) -> bytes:
         varint(zz(round(lat * 1e5)), out)
     roads = data["roads"]
     varint(len(roads), out)
-    for cls, ref, flat in roads:
+    for row in roads:
+        cls, ref, flat = row[:3]
         out.append(int(cls) & 0xFF)
         text(ref or "", out)
+        if version == 2:
+            name, oneway = row[3:5]
+            if oneway not in (-1, 0, 1):
+                raise ValueError("Invalid oneway")
+            text(name or "", out)
+            out.append(oneway + 1)
+        if len(flat) < 4 or len(flat) % 2:
+            raise ValueError("Invalid road geometry")
         n = len(flat) // 2
         varint(n, out)
         px = py = 0
@@ -65,6 +80,24 @@ def pack(data: dict) -> bytes:
             varint(zz(x - px), out)
             varint(zz(y - py), out)
             px, py = x, y
+    if version == 2:
+        areas = data.get("areas", [])
+        varint(len(areas), out)
+        for kind, rings in areas:
+            if kind not in (0, 1, 2):
+                raise ValueError("Invalid area kind")
+            out.append(kind)
+            varint(len(rings), out)
+            for flat in rings:
+                if len(flat) < 8 or len(flat) % 2 or flat[:2] != flat[-2:]:
+                    raise ValueError("Invalid area ring")
+                varint(len(flat) // 2, out)
+                px = py = 0
+                for x, y in zip(flat[::2], flat[1::2]):
+                    x, y = round(x * 1e5), round(y * 1e5)
+                    varint(zz(x - px), out)
+                    varint(zz(y - py), out)
+                    px, py = x, y
     return bytes(out)
 
 

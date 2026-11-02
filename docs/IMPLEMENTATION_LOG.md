@@ -100,3 +100,10 @@ Offen für M4: Onboarding, getrennte Personal-/Fahrzeugzuweisung, Audio-Mixer-Au
 
 ## Meilenstein M4 · 2026-11-02
 Binärformat `geo/roads-*.bin` (varint, Delta-Koordinaten), JSON-Quelle nach `data/osm` (ODbL-Offenlegung). Tutorial als Engine-Zustand `tutorialStep`. Versetzung verschiebt die ganze Planstelle (inkl. Ablöseteams), Ladeprüfung toleriert ungleiche Teamgrößen. Abnahmetest deckte unfaire Flächenländer auf (NI 7/20) → Größen-Skalierung von Fristen und Kräften; danach NI 15/20, BY 13/15, HH 19/24 (+3 übergeben). Emulator-Messwerte (CI, x86_64, kein physisches Gerät) in `docs/evidence/claude-m1/perf-emulator.txt`. Version 0.10.0-v1-kandidat (versionCode 111) – bewusst kein 1.0, siehe `docs/ACCEPTANCE_CLAUDE_V1.md`.
+
+## Auftrag Teil 2 · 2026-11-02 – Arbeitsplan und Änderungsvertrag
+Basis: `claude/operator-v1-gameplay`, Commit `62b9b87`, Arbeitsbranch `codex/operator-v1-polizeichef`. Native Offline-App, 16 Landesnetze, Schema-5-Spielstände, Disposition und Szenarien bleiben erhalten. Nutzerauftrag hat Vorrang vor älteren Landesübersichtsregeln: Bezirksansicht darf das gewählte Gebiet isolieren; Landesübersicht bleibt erreichbar.
+
+Reihenfolge: P1 Hamburg-Detailauszug (Namen getrennt von Referenzen, gerichtete Straßen, Wasser/Grün/Bahn), rückwärtslesbares Kartenformat, gerichtetes Routing und korrekte Rückwärts-Dijkstra-ETA, Straßenadressen, Bezirksmaske/Kameragrenzen/Beschriftung, JVM- und Android-Nachweise. Danach P2 Streifen/Sonderrechte/FMS, P3 Dienststellen/Fahrzeuge/Personal/Wirtschaft und P4 Realismus/Slots/Querformat/Modularisierung, jeweils mit eigenem Abnahmestand. Keine Vorab-Fertigmeldung.
+
+Hauptrisiken P1: Einbahnrichtung und ETA dürfen nicht auseinanderlaufen; Inselkomponenten und Brücken dürfen nicht künstlich verbunden werden; alter Binärformat-Leser und bestehende Saves müssen erhalten bleiben; dichte Geometrie darf den UI-Thread nicht blockieren. Gebäude sind optional und zunächst ausgeschlossen. APK-Ziel <40 MB. Nachweise: fokussierte JVM-/Python-Tests, bestehende Gradle-Tests/Lint/APK-Prüfung, Android-35-Geräteabläufe mit echten Screenshots und Messwerten; fehlende Laufzeitnachweise bleiben ausdrücklich offen.

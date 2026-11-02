@@ -1,8 +1,8 @@
 name: Build offline geo base (Natural Earth)
 on:
   push:
-    branches: ['claude/**']
-    paths: ['tools/build_geo_base.py', 'tools/build_osm_roads.py', 'tools/pack_geo.py', '.github/workflows/geo-data.yml']
+    branches: ['claude/**', 'codex/operator-v1-polizeichef']
+    paths: ['tools/build_geo_base.py', 'tools/build_osm_roads.py', 'tools/pack_geo.py', 'tools/tests/**', '.github/workflows/geo-data.yml']
   workflow_dispatch:
 permissions:
   contents: write
@@ -25,7 +25,9 @@ jobs:
       - name: Build Germany base map from public-domain Natural Earth
         run: |
           if [ -f app/src/main/native_assets/geo/germany-base.json ]; then echo "base map present"; else python3 tools/build_geo_base.py; fi
-      - name: One-off OSM main-road and town extract per state (ODbL, cached in repo)
+      - name: Verify extraction and binary format contracts
+        run: python3 -m unittest discover -s tools/tests -v
+      - name: One-off OSM roads and Hamburg detail extract (ODbL, cached in repo)
         run: |
           python3 tools/build_osm_roads.py
           python3 tools/pack_geo.py

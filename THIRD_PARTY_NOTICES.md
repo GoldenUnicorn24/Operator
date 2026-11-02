@@ -12,7 +12,9 @@
 
 **Gewässer, Siedlungsflächen, Übersichtsstraßennetz:** Natural Earth 1:10m (gemeinfrei, https://www.naturalearthdata.com/about/terms-of-use/), erzeugt durch `tools/build_geo_base.py` als `geo/germany-base.json`.
 
-Fahrzeiten und Routen auf diesen Netzen sind Spielnäherungen (keine Einbahnstraßen, Abbiegeverbote oder Verkehrslage). Fehlt für eine Strecke ein Netzanschluss, zeigt die Karte gestrichelt eine ausdrücklich gekennzeichnete Distanznäherung; Hubschrauber fliegen direkt.
+**Hamburg-Detailauszug (P1, Format R2):** derselbe OSM-/ODbL-Quellenvertrag gilt für Wohnstraßen, unclassified, living_street, tertiary und öffentliche sinnvolle Zufahrten sowie Wasser-, Grün- und Bahnflächen. Private Zufahrten und Parkplatzgassen werden gefiltert. Straßennamen und Straßenreferenzen bleiben getrennt, Einbahnrichtungen einschließlich umgekehrter OSM-Ways und Kreisverkehre werden übernommen. Offene lesbare Datenkopie: `data/osm/roads-DE-HH.json`; Binärkopie: `geo/roads-DE-HH.bin`. Keine Gebäudeumrisse. Extraktion ausschließlich einmalig in CI; spätere Builds verwenden die gebündelten Dateien.
+
+Fahrzeiten und Routen auf diesen Netzen sind Spielnäherungen (Hamburg mit Einbahnrichtungen seit R2; keine Abbiegeverbote oder Verkehrslage). Fehlt für eine Strecke ein Netzanschluss, zeigt die Karte gestrichelt eine ausdrücklich gekennzeichnete Distanznäherung; Hubschrauber fliegen direkt.
 
 Routen sind ausdrücklich Simulationsnäherungen. Keine echte Navigation und keine heruntergeladenen OSM-Tiles im nativen Spiel. Der ehemalige optionale Online-Tileadapter bleibt nur unter `prototype/previous-native/` als Referenz erhalten und wird nicht kompiliert. Die App besitzt keine Internetberechtigung.
 
