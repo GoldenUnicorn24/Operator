@@ -56,5 +56,6 @@ object GameSnapshots {
             logs = s.logs.toMutableList(),
             unlockedRegions = s.unlockedRegions.toMutableSet(),
             depot = s.depot.toMutableMap(),
+            chief = s.chief.deepCopy(),
         )
 }

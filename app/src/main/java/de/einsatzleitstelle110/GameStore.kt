@@ -113,6 +113,7 @@ object GameStore {
             .put("dutyMinutes", o.dutyMinutes)
             .put("restMinutes", o.restMinutes)
             .put("photo", o.photo)
+            .put("personnelId", o.personnelId)
 
     private fun chain(n: ChainStage) =
         JSONObject()
@@ -145,7 +146,7 @@ object GameStore {
             .put("lon", t.lon)
 
     fun toJson(s: GameState): JSONObject {
-        val o = JSONObject().put("schemaVersion", 5)
+        val o = JSONObject().put("schemaVersion", 6)
         o.put("region", s.region)
             .put("mode", s.mode)
             .put("day", s.day)
@@ -176,6 +177,8 @@ object GameStore {
             .put("customEnabled", s.customEnabled)
             .put("shiftRotations", s.shiftRotations)
             .put("shiftSpecial", s.shiftSpecial)
+            .put("shiftSpecialCost", s.shiftSpecialCost)
+            .put("shiftDecisions", s.shiftDecisions)
             .put("masterVolume", s.masterVolume.toDouble())
             .put("radioVolume", s.radioVolume.toDouble())
             .put("sfxVolume", s.sfxVolume.toDouble())
@@ -189,6 +192,9 @@ object GameStore {
             .put("depot", JSONObject().also { d -> s.depot.forEach { (k, v) -> d.put(k, v) } })
             .put("unlockedRegions", strings(s.unlockedRegions))
             .put("logs", strings(s.logs))
+            .put("chief", PoliceChiefCodec.write(s.chief))
+            .put("shiftFuelCosts", s.shiftFuelCosts)
+            .put("shiftSignalIncidents", s.shiftSignalIncidents)
         o.put(
             "units",
             jsonArray(s.units) { value ->
@@ -235,6 +241,13 @@ object GameStore {
                     .put("onDuty", u.onDuty)
                     .put("scope", u.scope)
                     .put("routeBasis", u.routeBasis)
+                    .put("patrolMode", u.patrolMode)
+                    .put("patrolScope", u.patrolScope)
+                    .put("focusLon", u.focusLon)
+                    .put("focusLat", u.focusLat)
+                    .put("specialSignal", u.specialSignal)
+                    .put("distanceDrivenKm", u.distanceDrivenKm)
+                    .put("shiftDrivenKm", u.shiftDrivenKm)
                     .put(
                         "routePoints",
                         JSONArray().apply {
@@ -313,6 +326,9 @@ object GameStore {
                     .put("fatigue", r.fatigue)
                     .put("specialCosts", r.specialCosts)
                     .put("decisions", r.decisions)
+                    .put("fuel", r.fuel)
+                    .put("buildings", r.buildings)
+                    .put("signalIncidents", r.signalIncidents)
             },
         )
         return o
@@ -378,6 +394,7 @@ object GameStore {
             n(o, "dutyMinutes", 0),
             n(o, "restMinutes", 960),
             o.optString("photo"),
+            o.optString("personnelId").take(90),
         )
     }
 
@@ -440,8 +457,10 @@ object GameStore {
 
     fun fromJson(input: JSONObject): GameState {
         require(input.toString().length <= 15 * 1024 * 1024) { "Datei größer als 15 MB" }
-        val root = if (input.optInt("schemaVersion") == 5) input else NativeMigration.migrate(input)
-        require(root.getInt("schemaVersion") == 5) { "Ungültiger Spielstand" }
+        require(input.optInt("schemaVersion") <= 6) { "Spielstand einer neueren Version" }
+        val migrated = if (input.optInt("schemaVersion") in 5..6) input else NativeMigration.migrate(input)
+        val root = if (migrated.optInt("schemaVersion") == 5) JSONObject(migrated.toString()).put("schemaVersion", 6) else migrated
+        require(root.getInt("schemaVersion") == 6) { "Ungültiger Spielstand" }
         val s =
             GameState(
                 region = root.optString("region", "DE-HH"),
@@ -474,6 +493,8 @@ object GameStore {
                 customEnabled = root.optBoolean("customEnabled", true),
                 shiftRotations = n(root, "shiftRotations", 0),
                 shiftSpecial = n(root, "shiftSpecial", 0),
+                shiftSpecialCost = n(root, "shiftSpecialCost", 0),
+                shiftDecisions = n(root, "shiftDecisions", 0),
                 masterVolume = root.optDouble("masterVolume", .7).toFloat(),
                 radioVolume = root.optDouble("radioVolume", .7).toFloat(),
                 sfxVolume = root.optDouble("sfxVolume", .7).toFloat(),
@@ -485,6 +506,9 @@ object GameStore {
                 trainingRequired = root.optBoolean("trainingRequired", false),
                 tutorialStep = root.optInt("tutorialStep", 0).coerceIn(0, 4),
                 logs = texts(array(root, "logs", 250)),
+                chief = PoliceChiefCodec.read(root.optJSONObject("chief")),
+                shiftFuelCosts = n(root, "shiftFuelCosts", 0),
+                shiftSignalIncidents = n(root, "shiftSignalIncidents", 0),
             )
         root.optJSONObject("depot")?.let { d ->
             for (k in d.keys()) if (k in GameContent.equipment && k != "P99") s.depot[k] = d.optInt(k, 0).coerceIn(0, 999)
@@ -540,7 +564,8 @@ object GameStore {
             val list = array(v, "officers", 8)
             val officers = mutableListOf<Officer>()
             for (k in 0 until list.length()) officers.add(readOfficer(list.getJSONObject(k)))
-            if (officers.isEmpty()) officers.add(o)
+            val managed = s.chief.vehicles.any { it.unitId == id }
+            if (officers.isEmpty() && !managed) officers.add(o)
             val relief = mutableListOf<MutableList<Officer>>()
             val teams = array(v, "reliefTeams", 2)
             for (k in 0 until teams.length()) {
@@ -560,10 +585,10 @@ object GameStore {
                     v.optString("region", s.region),
                     lat,
                     lon,
-                    n(v, "crew", officers.size, 1, 8),
+                    n(v, "crew", officers.size, if (managed) 0 else 1, 8),
                     n(v, "level", 1, 1, 100),
                     n(v, "experience", 0),
-                    officers.first(),
+                    officers.firstOrNull() ?: o,
                     texts(array(v, "equipment", 30)).toMutableSet(),
                     v.optString("status", "FREE"),
                     v.optString("incidentId"),
@@ -592,6 +617,16 @@ object GameStore {
                     mutableListOf(),
                     v.optString("routeBasis", "DISTANCE_APPROXIMATION"),
                 )
+            u.patrolMode = v.optString("patrolMode", "WATCH")
+            u.patrolScope = v.optString("patrolScope", u.scope)
+            u.focusLon = coordinate(v, "focusLon", lon)
+            u.focusLat = coordinate(v, "focusLat", lat)
+            u.specialSignal = v.optBoolean("specialSignal", u.status == "DRIVING")
+            u.distanceDrivenKm = v.optDouble("distanceDrivenKm", 0.0)
+            u.shiftDrivenKm = v.optDouble("shiftDrivenKm", 0.0)
+            require(u.patrolMode in listOf("WATCH", "PATROL", "FOCUS", "CHECKPOINT") &&
+                (u.patrolScope == "STATE" || u.region == "DE-HH" && u.patrolScope in listOf("WANDSBEK", "MITTE", "ALTONA", "NORD", "EIMSBÜTTEL", "HARBURG", "BERGEDORF")) &&
+                u.distanceDrivenKm.isFinite() && u.distanceDrivenKm >= 0 && u.shiftDrivenKm.isFinite() && u.shiftDrivenKm >= 0)
             val points = array(v, "routePoints", 5000)
             for (k in 0 until points.length()) {
                 val a = points.getJSONArray(k)
@@ -606,6 +641,8 @@ object GameStore {
                         "ON_SCENE",
                         "WORKING",
                         "RETURNING",
+                        "PATROLLING",
+                        "CHECKPOINT",
                         "TRAINING",
                         "REST",
                         "OFF_DUTY",
@@ -732,6 +769,9 @@ object GameStore {
                     n(v, "fatigue", 0, 0, 100),
                     n(v, "specialCosts", 0, 0, 10000000),
                     n(v, "decisions", 0, 0, 10000),
+                    n(v, "fuel", 0),
+                    n(v, "buildings", 0),
+                    n(v, "signalIncidents", 0),
                 )
             )
         }

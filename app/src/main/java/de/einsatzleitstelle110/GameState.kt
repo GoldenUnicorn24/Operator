@@ -16,6 +16,7 @@ data class Officer(
     var dutyMinutes: Int = 0,
     var restMinutes: Int = 960,
     var photo: String = "",
+    var personnelId: String = "",
 )
 
 data class UnitState(
@@ -56,7 +57,23 @@ data class UnitState(
     var scope: String = "STATE",
     var routePoints: MutableList<GeoPoint> = mutableListOf(),
     var routeBasis: String = "DISTANCE_APPROXIMATION",
-)
+    var patrolMode: String = "WATCH",
+    var patrolScope: String = scope,
+    var focusLon: Double = lon,
+    var focusLat: Double = lat,
+    var specialSignal: Boolean = false,
+    var distanceDrivenKm: Double = 0.0,
+    var shiftDrivenKm: Double = 0.0,
+) {
+    /** Public FMS meanings, kept separate from the simulation's finer-grained states. */
+    val fmsStatus: Int get() = when {
+        !onDuty || vehicleCondition < 20 || status in listOf("TRAINING", "REST", "OFF_DUTY") -> 6
+        status == "DRIVING" -> 3
+        status in listOf("WORKING", "ON_SCENE") -> 4
+        status == "FREE" && GeoData.km(GeoPoint(lon, lat), GeoPoint(homeLon, homeLat)) < .05 -> 2
+        else -> 1
+    }
+}
 
 data class IncidentState(
     val id: String,
@@ -158,6 +175,9 @@ data class ShiftReport(
     val fatigue: Int = 0,
     val specialCosts: Int = 0,
     val decisions: Int = 0,
+    val fuel: Int = 0,
+    val buildings: Int = 0,
+    val signalIncidents: Int = 0,
 )
 
 data class GameState(
@@ -215,6 +235,9 @@ data class GameState(
     val depot: MutableMap<String, Int> = mutableMapOf(),
     val unlockedRegions: MutableSet<String> = mutableSetOf("DE-HH"),
     val logs: MutableList<String> = mutableListOf(),
+    var shiftFuelCosts: Int = 0,
+    var shiftSignalIncidents: Int = 0,
+    var chief: PoliceChiefState = PoliceChiefState(),
 )
 
 object GameContent {
@@ -404,8 +427,8 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
     fun inScope(lat: Double, lon: Double) = inScope(GeoPoint(lon, lat))
 
     fun available(u: UnitState): Boolean =
-        u.status == "FREE" &&
-            u.officers.size >= minCrew(u.type) &&
+        u.status in listOf("FREE", "PATROLLING", "CHECKPOINT") &&
+            u.officers.size >= chiefMinCrew(u) &&
             u.onDuty &&
             u.vehicleCondition >= 20 &&
             state.absoluteMinute >= u.restUntil &&
@@ -536,6 +559,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
     fun dispatchable(u: UnitState): Boolean =
         available(u) ||
             (u.status == "RETURNING" &&
+                u.officers.size >= chiefMinCrew(u) &&
                 u.incidentId.isBlank() &&
                 state.absoluteMinute >= u.restUntil &&
                 u.onDuty &&
@@ -543,7 +567,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                 (!state.fatigueEnabled || u.officers.all { it.energy >= 15 }))
 
     fun readiness(u: UnitState): Int =
-        if (u.status == "RETURNING") 0
+        if (u.status in listOf("RETURNING", "PATROLLING", "CHECKPOINT")) 0
         else
             when (u.type) {
                 "SEK" -> 12
@@ -553,8 +577,62 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
             }
 
     /** Total minutes until a unit could be on scene: readiness plus routed travel time. */
-    fun eta(u: UnitState, call: IncidentState): Int =
-        readiness(u) + NativeRouting.eta(u, GeoPoint(call.lon, call.lat))
+    fun signalSpeed(specialRights: Boolean) = if (specialRights) 1.25 else 1.0
+
+    fun eta(u: UnitState, call: IncidentState, specialRights: Boolean = call.priority == 1): Int =
+        readiness(u) + ceil(NativeRouting.eta(u, GeoPoint(call.lon, call.lat)) / signalSpeed(specialRights)).toInt().coerceAtLeast(1)
+
+    fun fms(u: UnitState): Int = if (u.fmsStatus in listOf(1, 2) && !dispatchable(u)) 6 else u.fmsStatus
+
+    private fun radioStatus(u: UnitState) = emit("Funkstatus", "${u.callsign} an Leitstelle: Status ${fms(u)}")
+
+    fun patrolPresence(scope: String = state.scope): Double =
+        (state.units.count { it.region == state.region && it.patrolScope == scope && it.status in listOf("PATROLLING", "CHECKPOINT") && available(it) } * .06).coerceAtMost(.3)
+
+    fun setPatrolMode(u: UnitState, mode: String, point: GeoPoint? = null, scope: String = state.scope): Boolean {
+        lastError = ""
+        if (mode !in listOf("WATCH", "PATROL", "FOCUS", "CHECKPOINT") || u.region != state.region || !dispatchable(u)) return false
+        if (scope !in OperationsAreas.options(u.region).map { it.first }) return false
+        val focus = point ?: GeoPoint(u.lon, u.lat)
+        if (!region().contains(focus) || !OperationsAreas.contains(u.region, scope, focus)) {
+            lastError = "Der Streifenpunkt muss im zugewiesenen Gebiet liegen."; return false
+        }
+        val previous = u.patrolMode
+        u.patrolMode = mode; u.patrolScope = scope; u.focusLon = focus.lon; u.focusLat = focus.lat
+        u.specialSignal = false
+        if (state.phase == "RUNNING") {
+            if (mode == "WATCH") sendHome(u)
+            else if (!beginPatrol(u)) { u.patrolMode = previous; return false }
+        }
+        emit("Streifenauftrag", "${u.callsign}: $mode · Präsenz senkt Einbruch/Sachbeschädigung bis 30 %, verbraucht Treibstoff und Kraft.")
+        return true
+    }
+
+    private fun beginPatrol(u: UnitState): Boolean {
+        val region = regions.firstOrNull { it.code == u.region } ?: return false
+        fun inside(p: GeoPoint) = region.contains(p) && OperationsAreas.contains(u.region, u.patrolScope, p)
+        val focus = GeoPoint(u.focusLon, u.focusLat)
+        val route = if (u.patrolMode == "CHECKPOINT") {
+            if (!inside(focus)) return false
+            NativeRouting.routeFor(u, focus).takeIf { r -> r.basis != "DISTANCE_APPROXIMATION" && r.points.all { inside(it) } }
+        } else {
+            val map = MapData.loaded(u.region) ?: return false
+            PatrolRouting.circuit(map, GeoPoint(u.lon, u.lat), u.vehicleSpeed, state.absoluteMinute + u.id.hashCode(), ::inside,
+                if (u.patrolMode == "FOCUS") focus else null)
+        }
+        if (route == null) {
+            lastError = "Kein geschlossener Straßenrundkurs im Revier. Wähle einen anderen Punkt; Sackgassen werden nicht als Dauerstreife wiederholt."
+            return false
+        }
+        u.startLon = u.lon; u.startLat = u.lat
+        u.destLon = route.points.last().lon; u.destLat = route.points.last().lat
+        u.routePoints = route.points.toMutableList(); u.routeBasis = route.basis
+        u.travelTotal = route.durationMinutes; u.travelLeft = u.travelTotal; u.readinessLeft = 0
+        u.specialSignal = false; u.status = "PATROLLING"
+        radioStatus(u)
+        return true
+    }
+
 
     /** Units that may be sent to [call], best first (fitting role, then ETA). */
     fun candidates(call: IncidentState): List<Pair<UnitState, Int>> {
@@ -596,12 +674,14 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                     "DE-${it.region}" == state.region
             }
 
-    fun canHandle(u: UnitState, required: String) =
-        u.type == required ||
+    fun canHandle(u: UnitState, required: String): Boolean {
+        chiefCapabilities(u)?.let { return required in it }
+        return u.type == required ||
             (required == "STREIFE" &&
                 u.type in listOf("SEK", "MEK", "KRIPO", "BEREITSCHAFT", "HUND", "VERKEHR")) ||
             // In the absence of traffic police a patrol can secure and record (substitute penalty).
             (required == "VERKEHR" && u.type == "STREIFE")
+    }
 
     /** Large territorial states: longer realistic response times and more forces. */
     fun largeState(r: GeoRegion = region()) = r.areaKm2 > 25000
@@ -612,6 +692,11 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
     private fun police(type: String) = type !in listOf("RETTUNG", "FEUERWEHR")
 
     fun ensureRoster(u: UnitState) {
+        if (chiefVehicle(u) != null) {
+            u.crew = u.officers.size
+            u.officer = u.officers.firstOrNull() ?: Officer("Unbesetzt")
+            return
+        }
         if (u.officers.isEmpty()) u.officers.add(u.officer)
         while (u.officers.size < u.crew) u.officers.add(
             Officer(
@@ -763,6 +848,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
 
     fun startShift() {
         if (state.phase != "PLANNING") return
+        syncChiefRoster()
         seedUnitsIfNeeded()
         var start = state.absoluteMinute / 1440 * 1440 + state.startMinute
         if (start < state.absoluteMinute) start += 1440
@@ -776,6 +862,9 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         state.shiftSpecial = 0
         state.shiftSpecialCost = 0
         state.shiftDecisions = 0
+        state.shiftFuelCosts = 0
+        state.shiftSignalIncidents = 0
+        state.units.forEach { it.shiftDrivenKm = 0.0 }
         state.shiftIncoming = 0
         state.shiftSolved = 0
         state.shiftFailed = 0
@@ -825,6 +914,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         if (title.contains("laden") || title.contains("markt") || title.contains("demonstration") || title.contains("veranstaltung"))
             w *= if (h in 9..19) 1.8 else .25
         if (t.priority == 1) w *= .55
+        if (title.contains("einbruch") || title.contains("sachbeschädigung")) w *= 1 - patrolPresence()
         return w
     }
 
@@ -948,7 +1038,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         return left
     }
 
-    fun dispatch(call: IncidentState, u: UnitState): Boolean {
+    fun dispatch(call: IncidentState, u: UnitState, specialRights: Boolean = call.priority == 1): Boolean {
         lastError = ""
         if (
             state.phase != "RUNNING" ||
@@ -980,7 +1070,8 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         state.shiftSpecialCost += fee
         val readiness = readiness(u)
         val route = NativeRouting.routeFor(u, GeoPoint(call.lon, call.lat))
-        val eta = route.durationMinutes
+        val eta = ceil(route.durationMinutes / signalSpeed(specialRights)).toInt().coerceAtLeast(1)
+        u.specialSignal = specialRights
         u.routePoints = route.points.toMutableList()
         u.routeBasis = route.basis
         if (call.status == "OPEN") call.status = "DRIVING"
@@ -997,12 +1088,18 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         u.workLeft = call.duration
         u.readinessLeft = readiness
         if (u.type in listOf("SEK", "MEK")) state.shiftSpecial++
-        emit("Einheit unterwegs", "${u.callsign} · ${eta+u.readinessLeft} Sim.-Min.")
+        emit("Einheit unterwegs", "${u.callsign} · ${eta+u.readinessLeft} Sim.-Min. · ${if (specialRights) "mit Sonderrechten: schneller, Unfall-/Lärmrisiko und Mehrverschleiß" else "ohne Sonderrechte"}")
+        radioStatus(u)
+        if (specialRights && rnd() < .025) {
+            state.shiftSignalIncidents++
+            state.reputation = (state.reputation - 1).coerceAtLeast(0)
+            emit("Lärmbeschwerde", "${u.callsign}: Sondersignal hat Anwohner gestört (Ruf −1).")
+        }
         return true
     }
 
     /** Send several units in one radio order. Returns how many actually departed. */
-    fun dispatchAll(call: IncidentState, units: List<UnitState>): Int = units.count { dispatch(call, it) }
+    fun dispatchAll(call: IncidentState, units: List<UnitState>, specialRights: Boolean = call.priority == 1): Int = units.count { dispatch(call, it, specialRights) }
 
     /**
      * Withdraw a unit from its incident; it drives back to its station and is immediately
@@ -1028,14 +1125,15 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
     }
 
     /** Re-route a bound unit directly to another, more urgent call. */
-    fun redirect(u: UnitState, call: IncidentState): Boolean {
+    fun redirect(u: UnitState, call: IncidentState, specialRights: Boolean = call.priority == 1): Boolean {
         if (u.incidentId == call.id) return false
         if (u.incidentId.isNotBlank() && !recall(u)) return false
-        return dispatch(call, u)
+        return dispatch(call, u, specialRights)
     }
 
     private fun sendHome(u: UnitState) {
         u.incidentId = ""
+        u.specialSignal = false
         u.startLat = u.lat
         u.startLon = u.lon
         u.destLat = u.homeLat
@@ -1047,6 +1145,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         u.travelTotal = route.durationMinutes
         u.travelLeft = u.travelTotal
         u.status = if (u.travelTotal <= 0 || GeoData.km(GeoPoint(u.lon, u.lat), GeoPoint(u.homeLon, u.homeLat)) < .05) "FREE" else "RETURNING"
+        radioStatus(u)
     }
 
     private fun rotate(u: UnitState) {
@@ -1078,6 +1177,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
             u.readinessLeft--
             return
         }
+        val previousProgress = if (u.travelTotal <= 0) 1.0 else 1.0 - u.travelLeft.toDouble() / u.travelTotal
         u.travelLeft = (u.travelLeft - 1).coerceAtLeast(0)
         val t = if (u.travelTotal <= 0) 1.0 else 1.0 - u.travelLeft.toDouble() / u.travelTotal
         val pos =
@@ -1089,9 +1189,26 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
             )
         u.lat = pos.lat
         u.lon = pos.lon
+        val geometry = u.routePoints.ifEmpty { listOf(GeoPoint(u.startLon, u.startLat), GeoPoint(u.destLon, u.destLat)) }
+        val driven = geometry.zipWithNext { a, b -> GeoData.km(a, b) }.sum() * (t - previousProgress).coerceAtLeast(0.0)
+        u.distanceDrivenKm += driven; u.shiftDrivenKm += driven
+        recordChiefTravel(u, driven)
+        if (u.specialSignal && u.status == "DRIVING") {
+            if (state.elapsed % 10 == 0) u.vehicleCondition = (u.vehicleCondition - 1).coerceAtLeast(0)
+            if (u.travelLeft > 0 && rnd() < .0003) {
+                u.vehicleCondition = (u.vehicleCondition - 8).coerceAtLeast(0)
+                u.readinessLeft += 2
+                state.shiftSignalIncidents++
+                emit("Fahrzwischenfall", "${u.callsign}: kleiner simulierter Zwischenfall bei Sonderrechten, +2 Min., Zustand −8.")
+            }
+        }
+        if (u.status == "PATROLLING" && state.fatigueEnabled && state.elapsed % 10 == 0)
+            u.officers.forEach { it.energy = (it.energy - 1).coerceAtLeast(0) }
         if (u.travelLeft % 15 == 0) u.vehicleCondition = (u.vehicleCondition - 1).coerceAtLeast(0)
         if (u.travelLeft == 0) {
-            if (u.status == "RETURNING") {
+            if (u.status == "PATROLLING") {
+                u.status = if (u.patrolMode == "CHECKPOINT") "CHECKPOINT" else "FREE"
+            } else if (u.status == "RETURNING") {
                 u.status = "FREE"
                 u.lat = u.homeLat
                 u.lon = u.homeLon
@@ -1349,6 +1466,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
             state.elapsed++
             state.absoluteMinute++
             for (u in state.units.filter { it.region == state.region }) {
+                val previousFms = fms(u)
                 if (
                     u.incidentId.isNotBlank() &&
                         state.incidents.any { it.id == u.incidentId && it.status == "HANDED" }
@@ -1379,7 +1497,18 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                     }
                     rotate(u)
                 }
-                if (u.status in listOf("DRIVING", "RETURNING")) move(u)
+                if (u.status in listOf("DRIVING", "RETURNING", "PATROLLING")) move(u)
+                if (u.status == "FREE" && u.patrolMode in listOf("PATROL", "FOCUS", "CHECKPOINT") && available(u)) {
+                    if (!beginPatrol(u)) { u.patrolMode = "WATCH"; emit("Streife angehalten", "${u.callsign}: $lastError") }
+                }
+                if (u.status == "PATROLLING" && !available(u)) { u.patrolMode = "WATCH"; sendHome(u) }
+                if (previousFms != fms(u)) radioStatus(u)
+                if (state.autoCalls && u.status == "PATROLLING" && openIncidents() < 20 && rnd() < .0007) {
+                    val call = newIncident(IncidentTemplate("Eigenfeststellung", 3, "STREIFE", 6, "Streife bemerkt eine kleine Störung vor Ort.", reward = 300), GeoPoint(u.lon, u.lat))
+                    call.flags.add("patrol-discovery")
+                    emit("Eigenfeststellung", "${u.callsign}: ${call.location}")
+                    dispatch(call, u, false)
+                }
             }
             for (call in state.incidents.toList().filter { it.region == state.region }) {
                 if (call.pending.isNotBlank() && call.status in listOf("OPEN", "DRIVING", "WORKING") && call.age - call.pendingAge >= DECISION_TIMEOUT) {
@@ -1518,13 +1647,18 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                     it.onDuty &&
                     (it.scope == state.scope || it.incidentId.isNotBlank())
             }
-        val wages = (duty.sumOf { it.crew } * 22.5 * state.elapsed / 60.0).roundToInt()
-        val maintenance = duty.sumOf { (100 - it.vehicleCondition) * 2 }
+        val managed = state.chief.vehicles.map { it.unitId }.toSet()
+        val legacy = duty.filter { it.id !in managed }
+        val chiefCosts = closeChiefDay()
+        val wages = (legacy.sumOf { it.crew } * 22.5 * state.elapsed / 60.0).roundToInt() + chiefCosts.wages
+        val maintenance = legacy.sumOf { (100 - it.vehicleCondition) * 2 } + chiefCosts.maintenance
+        state.shiftFuelCosts = legacy.sumOf { ceil(it.shiftDrivenKm * .18).toInt() }
+        val running = state.shiftFuelCosts + chiefCosts.fuel + chiefCosts.buildings
         val funding =
             if (state.mode == "CAREER")
                 (9000 * state.elapsed / 480.0 * (1 + .1 * (state.careerLevel - 1)) * (.7 + state.reputation / 100.0 * .4)).roundToInt()
             else 0
-        if (limited()) state.budget += funding - wages - maintenance
+        if (limited()) state.budget += funding - (wages - chiefCosts.wages) - (maintenance - chiefCosts.maintenance) - state.shiftFuelCosts
         val done = mutableListOf<String>()
         for (u in state.units.filter { it.region == state.region }) if (u.trainingLeft > 0) {
             u.trainingLeft--
@@ -1542,9 +1676,8 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         state.shiftIncome += funding
         state.totalHours += state.elapsed / 60.0
         state.completedShifts++
-        val fatigue =
-            if (duty.isEmpty()) 0
-            else duty.flatMap { it.officers }.map { 100 - it.energy }.average().roundToInt()
+        val workingStaff = duty.flatMap { it.officers }
+        val fatigue = if (workingStaff.isEmpty()) 0 else workingStaff.map { 100 - it.energy }.average().roundToInt()
         state.reports.add(
             0,
             ShiftReport(
@@ -1556,7 +1689,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                 state.shiftFailed,
                 state.shiftHanded,
                 state.shiftIncome,
-                wages + maintenance,
+                wages + maintenance + running,
                 0,
                 state.elapsed,
                 state.shiftStartAbsolute,
@@ -1569,6 +1702,9 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                 fatigue,
                 state.shiftSpecialCost,
                 state.shiftDecisions,
+                state.shiftFuelCosts + chiefCosts.fuel,
+                chiefCosts.buildings,
+                state.shiftSignalIncidents,
             ),
         )
         state.phase = "DEBRIEF"
@@ -1699,6 +1835,9 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
      * from one vehicle crew to another in the planning phase. Crews below minimum cannot deploy.
      */
     fun transferOfficer(from: UnitState, index: Int, to: UnitState): Boolean {
+        if (chiefVehicle(from) != null || chiefVehicle(to) != null) {
+            lastError = "Eigenes Personal bitte über Polizeichef → Personal zuweisen."; return false
+        }
         lastError = ""
         if (state.phase != "PLANNING") {
             lastError = "Versetzungen nur in der Planungsphase."
@@ -1738,7 +1877,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         return true
     }
 
-    fun understaffed(u: UnitState) = u.officers.size < minCrew(u.type)
+    fun understaffed(u: UnitState) = u.officers.size < chiefMinCrew(u)
 
     /** Buy one item into the station depot. */
     fun buyStock(item: String): Boolean {
