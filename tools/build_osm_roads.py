@@ -43,12 +43,13 @@ def query(code: str) -> dict:
     if cached.exists():
         return json.loads(cached.read_text())
     if code in CITY_STATES:
-        hw = "motorway|motorway_link|trunk|trunk_link|primary|primary_link|secondary|tertiary"
+        hw = "motorway|motorway_link|trunk|trunk_link|primary|primary_link|secondary"
     elif code in SMALL:
         hw = "motorway|motorway_link|trunk|trunk_link|primary|primary_link|secondary"
     else:
         hw = "motorway|motorway_link|trunk|trunk_link|primary|primary_link"
-    q = f"""[out:json][timeout:900][maxsize:1073741824];
+    # Small declared limits: busy Overpass servers admit modest queries first.
+    q = f"""[out:json][timeout:240][maxsize:402653184];
 area["ISO3166-2"="{code}"]["admin_level"="4"]->.a;
 (way(area.a)["highway"~"^({hw})$"];);
 out body geom qt;
@@ -56,7 +57,7 @@ node(area.a)["place"~"^(city|town{'|suburb' if code in CITY_STATES else ''})$"];
 out body qt;"""
     body = urllib.parse.urlencode({"data": q}).encode()
     last = None
-    for attempt in range(6):
+    for attempt in range(5):
         url = ENDPOINTS[attempt % len(ENDPOINTS)]
         try:
             req = urllib.request.Request(url, data=body, headers={
@@ -71,7 +72,7 @@ out body qt;"""
         except Exception as e:  # noqa: BLE001
             last = e
             print(f"  {code}: attempt {attempt + 1} via {url} failed: {e}", file=sys.stderr)
-            time.sleep(20 + attempt * 25)
+            time.sleep(30 + attempt * 30)
     raise RuntimeError(f"{code}: {last}")
 
 
@@ -111,7 +112,7 @@ def build(code: str) -> dict:
     for w in ways:
         for n in w["nodes"]:
             use[n] = use.get(n, 0) + 1
-    tol = 0.00012 if code in CITY_STATES else 0.00028  # ~10 m / ~25 m
+    tol = 0.00012 if code in CITY_STATES else 0.0004  # ~10 m / ~35 m
     roads = []
     for w in ways:
         tags = w.get("tags", {})
@@ -151,14 +152,30 @@ def build(code: str) -> dict:
 
 def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
-    only = sys.argv[1:] or STATES
-    summary = {}
+    only = [a for a in sys.argv[1:] if not a.startswith("--")] or STATES
+    summary_path = OUT / "roads.summary.json"
+    summary = json.loads(summary_path.read_text()) if summary_path.exists() else {}
+    missing = []
+    started = time.time()
     for i, code in enumerate(only):
-        result = build(code)
+        path = OUT / f"roads-{code}.json"
+        if time.time() - started > 85 * 60 and not path.exists():
+            print(code, "time budget used up – left for the next run", flush=True)
+            missing.append(code)
+            continue
+        if path.exists() and "--force" not in sys.argv:
+            print(code, "already extracted, skipping", flush=True)
+            continue
+        try:
+            result = build(code)
+        except Exception as e:  # noqa: BLE001
+            print(f"{code}: extraction failed ({e}); will retry in a later run", file=sys.stderr, flush=True)
+            missing.append(code)
+            continue
         if len(result["roads"]) < 50:
             print(f"{code}: too few roads ({len(result['roads'])})", file=sys.stderr)
-            return 1
-        path = OUT / f"roads-{code}.json"
+            missing.append(code)
+            continue
         path.write_text(json.dumps(result, ensure_ascii=False, separators=(",", ":")))
         summary[code] = {
             "roads": len(result["roads"]),
@@ -169,7 +186,9 @@ def main() -> int:
         print(code, summary[code], flush=True)
         if i < len(only) - 1:
             time.sleep(8)  # be polite to the shared Overpass service
-    (OUT / "roads.summary.json").write_text(json.dumps(summary, indent=1))
+        summary_path.write_text(json.dumps(summary, indent=1))
+    print("missing:", missing, flush=True)
+    # Partial progress is committed by the workflow; a later run fills the gaps.
     return 0
 
 
