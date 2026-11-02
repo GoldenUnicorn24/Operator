@@ -36,6 +36,9 @@ object GameSnapshots {
                             requiredTypes = i.requiredTypes.toMutableList(),
                             assignedUnits = i.assignedUnits.toMutableList(),
                             chain = i.chain.map(::stage).toMutableList(),
+                            stagesDone = i.stagesDone.toMutableList(),
+                            flags = i.flags.toMutableSet(),
+                            notes = i.notes.toMutableList(),
                         )
                     }
                     .toMutableList(),

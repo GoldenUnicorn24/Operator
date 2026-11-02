@@ -266,6 +266,13 @@ object GameStore {
                     .put("outcome", i.outcome)
                     .put("firstArrival", i.firstArrival)
                     .put("closedAt", i.closedAt)
+                    .put("scenario", i.scenario)
+                    .put("stagesDone", strings(i.stagesDone))
+                    .put("pending", i.pending)
+                    .put("pendingAge", i.pendingAge)
+                    .put("flags", strings(i.flags))
+                    .put("notes", strings(i.notes))
+                    .put("waitSince", i.waitSince)
             },
         )
         o.put("customTemplates", jsonArray(s.customTemplates) { template(it as IncidentTemplate) })
@@ -293,6 +300,8 @@ object GameStore {
                     .put("specialDispatches", r.specialDispatches)
                     .put("trainingDone", strings(r.trainingDone))
                     .put("fatigue", r.fatigue)
+                    .put("specialCosts", r.specialCosts)
+                    .put("decisions", r.decisions)
             },
         )
         return o
@@ -628,6 +637,13 @@ object GameStore {
             i.outcome = v.optString("outcome").take(400)
             i.firstArrival = v.optInt("firstArrival", -1).coerceIn(-1, 1440)
             i.closedAt = v.optLong("closedAt", -1L).coerceAtLeast(-1L)
+            i.scenario = v.optString("scenario").take(120)
+            i.stagesDone = texts(array(v, "stagesDone", 20))
+            i.pending = v.optString("pending").take(40)
+            i.pendingAge = v.optInt("pendingAge", 0).coerceIn(0, 1440)
+            i.flags = texts(array(v, "flags", 40)).toMutableSet()
+            i.notes = texts(array(v, "notes", 40))
+            i.waitSince = v.optInt("waitSince", -1).coerceIn(-1, 1440)
             require(i.followUpType in GameController.TYPES)
             if (i.assignedUnits.isEmpty() && i.assignedUnit.isNotBlank())
                 i.assignedUnits.add(i.assignedUnit)
@@ -673,6 +689,8 @@ object GameStore {
                     n(v, "specialDispatches", 0),
                     texts(array(v, "trainingDone", 2000)),
                     n(v, "fatigue", 0, 0, 100),
+                    n(v, "specialCosts", 0, 0, 10000000),
+                    n(v, "decisions", 0, 0, 10000),
                 )
             )
         }

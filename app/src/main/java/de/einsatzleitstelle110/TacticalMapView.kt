@@ -736,6 +736,12 @@ class TacticalMapView(
                 else -> "Übergabe"
             }
         pill(c, tag, x, y + 24 * density, 7.5f, tint, 0xe00b1a26.toInt())
+        if (i.pending.isNotBlank()) {
+            // Decision waiting: amber badge.
+            paint(0xffffc66d.toInt())
+            c.drawCircle(x + 12 * density, y - 12 * density, 7 * density, p)
+            text(c, "!", x + 12 * density, y - 8 * density, 11f, 0xff10161c.toInt(), true, true)
+        }
     }
 
     private fun drawCallCluster(c: Canvas, cluster: MapClustering.Cluster<Any>) {

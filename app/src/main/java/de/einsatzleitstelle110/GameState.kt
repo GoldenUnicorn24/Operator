@@ -91,6 +91,17 @@ data class IncidentState(
     var firstArrival: Int = -1,
     /** Absolute simulation minute when the call was solved or failed (-1 = still open). */
     var closedAt: Long = -1,
+    /** M2 scenario flow: scenario id (template title) or blank for the generic call taking. */
+    var scenario: String = "",
+    var stagesDone: MutableList<String> = mutableListOf(),
+    /** Stage awaiting the player's decision (blank = none). */
+    var pending: String = "",
+    var pendingAge: Int = 0,
+    var flags: MutableSet<String> = mutableSetOf(),
+    /** Decision log shown in the call file and used to explain the outcome. */
+    var notes: MutableList<String> = mutableListOf(),
+    /** Age when the on-scene work finished but requested forces were still missing (-1 = no). */
+    var waitSince: Int = -1,
 )
 
 data class ChainStage(
@@ -141,6 +152,8 @@ data class ShiftReport(
     val specialDispatches: Int = 0,
     val trainingDone: List<String> = emptyList(),
     val fatigue: Int = 0,
+    val specialCosts: Int = 0,
+    val decisions: Int = 0,
 )
 
 data class GameState(
@@ -178,6 +191,8 @@ data class GameState(
     var customEnabled: Boolean = true,
     var shiftRotations: Int = 0,
     var shiftSpecial: Int = 0,
+    var shiftSpecialCost: Int = 0,
+    var shiftDecisions: Int = 0,
     var masterVolume: Float = .7f,
     var radioVolume: Float = .7f,
     var sfxVolume: Float = .7f,
@@ -346,11 +361,133 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
             state.absoluteMinute >= u.restUntil &&
             (!state.fatigueEnabled || u.officers.all { it.energy >= 15 })
 
+    /** Human-readable reason of the last refused action (shown by the UI). */
+    var lastError = ""
+
+    /** Abstract deployment fees: specialist forces are scarce and expensive. */
+    fun deploymentCost(type: String) =
+        when (type) {
+            "SEK" -> 4200
+            "MEK" -> 2100
+            "HELI" -> 1500
+            else -> 0
+        }
+
+    /** Recovery after a specialist deployment (debrief, equipment, crew rest; fuel for the helicopter). */
+    fun recoveryMinutes(type: String) =
+        when (type) {
+            "SEK" -> 150
+            "MEK" -> 90
+            "HELI" -> 60
+            else -> 0
+        }
+
+    // --- M2 decision stages ------------------------------------------------------------------
+
+    /** Open the next not-yet-taken stage with the given trigger. */
+    fun trigger(call: IncidentState, trigger: String) {
+        if (call.pending.isNotBlank()) return
+        val stage =
+            if (call.scenario.isBlank()) Scenarios.generic.takeIf { trigger == "CALL" && "call" !in call.stagesDone }
+            else Scenarios.find(call.scenario)?.stages?.firstOrNull { it.trigger == trigger && it.id !in call.stagesDone }
+        stage ?: return
+        call.pending = stage.id
+        call.pendingAge = call.age
+        if (trigger != "CALL") emit("Funkmeldung", "${call.title}: ${stage.text}")
+    }
+
+    /** Whether an option's requirement (forces, equipment, training, earlier decision) is met. */
+    fun optionAvailable(call: IncidentState, o: Option): Pair<Boolean, String> {
+        if (o.needs.isBlank()) return true to ""
+        val (kind, value) = o.needs.split(':', limit = 2).let { it[0] to it.getOrElse(1) { "" } }
+        val units = call.assignedUnits.mapNotNull { id -> state.units.find { it.id == id } }
+        val staff = units.flatMap { it.officers }
+        return when (kind) {
+            "TYPE" -> (units.any { it.type == value }) to "benötigt eine zugewiesene Einheit: $value"
+            "GEAR" -> (staff.any { value in it.equipment }) to "benötigt Ausrüstung bei den Kräften: $value"
+            "QUAL" -> (staff.any { value in it.qualifications }) to "benötigt Lehrgang bei den Kräften: $value"
+            "FLAG" -> (value in call.flags) to "erst nach passender vorheriger Entscheidung"
+            else -> false to "unbekannte Bedingung"
+        }
+    }
+
+    fun pendingStage(call: IncidentState): Stage? = if (call.pending.isBlank()) null else Scenarios.stage(call, call.pending)
+
+    fun pendingDecisions(): Int =
+        state.incidents.count { it.region == state.region && it.pending.isNotBlank() && it.status in listOf("OPEN", "DRIVING", "WORKING") }
+
+    /** Apply a decision. Automatic (timeout) decisions take the default and are marked as such. */
+    fun choose(call: IncidentState, optionId: String, auto: Boolean = false): Boolean {
+        val stage =
+            pendingStage(call)
+                ?: run {
+                    call.pending = ""
+                    return false
+                }
+        var option = stage.options.firstOrNull { it.id == optionId } ?: return false
+        if (!optionAvailable(call, option).first) {
+            if (!auto) {
+                lastError = optionAvailable(call, option).second
+                return false
+            }
+            option = stage.options.first { optionAvailable(call, it).first }
+        }
+        val e = option.effect
+        if (e.cost > 0 && !spend(e.cost)) {
+            lastError = "Budget reicht nicht (${e.cost} €)."
+            return false
+        }
+        call.riskDelta += e.risk + if (auto) .03 else 0.0
+        if (e.work != 0) {
+            call.duration = (call.duration + e.work).coerceAtLeast(1)
+            state.units.filter { it.incidentId == call.id && it.status == "WORKING" }.forEach { it.workLeft = (it.workLeft + e.work).coerceAtLeast(1) }
+        }
+        if (e.time != 0) call.deadline = (call.deadline + e.time).coerceIn(call.age + 5, 1440)
+        if (e.add.isNotEmpty()) call.requiredTypes.addAll(e.add.filter { it in TYPES }.take((7 - call.requiredTypes.size).coerceAtLeast(0)))
+        if (e.prio in 1..3) call.priority = e.prio
+        if (e.rep != 0) state.reputation = (state.reputation + e.rep).coerceIn(0, 100)
+        if (e.flag.isNotBlank()) call.flags.add(e.flag)
+        call.notes.add((if (auto) "⏱ Ohne Entscheidung: " else "") + option.label + " – " + e.note)
+        call.stagesDone.add(stage.id)
+        call.pending = ""
+        if (!auto) state.shiftDecisions++
+        // New requirements reopen the dispatch: the call waits for the requested forces.
+        if (e.add.isNotEmpty() && call.status == "WORKING" && remainingTypes(call).isNotEmpty())
+            emit("Nachforderung", "${call.title}: ${e.add.joinToString()}")
+        else emit("Entscheidung", "${call.title}: ${option.label}")
+        return true
+    }
+
+    private fun scenarioFollowUps(call: IncidentState, success: Boolean) {
+        val sc = Scenarios.find(call.scenario) ?: return
+        var spawned = 0
+        for (fu in sc.follow) {
+            if (spawned >= 2) break
+            val hit =
+                when {
+                    fu.on == "SUCCESS" -> success
+                    fu.on == "FAILURE" -> !success
+                    fu.on.startsWith("FLAG:") -> fu.on.removePrefix("FLAG:") in call.flags
+                    else -> false
+                }
+            if (!hit || rnd() > fu.chance) continue
+            if (state.phase != "RUNNING" || state.elapsed > state.duration - 20 || openIncidents() >= 30) return
+            val pos = GeoPoint(call.lon + (rnd() - .5) * .01, call.lat + (rnd() - .5) * .006)
+            val at = if (region().contains(pos) && inScope(pos)) pos else GeoPoint(call.lon, call.lat)
+            newIncident(
+                IncidentTemplate(fu.title, fu.priority, fu.types.first(), fu.duration, fu.text, requiredTypes = fu.types, deadline = fu.deadline, reward = 600 + (4 - fu.priority) * 0 + fu.duration * 25),
+                at,
+            )
+            spawned++
+        }
+    }
+
     /** Free units, plus units on their way back to the station (911-style re-dispatch). */
     fun dispatchable(u: UnitState): Boolean =
         available(u) ||
             (u.status == "RETURNING" &&
                 u.incidentId.isBlank() &&
+                state.absoluteMinute >= u.restUntil &&
                 u.onDuty &&
                 u.vehicleCondition >= 20 &&
                 (!state.fatigueEnabled || u.officers.all { it.energy >= 15 }))
@@ -571,6 +708,8 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         state.paused = false
         state.shiftRotations = 0
         state.shiftSpecial = 0
+        state.shiftSpecialCost = 0
+        state.shiftDecisions = 0
         state.shiftIncoming = 0
         state.shiftSolved = 0
         state.shiftFailed = 0
@@ -717,9 +856,11 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                 reward = template.reward,
                 followUpType = template.followUpType,
             )
+        if (Scenarios.find(call.title) != null) call.scenario = call.title
         state.incidents.add(0, call)
         state.shiftIncoming++
         emit("Neuer Notruf P${call.priority}", call.title)
+        trigger(call, "CALL")
         return call
     }
 
@@ -735,6 +876,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
     }
 
     fun dispatch(call: IncidentState, u: UnitState): Boolean {
+        lastError = ""
         if (
             state.phase != "RUNNING" ||
                 call.status !in listOf("OPEN", "DRIVING", "WORKING") ||
@@ -750,6 +892,12 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
             return false
         ensureRoster(u)
         if (state.fatigueEnabled && u.officers.any { it.energy < 15 }) return false
+        val fee = deploymentCost(u.type)
+        if (fee > 0 && !spend(fee)) {
+            lastError = "Budget reicht nicht für den ${u.type}-Einsatz (${fee} €)."
+            return false
+        }
+        state.shiftSpecialCost += fee
         val readiness = readiness(u)
         val route = NativeRouting.routeFor(u, GeoPoint(call.lon, call.lat))
         val eta = route.durationMinutes
@@ -871,8 +1019,11 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                 u.status = "ON_SCENE"
                 val call = state.incidents.find { it.id == u.incidentId }
                 if (call != null) {
-                    if (call.firstArrival < 0) call.firstArrival = call.age
-                    emit("Am Einsatzort", "${u.callsign} · ${call.title}")
+                    if (call.firstArrival < 0) {
+                        call.firstArrival = call.age
+                        emit("Am Einsatzort", "${u.callsign} · ${call.title}")
+                        trigger(call, "ARRIVAL")
+                    } else emit("Am Einsatzort", "${u.callsign} · ${call.title}")
                 }
             }
         }
@@ -882,7 +1033,10 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         for (id in call.assignedUnits) {
             val u = state.units.find { it.id == id } ?: continue
             if (u.incidentId != call.id) continue
+            val worked = u.status == "WORKING"
             sendHome(u)
+            val recovery = recoveryMinutes(u.type)
+            if (worked && recovery > 0) u.restUntil = state.absoluteMinute + u.travelTotal + recovery
         }
     }
 
@@ -995,10 +1149,30 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         }
         if (call.riskDelta != 0.0) {
             p -= call.riskDelta
-            reasons.add(if (call.decision == "SUPPORT") "Betreuung verstärkt" else "Gespräch verlängert")
+            val pts = (call.riskDelta * 100).roundToInt()
+            reasons.add(
+                when {
+                    call.notes.isEmpty() -> if (call.decision == "SUPPORT") "Betreuung verstärkt" else "Gespräch verlängert"
+                    pts < 0 -> "Entscheidungen senkten das Risiko (${-pts} Pkt.)"
+                    else -> "Entscheidungen erhöhten das Risiko ($pts Pkt.)"
+                }
+            )
         }
+        if (call.notes.any { it.startsWith("⏱") }) reasons.add("Entscheidung verpasst")
+        if (misusedSpecialists(call, units)) reasons.add("Spezialkräfte für Routinelage gebunden")
         return p.coerceIn(.3, .97) to reasons
     }
+
+    fun failurePenalty(call: IncidentState) =
+        when (call.priority) {
+            1 -> 5
+            2 -> 3
+            else -> 1
+        }
+
+    /** SEK/MEK sent to a call that requires neither. */
+    fun misusedSpecialists(call: IncidentState, units: List<UnitState>) =
+        units.any { it.type in listOf("SEK", "MEK") } && call.requiredTypes.none { it in listOf("SEK", "MEK") }
 
     fun advance(minutes: Int) {
         if (state.phase != "RUNNING" || state.paused) return
@@ -1040,6 +1214,10 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                 if (u.status in listOf("DRIVING", "RETURNING")) move(u)
             }
             for (call in state.incidents.toList().filter { it.region == state.region }) {
+                if (call.pending.isNotBlank() && call.status in listOf("OPEN", "DRIVING", "WORKING") && call.age - call.pendingAge >= DECISION_TIMEOUT) {
+                    choose(call, pendingStage(call)?.default ?: "", auto = true)
+                }
+                if (call.status == "WORKING") call.age++
                 if (call.status in listOf("OPEN", "DRIVING")) {
                     call.age++
                     if (call.age > call.deadline) {
@@ -1049,9 +1227,11 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                         call.status = "FAILED"
                         call.closedAt = state.absoluteMinute
                         state.shiftFailed++
-                        state.reputation = (state.reputation - 2).coerceAtLeast(0)
+                        state.reputation = (state.reputation - failurePenalty(call)).coerceAtLeast(0)
+                        call.pending = ""
                         release(call)
                         branch(call, false)
+                        scenarioFollowUps(call, false)
                         continue
                     }
                 }
@@ -1085,8 +1265,23 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                         emit("Verstärkung eingetroffen", call.title)
                     }
                     val working = assigned.filter { it.status == "WORKING" }
-                    working.forEach { it.workLeft-- }
-                    if (working.isNotEmpty() && working.all { it.workLeft <= 0 }) {
+                    working.forEach { if (it.workLeft > 0) it.workLeft-- }
+                    if ("work" !in call.stagesDone && working.isNotEmpty() && working.maxOf { it.workLeft } <= call.duration / 2)
+                        trigger(call, "WORK")
+                    var rolesComplete = remainingTypes(call).isEmpty()
+                    if (working.isNotEmpty() && working.all { it.workLeft <= 0 } && !rolesComplete) {
+                        // Requested reinforcement never came: after 45 minutes the scene is closed
+                        // with what is there, at a clearly higher risk.
+                        if (call.waitSince < 0) call.waitSince = call.age
+                        else if (call.age - call.waitSince >= 45) {
+                            call.riskDelta += .15
+                            call.notes.add("Nachforderung nicht erfüllt – Lage mit vorhandenen Kräften abgeschlossen")
+                            rolesComplete = true
+                        }
+                    }
+                    if (working.isNotEmpty() && working.all { it.workLeft <= 0 } && rolesComplete) {
+                        // A decision nobody answered is taken by default before the result.
+                        if (call.pending.isNotBlank()) choose(call, pendingStage(call)?.default ?: "", auto = true)
                         val staff = working.flatMap { it.officers }
                         val (probability, reasons) = assess(call, working)
                         val success = rnd() < probability
@@ -1097,14 +1292,15 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                         call.closedAt = state.absoluteMinute
                         if (success) {
                             state.shiftSolved++
-                            state.reputation = (state.reputation + 1).coerceAtMost(100)
+                            state.reputation = (state.reputation + if (call.priority == 1) 2 else 1).coerceAtMost(100)
                             val reward = call.reward
                             state.shiftIncome += reward
                             if (limited()) state.budget += reward
                         } else {
                             state.shiftFailed++
-                            state.reputation = (state.reputation - 2).coerceAtLeast(0)
+                            state.reputation = (state.reputation - failurePenalty(call)).coerceAtLeast(0)
                         }
+                        if (misusedSpecialists(call, working)) state.reputation = (state.reputation - 1).coerceAtLeast(0)
                         staff.forEach {
                             it.experience += if (success) 14 else 5
                             if (it.experience >= 100) {
@@ -1114,6 +1310,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                         }
                         release(call)
                         branch(call, success)
+                        scenarioFollowUps(call, success)
                         emit(
                             if (success) "Einsatz beendet" else "Einsatz fehlgeschlagen",
                             "${call.title} – ${call.outcome}",
@@ -1197,6 +1394,8 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                 state.shiftSpecial,
                 done,
                 fatigue,
+                state.shiftSpecialCost,
+                state.shiftDecisions,
             ),
         )
         state.phase = "DEBRIEF"
@@ -1357,6 +1556,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
     }
 
     companion object {
+        const val DECISION_TIMEOUT = 12
         val TYPES =
             listOf(
                 "STREIFE",

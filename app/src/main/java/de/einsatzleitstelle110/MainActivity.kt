@@ -333,7 +333,8 @@ class MainActivity : Activity() {
                     audio.cue("RADIO")
                     audio.cue("AMBIENT")
                 }
-                name == "Am Einsatzort" || name == "Verstärkung eingetroffen" || name == "Einheit abgezogen" ->
+                name == "Am Einsatzort" || name == "Verstärkung eingetroffen" || name == "Einheit abgezogen" ||
+                    name == "Funkmeldung" || name == "Nachforderung" ->
                     audio.cue("RADIO")
                 name == "Einsatz beendet" -> audio.cue("SUCCESS")
                 name == "Einsatz fehlgeschlagen" -> audio.cue("FAILED")
@@ -347,8 +348,9 @@ class MainActivity : Activity() {
             override fun run() {
                 if (isFinishing) return
                 val old = game.state.phase
+                // Open decisions slow the clock to at most ×4 so nobody misses a radio report.
                 if (foreground && old == "RUNNING" && !game.state.paused)
-                    game.advance(game.state.speed)
+                    game.advance(if (game.pendingDecisions() > 0) minOf(game.state.speed, 4) else game.state.speed)
                 if (old != game.state.phase) save()
                 updateLive()
                 if (old == "RUNNING" && !game.state.paused && ++saveTick % 15 == 0) save()
@@ -590,7 +592,7 @@ class MainActivity : Activity() {
             game.state.incidents
                 .filter { it.region == game.state.region && game.inScope(it.lat, it.lon) && it.status in listOf("OPEN", "DRIVING", "WORKING") }
                 .sortedWith(compareBy<IncidentState>({ if (it.status == "OPEN") 0 else 1 }, { it.priority }, { it.deadline - it.age }))
-        val version = calls.take(3).joinToString { it.id + it.status + (it.deadline - it.age) / 5 } + calls.size
+        val version = calls.take(3).joinToString { it.id + it.status + it.pending + (it.deadline - it.age) / 5 } + calls.size
         if (version == queueVersion) return
         queueVersion = version
         q.removeAllViews()
@@ -607,6 +609,7 @@ class MainActivity : Activity() {
                 contentDescription = "Notruf ${c.title} öffnen"
             }
             r.addView(ui.chip("P${c.priority}", ui.priorityColor(c.priority), c.status == "OPEN"))
+            if (c.pending.isNotBlank()) r.addView(ui.chip("⚠", ui.amber, true), LinearLayout.LayoutParams(-2, -2).apply { marginStart = dp(4) })
             val state = when (c.status) { "OPEN" -> "offen"; "DRIVING" -> "Anfahrt"; else -> "vor Ort" }
             r.addView(text("  ${c.title} · ${c.location}", 13f, ink, c.status == "OPEN").apply { maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END }, LinearLayout.LayoutParams(0, -2, 1f))
             r.addView(text(if (c.status == "WORKING") state else "$state · ${(c.deadline - c.age).coerceAtLeast(0)}′", 11f, if (c.status == "OPEN" && c.deadline - c.age < 15) red else muted, true))
@@ -1258,6 +1261,8 @@ class MainActivity : Activity() {
                 "Wartung" to euro(r.maintenance),
                 "Personalwechsel" to "${r.rotations}",
                 "SEK-/MEK-Aufträge" to "${r.specialDispatches}",
+                "Spezialkräfte-Kosten" to euro(r.specialCosts),
+                "Eigene Entscheidungen" to "${r.decisions}",
                 "Müdigkeit" to "${r.fatigue}%",
             )) {
             val line = row()

@@ -173,7 +173,7 @@ class DispatchPanel(
             return
         }
         val version =
-            c.status + c.assignedUnits.joinToString() + c.age / 2 +
+            c.status + c.pending + c.notes.size + c.assignedUnits.joinToString() + c.age / 2 +
                 game.state.units.filter { it.region == c.region }.joinToString { "${it.status[0]}${it.travelLeft / 2}" }
         if (version != lastVersion) render()
     }
@@ -183,7 +183,7 @@ class DispatchPanel(
     private fun render() {
         val c = call ?: return
         lastVersion =
-            c.status + c.assignedUnits.joinToString() + c.age / 2 +
+            c.status + c.pending + c.notes.size + c.assignedUnits.joinToString() + c.age / 2 +
                 game.state.units.filter { it.region == c.region }.joinToString { "${it.status[0]}${it.travelLeft / 2}" }
         val y = scroll.scrollY
         body.removeAllViews()
@@ -213,12 +213,21 @@ class DispatchPanel(
         body.addView(ui.text("${c.location} · ${c.id} · $status", 12f, ui.muted).apply { setPadding(0, ui.dp(4), 0, ui.dp(6)) })
         if (c.outcome.isNotBlank())
             body.addView(ui.text(c.outcome, 12f, if (c.status == "SOLVED") ui.mint else ui.red, true).apply { setPadding(0, 0, 0, ui.dp(6)) })
-        body.addView(
-            ui.text("„${c.description}“", 13f, ui.ink).apply {
-                setPadding(ui.dp(10), ui.dp(8), ui.dp(10), ui.dp(8))
-                background = ui.bg(Color.rgb(16, 34, 48), Color.rgb(16, 34, 48), 10)
-            }
-        )
+        // Caller dialogue (scripted scenarios) or the original call description.
+        val lines = Scenarios.find(c.scenario)?.caller ?: listOf("„${c.description}“")
+        for (line in lines)
+            body.addView(
+                ui.text(line, 13f, ui.ink).apply {
+                    setPadding(ui.dp(10), ui.dp(7), ui.dp(10), ui.dp(7))
+                    background = ui.bg(Color.rgb(16, 34, 48), Color.rgb(16, 34, 48), 10)
+                },
+                LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = ui.dp(4) },
+            )
+        decisionCard(c)
+        if (c.notes.isNotEmpty()) {
+            body.addView(ui.text("Entscheidungen", 12f, ui.muted, true).apply { setPadding(0, ui.dp(6), 0, ui.dp(2)) })
+            for (n in c.notes) body.addView(ui.text("• $n", 12f, if (n.startsWith("⏱")) ui.amber else ui.muted))
+        }
         // Requirements with coverage.
         val need = c.requiredTypes
         val stillOpen = game.remainingTypes(c)
@@ -299,20 +308,57 @@ class DispatchPanel(
         }
         footer.addView(ui.button("Ort") { map.focus(c.lon, c.lat) }.apply { contentDescription = "Auf Einsatzort zoomen" },
             LinearLayout.LayoutParams(ui.dp(64), ui.dp(48)).apply { marginStart = ui.dp(8) })
-        if (c.decision.isBlank() && c.status in listOf("OPEN", "DRIVING", "WORKING") && game.state.phase == "RUNNING") {
-            body.addView(ui.text("Maßnahmen", 13f, ui.ink, true).apply { setPadding(0, ui.dp(10), 0, ui.dp(4)) })
-            val r = ui.row()
-            r.addView(ui.button("Gespräch verlängern · +10 Min") {
-                if (game.decide(c, "DIALOG")) { onChanged(); render() }
-            }, LinearLayout.LayoutParams(0, ui.dp(44), 1f))
-            r.addView(ui.button("Betreuung · 180 €") {
-                if (game.decide(c, "SUPPORT")) { onChanged(); render() } else toast("Budget reicht nicht aus.")
-            }, LinearLayout.LayoutParams(0, ui.dp(44), 1f).apply { marginStart = ui.dp(6) })
-            body.addView(r)
-        }
         map.previewUnits = selected.toSet()
         map.invalidate()
         scroll.post { scroll.scrollTo(0, y) }
+    }
+
+    /** Short, visible consequences of an option (no hidden numbers). */
+    private fun summary(e: Effect): String {
+        val parts = mutableListOf<String>()
+        if (e.risk <= -.1) parts.add("Risiko ↓↓") else if (e.risk < 0) parts.add("Risiko ↓")
+        if (e.risk >= .1) parts.add("Risiko ↑↑") else if (e.risk > 0) parts.add("Risiko ↑")
+        if (e.work > 0) parts.add("+${e.work} Min vor Ort") else if (e.work < 0) parts.add("${e.work} Min vor Ort")
+        if (e.time > 0) parts.add("Frist +${e.time}") else if (e.time < 0) parts.add("Frist ${e.time}")
+        for (t in e.add) parts.add("+ ${ui.roleName(t)}")
+        if (e.prio in 1..3) parts.add("→ P${e.prio}")
+        if (e.cost > 0) parts.add("${e.cost} €")
+        if (e.rep > 0) parts.add("Ruf +${e.rep}") else if (e.rep < 0) parts.add("Ruf ${e.rep}")
+        if (e.flag.isNotBlank()) parts.add("mögliche Folgeermittlung")
+        return parts.joinToString(" · ").ifEmpty { "ohne Zusatzaufwand" }
+    }
+
+    /** Pending decision stage with all options; locked options show why. */
+    private fun decisionCard(c: IncidentState) {
+        val stage = game.pendingStage(c) ?: return
+        if (c.status !in listOf("OPEN", "DRIVING", "WORKING") || game.state.phase != "RUNNING") return
+        val card = ui.column().apply {
+            setPadding(ui.dp(10), ui.dp(8), ui.dp(10), ui.dp(8))
+            background = ui.bg(Color.rgb(48, 38, 14), ui.amber, 12)
+        }
+        val left = (GameController.DECISION_TIMEOUT - (c.age - c.pendingAge)).coerceAtLeast(0)
+        val head =
+            when (stage.trigger) {
+                "CALL" -> "☎ Anrufannahme"
+                "ARRIVAL" -> "📻 Lage vor Ort"
+                else -> "📻 Lageänderung"
+            }
+        card.addView(ui.text("$head · Entscheidung in $left Min", 12f, ui.amber, true))
+        card.addView(ui.text(stage.text, 14f, ui.ink, true).apply { setPadding(0, ui.dp(3), 0, ui.dp(6)) })
+        for (o in stage.options) {
+            val (ok, why) = game.optionAvailable(c, o)
+            val b = ui.button(o.label + "\n" + if (ok) summary(o.effect) else "🔒 $why", enabled = ok) {
+                if (game.choose(c, o.id)) {
+                    toast(o.effect.note)
+                    onChanged()
+                    render()
+                } else toast(game.lastError)
+            }
+            b.textSize = 12f
+            b.setPadding(ui.dp(10), ui.dp(6), ui.dp(10), ui.dp(6))
+            card.addView(b, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(5) })
+        }
+        body.addView(card, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(6); bottomMargin = ui.dp(4) })
     }
 
     /** Units bound to other calls of the same or lower urgency, eligible for re-dispatch. */
@@ -353,7 +399,9 @@ class DispatchPanel(
             }
         val crew = u.officers.size
         val fatigue = u.officers.minOfOrNull { it.energy } ?: 100
-        info.addView(ui.text("${ui.roleName(u.type)} · $crew Pers. · Kraft $fatigue%$extra", 11f, ui.muted))
+        val fee = game.deploymentCost(u.type)
+        val special = if (fee > 0) " · ${fee} € · danach ${game.recoveryMinutes(u.type)} Min Erholung" else ""
+        info.addView(ui.text("${ui.roleName(u.type)} · $crew Pers. · Kraft $fatigue%$extra$special", 11f, ui.muted))
         r.addView(info, LinearLayout.LayoutParams(0, -2, 1f))
         val right = ui.column().apply { gravity = Gravity.END }
         right.addView(ui.text("$eta Min", 15f, if (eta <= 10) ui.mint else if (eta <= 25) ui.amber else ui.red, true))
@@ -384,7 +432,7 @@ class DispatchPanel(
             if (ok) sent++
         }
         selected.clear()
-        if (sent == 0) toast("Keine der gewählten Einheiten konnte ausrücken.")
+        if (sent == 0) toast(game.lastError.ifBlank { "Keine der gewählten Einheiten konnte ausrücken." })
         else if (sent < units.size) toast("$sent von ${units.size} Einheiten unterwegs – die übrigen sind nicht mehr verfügbar.")
         onChanged()
         render()
