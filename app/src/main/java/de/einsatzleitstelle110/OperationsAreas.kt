@@ -55,6 +55,10 @@ object OperationsAreas {
         if (region == "DE-HH") areas.firstOrNull { it.id == scope }?.rings ?: emptyList()
         else emptyList()
 
+    /** All Hamburg district outlines with names (drawn as thin borders on the live map). */
+    fun districts(region: String): List<Pair<String, List<List<GeoPoint>>>> =
+        if (region == "DE-HH") areas.map { it.name to it.rings } else emptyList()
+
     fun contains(region: String, scope: String, p: GeoPoint): Boolean {
         if (!p.lat.isFinite() || !p.lon.isFinite()) return false
         if (scope == "STATE")

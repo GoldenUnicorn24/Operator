@@ -263,6 +263,8 @@ object GameStore {
                     .put("riskDelta", i.riskDelta)
                     .put("handoffStatus", i.handoffStatus)
                     .put("scope", i.scope)
+                    .put("outcome", i.outcome)
+                    .put("firstArrival", i.firstArrival)
             },
         )
         o.put("customTemplates", jsonArray(s.customTemplates) { template(it as IncidentTemplate) })
@@ -622,6 +624,8 @@ object GameStore {
                     100000,
                 )
             i.followUpType = v.optString("followUpType", "KRIPO")
+            i.outcome = v.optString("outcome").take(400)
+            i.firstArrival = v.optInt("firstArrival", -1).coerceIn(-1, 1440)
             require(i.followUpType in GameController.TYPES)
             if (i.assignedUnits.isEmpty() && i.assignedUnit.isNotBlank())
                 i.assignedUnits.add(i.assignedUnit)

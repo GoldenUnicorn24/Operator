@@ -70,6 +70,39 @@ class NativeControlRoomTest {
         return false
     }
 
+    private fun tapPrefix(view: View, prefix: String): Boolean {
+        if (view is android.widget.TextView && view.text.toString().startsWith(prefix) && view.isEnabled) {
+            view.performClick()
+            return true
+        }
+        if (view is ViewGroup)
+            for (i in 0 until view.childCount) if (tapPrefix(view.getChildAt(i), prefix)) return true
+        return false
+    }
+
+    private fun mapView(a: MainActivity) =
+        MainActivity::class.java.getDeclaredField("map").apply { isAccessible = true }.get(a) as TacticalMapView
+
+    /** The topographic base map renders on a background thread; wait for it before evidence shots. */
+    private fun waitForBaseMap(scenario: ActivityScenario<MainActivity>) {
+        var ready = false
+        val until = System.currentTimeMillis() + 15000
+        while (!ready && System.currentTimeMillis() < until) {
+            scenario.onActivity { a -> ready = mapView(a).baseMapReady() }
+            if (!ready) Thread.sleep(250)
+        }
+        assertTrue("base map rendered", ready)
+        Thread.sleep(400)
+    }
+
+    private fun autoDispatch(g: GameController) {
+        for (call in g.state.incidents.filter { it.region == g.state.region && it.status in listOf("OPEN", "DRIVING") }.sortedBy { it.priority })
+            for (need in g.remainingTypes(call)) {
+                val pick = g.candidates(call).firstOrNull { (u, _) -> g.canHandle(u, need) } ?: continue
+                g.dispatch(call, pick.first)
+            }
+    }
+
     private fun assertNative(view: View) {
         assertFalse(view.javaClass.name.startsWith("android.webkit."))
         if (view is ViewGroup) for (i in 0 until view.childCount) assertNative(view.getChildAt(i))
@@ -105,7 +138,84 @@ class NativeControlRoomTest {
                 g.state.paused = true
                 invoke(a, "showTab", "MAP")
             }
+            waitForBaseMap(scenario)
             screenshot(file)
+        }
+    }
+
+    /**
+     * M1 vertical slice on a device: Hamburg career shift, call opened from the live map,
+     * multi-unit dispatch from the map panel, vehicles driving on the routed roads, withdrawal,
+     * a full 8-hour day and the shift report.
+     */
+    @Test
+    fun hamburgLiveMapDispatchAndEightHourShift() {
+        reset()
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            instrument.waitForIdleSync()
+            scenario.onActivity { a ->
+                dismiss(a)
+                assertNative(a.window.decorView)
+                val g = game(a)
+                assertEquals("DE-HH", g.state.region)
+                g.state.mode = "CAREER"
+                g.state.randomSeed = 20261102
+                g.setShift(14, 8)
+                g.startShift()
+                g.state.paused = true
+                invoke(a, "showTab", "MAP")
+            }
+            waitForBaseMap(scenario)
+            screenshot("native-hamburg-live.png")
+            var callId = ""
+            scenario.onActivity { a ->
+                val g = game(a)
+                val call = g.state.incidents.first { it.status == "OPEN" }
+                callId = call.id
+                invoke(a, "openCall", call)
+            }
+            instrument.waitForIdleSync()
+            Thread.sleep(500)
+            screenshot("native-dispatch-panel.png")
+            scenario.onActivity { a ->
+                val g = game(a)
+                val call = g.state.incidents.first { it.id == callId }
+                assertTrue("dispatch button in the map panel", tapPrefix(a.window.decorView, "Entsenden ("))
+                assertEquals("DRIVING", call.status)
+                assertTrue(call.assignedUnits.isNotEmpty())
+                val u = g.state.units.first { it.id == call.assignedUnits.first() }
+                assertNotEquals("DISTANCE_APPROXIMATION", u.routeBasis)
+                assertTrue(u.routePoints.size > 4)
+                g.state.paused = false
+                g.advance(u.readinessLeft + (u.travelTotal / 2).coerceAtLeast(1))
+                g.state.paused = true
+                assertEquals("DRIVING", u.status)
+                mapView(a).focus(u.lon, u.lat)
+            }
+            waitForBaseMap(scenario)
+            screenshot("native-vehicle-route.png")
+            scenario.onActivity { a ->
+                val g = game(a)
+                // Withdraw and re-dispatch: the unit turns around and stays alarmable.
+                val call = g.state.incidents.first { it.id == callId }
+                val u = g.state.units.first { it.id == call.assignedUnits.first() }
+                g.state.paused = false
+                assertTrue(g.recall(u))
+                assertTrue(g.dispatchable(u))
+                assertTrue(g.dispatch(call, u))
+                var guard = 0
+                while (g.state.phase == "RUNNING" && guard++ < 600) {
+                    autoDispatch(g)
+                    g.advance(1)
+                }
+                assertEquals("DEBRIEF", g.state.phase)
+                val r = g.state.reports.first()
+                assertEquals(1, g.state.reports.size)
+                assertTrue("calls ${r.served}", r.served >= 8)
+                assertTrue("solved ${r.solved}/${r.served}", r.solved >= r.served / 2)
+                invoke(a, "showDebrief")
+            }
+            screenshot("native-hamburg-8h-report.png")
         }
     }
 

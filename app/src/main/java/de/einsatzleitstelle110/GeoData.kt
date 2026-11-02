@@ -86,8 +86,13 @@ object GeoData {
     fun load(context: Context): List<GeoRegion> {
         OperationsAreas.load(context)
         if (regions != null) return regions!!
-        val root =
-            JSONObject(context.assets.open("states.geojson").bufferedReader().use { it.readText() })
+        regions = parseStates(context.assets.open("states.geojson").bufferedReader().use { it.readText() })
+        return regions!!
+    }
+
+    /** Parse the bundled BKG state borders (no Android dependency; used by JVM tests). */
+    fun parseStates(raw: String): List<GeoRegion> {
+        val root = JSONObject(raw)
         val features = root.getJSONArray("features")
         val parsed = mutableListOf<GeoRegion>()
         for (fi in 0 until features.length()) {
@@ -126,8 +131,7 @@ object GeoData {
                     }
             parsed.add(GeoRegion(code, name, result, cities))
         }
-        regions = parsed.sortedBy { it.name }
-        return regions!!
+        return parsed.sortedBy { it.name }
     }
 
     fun find(code: String) = all.first { it.code == code }

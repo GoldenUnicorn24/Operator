@@ -1,7 +1,7 @@
 name: Native Android APK and device verification
 on:
   push:
-    branches: [main, 'codex/**']
+    branches: [main, 'codex/**', 'claude/**']
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -97,8 +97,14 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           TAG=operator-native-v2-preview
+          NOTES=docs/NATIVE_PREVIEW_RELEASE.md
+          TITLE="Native Leitstelle: neue Grafik, Bezirke und persönliche Ausstattung"
+          case "${GITHUB_REF_NAME}" in
+            claude/*) TAG=operator-claude-v1-preview; NOTES=docs/RELEASE_CLAUDE_V1.md; TITLE="Einsatzleitstelle 110 – V1-Entwicklungsstand (Claude)";;
+          esac
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" release/Einsatzleitstelle110-Native-Leitstelle.apk release/SHA256SUMS.txt release/package-audit.json --clobber
+            gh release edit "$TAG" --notes-file "$NOTES" --target "$GITHUB_SHA" || true
           else
-            gh release create "$TAG" release/Einsatzleitstelle110-Native-Leitstelle.apk release/SHA256SUMS.txt release/package-audit.json --target "$GITHUB_SHA" --prerelease --title "Native Leitstelle: neue Grafik, Bezirke und persönliche Ausstattung" --notes-file docs/NATIVE_PREVIEW_RELEASE.md
+            gh release create "$TAG" release/Einsatzleitstelle110-Native-Leitstelle.apk release/SHA256SUMS.txt release/package-audit.json --target "$GITHUB_SHA" --prerelease --title "$TITLE" --notes-file "$NOTES"
           fi
