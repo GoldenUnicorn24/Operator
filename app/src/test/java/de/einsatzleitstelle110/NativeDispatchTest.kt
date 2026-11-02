@@ -180,6 +180,28 @@ class NativeDispatchTest {
     private fun asset(name: String) =
         listOf(File("src/main/native_assets/$name"), File("app/src/main/native_assets/$name")).firstOrNull { it.isFile }
 
+    /** Statewide routing on the bundled OSM extracts: Hannover–Oldenburg, München–Nürnberg. */
+    @Test
+    fun statewideRoutesUseTheRealRoadNetwork() {
+        for ((code, a, b, maxKm) in listOf(
+            listOf("DE-NI", GeoPoint(9.732, 52.3759), GeoPoint(8.2146, 53.1435), 230.0),
+            listOf("DE-BY", GeoPoint(11.5761, 48.1372), GeoPoint(11.0767, 49.4521), 240.0),
+        )) {
+            val file = asset("geo/roads-$code.json") ?: return
+            val t0 = System.nanoTime()
+            NativeRouting.install(MapData.parseState(code as String, file.readText()))
+            val built = (System.nanoTime() - t0) / 1e6
+            val t1 = System.nanoTime()
+            val r = NativeRouting.route(a as GeoPoint, b as GeoPoint, 62.0, code)
+            val ms = (System.nanoTime() - t1) / 1e6
+            println("$code route ${"%.0f".format(r.distanceKm)} km, ${r.durationMinutes} min, ${r.points.size} pts, basis ${r.basis}; load+graph ${"%.0f".format(built)} ms, A* ${"%.0f".format(ms)} ms, nodes ${NativeRouting.loadedGraph(code)!!.nodeCount}")
+            assertEquals("OSM_MAIN_ROADS_APPROXIMATION", r.basis)
+            assertTrue(r.distanceKm > GeoData.km(a, b) && r.distanceKm < maxKm as Double)
+            assertTrue(r.points.size > 50)
+            NativeRouting.clear()
+        }
+    }
+
     /**
      * A complete 8-hour Hamburg day on the real state border and bundled road network, played by a
      * simple automatic dispatcher. Proves the vertical slice end to end without a device.
