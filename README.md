@@ -4,6 +4,10 @@
 
 [Native Android-APK herunterladen](https://github.com/GoldenUnicorn24/Operator/releases/download/operator-native-v2-preview/Einsatzleitstelle110-Native-Leitstelle.apk) · [Android-Screenshots](docs/evidence/native-v2/)
 
+## V1-Entwicklungsstand (Branch `claude/operator-v1-gameplay`)
+
+Meilensteine **M1–M4** umgesetzt (Version 0.10.0-v1-kandidat): topografische Offline-Live-Karte aller 16 Länder mit Straßenrouting, Disposition direkt auf der Karte, 34 Einsatzabläufe mit Entscheidungen, SEK/MEK-Differenzierung, Karriere mit Freischaltungen, Loadout, visueller Ketteneditor, Tutorial. Abnahmestand: [docs/ACCEPTANCE_CLAUDE_V1.md](docs/ACCEPTANCE_CLAUDE_V1.md). [Preview-APK](https://github.com/GoldenUnicorn24/Operator/releases/tag/operator-claude-v1-preview) · [Gerätescreenshots](docs/evidence/claude-m1/) · [Release-Notes](docs/RELEASE_CLAUDE_V1.md). Noch kein v1.0: menschlicher Spieltest und Messung auf echtem Gerät stehen aus.
+
 ## Aktueller nativer Stand
 
 - 16 vollständige Offline-Bundeslandkarten mit echten Grenzen, Städten, fiktiven Wachen, Fahrzeugen, Notrufen, Clustern, Filtern und Routen. Hamburg mit amtlichem Hauptstraßennetz und einem A*-Spielgraph.

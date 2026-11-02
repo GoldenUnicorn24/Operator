@@ -25,6 +25,43 @@ data class GeoRegion(
         )
     }
 
+    /**
+     * Bounds of the main territory for camera fitting: the largest ring plus nearby parts. Distant
+     * exclaves (Hamburg's Neuwerk, Bremerhaven is kept because it is a large ring) would otherwise
+     * shrink the city to a dot.
+     */
+    val coreBounds: DoubleArray by lazy {
+        fun box(r: List<GeoPoint>) = doubleArrayOf(r.minOf { it.lon }, r.minOf { it.lat }, r.maxOf { it.lon }, r.maxOf { it.lat })
+        val boxes = rings.map { box(it) }
+        val main = boxes.maxByOrNull { (it[2] - it[0]) * (it[3] - it[1]) } ?: return@lazy bounds
+        val area = (main[2] - main[0]) * (main[3] - main[1])
+        val keep =
+            boxes.filter { b ->
+                val big = (b[2] - b[0]) * (b[3] - b[1]) > area * .04
+                val near = b[0] < main[2] + .15 && b[2] > main[0] - .15 && b[1] < main[3] + .15 && b[3] > main[1] - .15
+                big || near
+            }
+        doubleArrayOf(keep.minOf { it[0] }, keep.minOf { it[1] }, keep.maxOf { it[2] }, keep.maxOf { it[3] })
+    }
+
+    /** Approximate area in km² (even-odd rings, equirectangular per ring). */
+    val areaKm2: Double by lazy {
+        var total = 0.0
+        for (ring in rings) {
+            if (ring.size < 3) continue
+            val lat0 = Math.toRadians(ring.sumOf { it.lat } / ring.size)
+            var a = 0.0
+            for (i in ring.indices) {
+                val p = ring[i]
+                val q = ring[(i + 1) % ring.size]
+                a += p.lon * q.lat - q.lon * p.lat
+            }
+            total += abs(a) / 2 * 111.32 * 111.32 * cos(lat0)
+        }
+        // Holes are counted as rings too; for German states they are negligible (Bremen/Berlin enclaves).
+        total
+    }
+
     fun contains(p: GeoPoint): Boolean {
         // Multipolygons and holes: even-odd winding.
         var inside = false
@@ -86,8 +123,13 @@ object GeoData {
     fun load(context: Context): List<GeoRegion> {
         OperationsAreas.load(context)
         if (regions != null) return regions!!
-        val root =
-            JSONObject(context.assets.open("states.geojson").bufferedReader().use { it.readText() })
+        regions = parseStates(context.assets.open("states.geojson").bufferedReader().use { it.readText() })
+        return regions!!
+    }
+
+    /** Parse the bundled BKG state borders (no Android dependency; used by JVM tests). */
+    fun parseStates(raw: String): List<GeoRegion> {
+        val root = JSONObject(raw)
         val features = root.getJSONArray("features")
         val parsed = mutableListOf<GeoRegion>()
         for (fi in 0 until features.length()) {
@@ -126,8 +168,7 @@ object GeoData {
                     }
             parsed.add(GeoRegion(code, name, result, cities))
         }
-        regions = parsed.sortedBy { it.name }
-        return regions!!
+        return parsed.sortedBy { it.name }
     }
 
     fun find(code: String) = all.first { it.code == code }

@@ -85,6 +85,23 @@ data class IncidentState(
     var scope: String = "STATE",
     var reward: Int = 1100,
     var followUpType: String = "KRIPO",
+    /** Explanation of the result shown in the call file and the shift report. */
+    var outcome: String = "",
+    /** Call age when the first unit reached the scene (-1 = nobody yet). */
+    var firstArrival: Int = -1,
+    /** Absolute simulation minute when the call was solved or failed (-1 = still open). */
+    var closedAt: Long = -1,
+    /** M2 scenario flow: scenario id (template title) or blank for the generic call taking. */
+    var scenario: String = "",
+    var stagesDone: MutableList<String> = mutableListOf(),
+    /** Stage awaiting the player's decision (blank = none). */
+    var pending: String = "",
+    var pendingAge: Int = 0,
+    var flags: MutableSet<String> = mutableSetOf(),
+    /** Decision log shown in the call file and used to explain the outcome. */
+    var notes: MutableList<String> = mutableListOf(),
+    /** Age when the on-scene work finished but requested forces were still missing (-1 = no). */
+    var waitSince: Int = -1,
 )
 
 data class ChainStage(
@@ -96,6 +113,10 @@ data class ChainStage(
     val onSuccess: String = "",
     val onFailure: String = "",
     val requiredTypes: List<String> = listOf(required),
+    /** Radio/caller text shown when the stage starts (editor). */
+    val radio: String = "",
+    /** Timer: deadline of this stage in minutes (0 = 120). */
+    val deadline: Int = 0,
 )
 
 data class IncidentTemplate(
@@ -135,6 +156,8 @@ data class ShiftReport(
     val specialDispatches: Int = 0,
     val trainingDone: List<String> = emptyList(),
     val fatigue: Int = 0,
+    val specialCosts: Int = 0,
+    val decisions: Int = 0,
 )
 
 data class GameState(
@@ -172,12 +195,25 @@ data class GameState(
     var customEnabled: Boolean = true,
     var shiftRotations: Int = 0,
     var shiftSpecial: Int = 0,
+    var shiftSpecialCost: Int = 0,
+    var shiftDecisions: Int = 0,
     var masterVolume: Float = .7f,
     var radioVolume: Float = .7f,
     var sfxVolume: Float = .7f,
     var ambientVolume: Float = 0f,
     var randomSeed: Long = 982341L,
     var legacySource: String = "",
+    /** Career progression: level 1–4 and the states the control room may operate. */
+    var careerLevel: Int = 1,
+    /** LEICHT / NORMAL / SCHWER: call volume and deadlines. */
+    var difficulty: String = "NORMAL",
+    /** Sandbox rule: SEK/MEK may only deploy with their specialist course. */
+    var trainingRequired: Boolean = false,
+    /** Onboarding: 0 = off, 1–3 = guided call, 4 = finished. */
+    var tutorialStep: Int = 0,
+    /** Station depot: purchased equipment not yet issued to an officer. */
+    val depot: MutableMap<String, Int> = mutableMapOf(),
+    val unlockedRegions: MutableSet<String> = mutableSetOf("DE-HH"),
     val logs: MutableList<String> = mutableListOf(),
 )
 
@@ -236,6 +272,40 @@ object GameContent {
             "Einsatzgürtel" -> 1
             else -> 2
         }
+
+    /** Loadout slots: category and how many items of it one officer can carry. */
+    val slotOf =
+        mapOf(
+            "P99" to "Dienstwaffe", "MP5" to "Zusatzwaffe", "G36" to "Zusatzwaffe", "Elektroimpulsgerät" to "Zusatzwaffe",
+            "Schutzweste" to "Schutz", "Schutzhelm" to "Schutz", "Schutzschild" to "Schutz",
+            "Funkgerät" to "Kommunikation", "Bodycam" to "Kommunikation", "Funk-Repeater" to "Kommunikation",
+            "Erste-Hilfe" to "Hilfsmittel", "Taschenlampe" to "Hilfsmittel", "Einsatzgürtel" to "Hilfsmittel", "Schutzhandschuhe" to "Hilfsmittel",
+            "Drohne" to "Technik", "Fahrzeugkamera" to "Technik",
+        )
+    val slotLimits = linkedMapOf("Dienstwaffe" to 1, "Zusatzwaffe" to 1, "Schutz" to 2, "Kommunikation" to 2, "Hilfsmittel" to 3, "Technik" to 1)
+
+    /** Carried weight in kg (abstract game values). */
+    val weight =
+        mapOf(
+            "P99" to 1.0, "MP5" to 3.0, "G36" to 4.0, "Elektroimpulsgerät" to .5, "Schutzweste" to 3.5, "Schutzhelm" to 1.5,
+            "Schutzschild" to 6.0, "Funkgerät" to .5, "Bodycam" to .2, "Funk-Repeater" to 1.5, "Erste-Hilfe" to 1.0,
+            "Taschenlampe" to .3, "Einsatzgürtel" to 1.0, "Schutzhandschuhe" to .2, "Drohne" to 2.5, "Fahrzeugkamera" to 1.0,
+        )
+    const val MAX_WEIGHT = 12.0
+
+    /** Long guns only for specialist and riot units. */
+    fun compatible(type: String, item: String) =
+        when (item) {
+            "G36" -> type in listOf("SEK", "MEK", "BEREITSCHAFT")
+            "Schutzschild" -> type in listOf("SEK", "BEREITSCHAFT", "STREIFE")
+            else -> true
+        }
+
+    fun loadWeight(items: Collection<String>) = items.sumOf { weight[it] ?: 0.0 }
+
+    /** Which written decisions an item unlocks (derived from the scenario catalog). */
+    fun unlocks(item: String): List<String> =
+        Scenarios.all.flatMap { sc -> sc.stages.flatMap { st -> st.options.filter { it.needs == "GEAR:$item" }.map { "${sc.id}: ${it.label}" } } }
 
     val courses =
         linkedMapOf(
@@ -310,6 +380,11 @@ object GameContent {
 class GameController(val state: GameState, val regions: List<GeoRegion>) {
     var notify: ((String, String) -> Unit)? = null
 
+    /** Real towns of a state (population-weighted call locations). Set by the UI; tests use cities. */
+    var placeProvider: (GeoRegion) -> List<MapPlace> = { r ->
+        r.cities.map { MapPlace(it.name, "city", 80000, it.lon, it.lat) }
+    }
+
     private fun rnd(): Double {
         state.randomSeed = (state.randomSeed * 1664525L + 1013904223L) and 0xffffffffL
         return state.randomSeed.toDouble() / 4294967296.0
@@ -330,10 +405,176 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
 
     fun available(u: UnitState): Boolean =
         u.status == "FREE" &&
+            u.officers.size >= minCrew(u.type) &&
             u.onDuty &&
             u.vehicleCondition >= 20 &&
             state.absoluteMinute >= u.restUntil &&
             (!state.fatigueEnabled || u.officers.all { it.energy >= 15 })
+
+    /** Human-readable reason of the last refused action (shown by the UI). */
+    var lastError = ""
+
+    /** Abstract deployment fees: specialist forces are scarce and expensive. */
+    fun deploymentCost(type: String) =
+        when (type) {
+            "SEK" -> 4200
+            "MEK" -> 2100
+            "HELI" -> 1500
+            else -> 0
+        }
+
+    /** Recovery after a specialist deployment (debrief, equipment, crew rest; fuel for the helicopter). */
+    fun recoveryMinutes(type: String) =
+        when (type) {
+            "SEK" -> 150
+            "MEK" -> 90
+            "HELI" -> 60
+            else -> 0
+        }
+
+    // --- M2 decision stages ------------------------------------------------------------------
+
+    /** Open the next not-yet-taken stage with the given trigger. */
+    fun trigger(call: IncidentState, trigger: String) {
+        if (call.pending.isNotBlank()) return
+        val stage =
+            if (call.scenario.isBlank()) Scenarios.generic.takeIf { trigger == "CALL" && "call" !in call.stagesDone }
+            else Scenarios.find(call.scenario)?.stages?.firstOrNull { it.trigger == trigger && it.id !in call.stagesDone }
+        stage ?: return
+        call.pending = stage.id
+        call.pendingAge = call.age
+        if (trigger != "CALL") emit("Funkmeldung", "${call.title}: ${stage.text}")
+    }
+
+    /** Whether an option's requirement (forces, equipment, training, earlier decision) is met. */
+    fun optionAvailable(call: IncidentState, o: Option): Pair<Boolean, String> {
+        if (o.needs.isBlank()) return true to ""
+        val (kind, value) = o.needs.split(':', limit = 2).let { it[0] to it.getOrElse(1) { "" } }
+        val units = call.assignedUnits.mapNotNull { id -> state.units.find { it.id == id } }
+        val staff = units.flatMap { it.officers }
+        return when (kind) {
+            "TYPE" -> (units.any { it.type == value }) to "benötigt eine zugewiesene Einheit: $value"
+            "GEAR" -> (staff.any { value in it.equipment }) to "benötigt Ausrüstung bei den Kräften: $value"
+            "QUAL" -> (staff.any { value in it.qualifications }) to "benötigt Lehrgang bei den Kräften: $value"
+            "FLAG" -> (value in call.flags) to "erst nach passender vorheriger Entscheidung"
+            else -> false to "unbekannte Bedingung"
+        }
+    }
+
+    fun pendingStage(call: IncidentState): Stage? = if (call.pending.isBlank()) null else Scenarios.stage(call, call.pending)
+
+    fun pendingDecisions(): Int =
+        state.incidents.count { it.region == state.region && it.pending.isNotBlank() && it.status in listOf("OPEN", "DRIVING", "WORKING") }
+
+    /** Apply a decision. Automatic (timeout) decisions take the default and are marked as such. */
+    fun choose(call: IncidentState, optionId: String, auto: Boolean = false): Boolean {
+        val stage =
+            pendingStage(call)
+                ?: run {
+                    call.pending = ""
+                    return false
+                }
+        var option = stage.options.firstOrNull { it.id == optionId } ?: return false
+        if (!optionAvailable(call, option).first) {
+            if (!auto) {
+                lastError = optionAvailable(call, option).second
+                return false
+            }
+            option = stage.options.first { optionAvailable(call, it).first }
+        }
+        val e = option.effect
+        if (e.cost > 0 && !spend(e.cost)) {
+            lastError = "Budget reicht nicht (${e.cost} €)."
+            return false
+        }
+        call.riskDelta += e.risk + if (auto) .03 else 0.0
+        if (e.work != 0) {
+            call.duration = (call.duration + e.work).coerceAtLeast(1)
+            state.units.filter { it.incidentId == call.id && it.status == "WORKING" }.forEach { it.workLeft = (it.workLeft + e.work).coerceAtLeast(1) }
+        }
+        if (e.time != 0) call.deadline = (call.deadline + e.time).coerceIn(call.age + 5, 1440)
+        if (e.add.isNotEmpty()) call.requiredTypes.addAll(e.add.filter { it in TYPES }.take((7 - call.requiredTypes.size).coerceAtLeast(0)))
+        if (e.prio in 1..3) call.priority = e.prio
+        if (e.rep != 0) state.reputation = (state.reputation + e.rep).coerceIn(0, 100)
+        if (e.flag.isNotBlank()) call.flags.add(e.flag)
+        call.notes.add((if (auto) "⏱ Ohne Entscheidung: " else "") + option.label + " – " + e.note)
+        call.stagesDone.add(stage.id)
+        call.pending = ""
+        if (!auto) state.shiftDecisions++
+        // New requirements reopen the dispatch: the call waits for the requested forces.
+        if (e.add.isNotEmpty() && call.status == "WORKING" && remainingTypes(call).isNotEmpty())
+            emit("Nachforderung", "${call.title}: ${e.add.joinToString()}")
+        else emit("Entscheidung", "${call.title}: ${option.label}")
+        return true
+    }
+
+    private fun scenarioFollowUps(call: IncidentState, success: Boolean) {
+        val sc = Scenarios.find(call.scenario) ?: return
+        var spawned = 0
+        for (fu in sc.follow) {
+            if (spawned >= 2) break
+            val hit =
+                when {
+                    fu.on == "SUCCESS" -> success
+                    fu.on == "FAILURE" -> !success
+                    fu.on.startsWith("FLAG:") -> fu.on.removePrefix("FLAG:") in call.flags
+                    else -> false
+                }
+            if (!hit || rnd() > fu.chance) continue
+            if (state.phase != "RUNNING" || state.elapsed > state.duration - 20 || openIncidents() >= 30) return
+            val pos = GeoPoint(call.lon + (rnd() - .5) * .01, call.lat + (rnd() - .5) * .006)
+            val at = if (region().contains(pos) && inScope(pos)) pos else GeoPoint(call.lon, call.lat)
+            newIncident(
+                IncidentTemplate(fu.title, fu.priority, fu.types.first(), fu.duration, fu.text, requiredTypes = fu.types, deadline = fu.deadline, reward = 600 + (4 - fu.priority) * 0 + fu.duration * 25),
+                at,
+            )
+            spawned++
+        }
+    }
+
+    /** Free units, plus units on their way back to the station (911-style re-dispatch). */
+    fun dispatchable(u: UnitState): Boolean =
+        available(u) ||
+            (u.status == "RETURNING" &&
+                u.incidentId.isBlank() &&
+                state.absoluteMinute >= u.restUntil &&
+                u.onDuty &&
+                u.vehicleCondition >= 20 &&
+                (!state.fatigueEnabled || u.officers.all { it.energy >= 15 }))
+
+    fun readiness(u: UnitState): Int =
+        if (u.status == "RETURNING") 0
+        else
+            when (u.type) {
+                "SEK" -> 12
+                "MEK" -> 9
+                "HELI" -> 6
+                else -> 2
+            }
+
+    /** Total minutes until a unit could be on scene: readiness plus routed travel time. */
+    fun eta(u: UnitState, call: IncidentState): Int =
+        readiness(u) + NativeRouting.eta(u, GeoPoint(call.lon, call.lat))
+
+    /** Units that may be sent to [call], best first (fitting role, then ETA). */
+    fun candidates(call: IncidentState): List<Pair<UnitState, Int>> {
+        val need = remainingTypes(call)
+        return state.units
+            .filter { it.region == call.region && dispatchable(it) && it.id !in call.assignedUnits }
+            .map { it to eta(it, call) }
+            .sortedWith(
+                compareBy<Pair<UnitState, Int>>(
+                    { (u, _) ->
+                        when {
+                            need.contains(u.type) -> 0
+                            need.any { canHandle(u, it) } -> 1
+                            else -> 2
+                        }
+                    },
+                    { it.second },
+                )
+            )
+    }
 
     fun freeUnits() =
         state.units.count {
@@ -358,7 +599,15 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
     fun canHandle(u: UnitState, required: String) =
         u.type == required ||
             (required == "STREIFE" &&
-                u.type in listOf("SEK", "MEK", "KRIPO", "BEREITSCHAFT", "HUND", "VERKEHR"))
+                u.type in listOf("SEK", "MEK", "KRIPO", "BEREITSCHAFT", "HUND", "VERKEHR")) ||
+            // In the absence of traffic police a patrol can secure and record (substitute penalty).
+            (required == "VERKEHR" && u.type == "STREIFE")
+
+    /** Large territorial states: longer realistic response times and more forces. */
+    fun largeState(r: GeoRegion = region()) = r.areaKm2 > 25000
+
+    fun regionDeadlineFactor(r: GeoRegion = region()): Double =
+        if (state.scope != "STATE") 1.0 else (1 + (sqrt(r.areaKm2.coerceAtLeast(1.0)) / 27.5 - 1) * .12).coerceIn(1.0, 1.8)
 
     private fun police(type: String) = type !in listOf("RETTUNG", "FEUERWEHR")
 
@@ -402,7 +651,15 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                 "RETTUNG",
                 "FEUERWEHR",
             )
-        repeat(if (state.scope == "STATE") 32 else 8) { i ->
+        // Fictional game stations at the largest real towns of the jurisdiction; specialist
+        // forces (SEK, MEK, helicopter) are based centrally.
+        val sites =
+            placeProvider(r)
+                .filter { r.contains(GeoPoint(it.lon, it.lat)) && inScope(GeoPoint(it.lon, it.lat)) }
+                .sortedByDescending { it.population }
+                .take(if (state.scope != "STATE") 3 else if (largeState(r)) 16 else 10)
+                .map { GeoPoint(it.lon, it.lat) }
+        repeat(if (state.scope != "STATE") 8 else if (largeState(r)) 48 else 32) { i ->
             val t =
                 if (state.scope != "STATE")
                     listOf(
@@ -418,7 +675,10 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                 else types[i % types.size]
             val city = r.cities[i % r.cities.size]
             val p =
-                if (state.scope != "STATE") OperationsAreas.sample(r, state.scope, rng)
+                if (sites.isNotEmpty())
+                    if (t in listOf("SEK", "MEK", "HELI")) sites[if (largeState(r)) (i / types.size) % minOf(3, sites.size) else 0]
+                    else sites[i % sites.size]
+                else if (state.scope != "STATE") OperationsAreas.sample(r, state.scope, rng)
                 else if (i < r.cities.size) GeoPoint(city.lon, city.lat) else sampleState(r)
             val u =
                 UnitState(
@@ -459,6 +719,8 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                     else -> "Dienstwagen"
                 }
             u.vehicleSpeed = if (t == "HELI") 180.0 else if (t == "SEK") 58.0 else 62.0
+            val course = if (t == "SEK") "SEK-Fortbildung" else if (t == "MEK") "MEK-Observation" else ""
+            if (course.isNotBlank()) (u.officers + u.reliefTeams.flatten()).forEach { it.qualifications.add(course) }
             ensureRoster(u)
             state.units.add(u)
         }
@@ -473,11 +735,16 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         return GeoPoint(r.cities.first().lon, r.cities.first().lat)
     }
 
-    fun setRegion(code: String) {
-        if (state.phase == "RUNNING" || regions.none { it.code == code }) return
+    fun setRegion(code: String): Boolean {
+        if (state.phase == "RUNNING" || regions.none { it.code == code }) return false
+        if (state.mode == "CAREER" && code !in state.unlockedRegions) {
+            lastError = "In der Karriere noch nicht freigeschaltet (Stufe ${state.careerLevel})."
+            return false
+        }
         state.region = code
         state.scope = "STATE"
         seedUnitsIfNeeded()
+        return true
     }
 
     fun setScope(code: String): Boolean {
@@ -507,6 +774,8 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         state.paused = false
         state.shiftRotations = 0
         state.shiftSpecial = 0
+        state.shiftSpecialCost = 0
+        state.shiftDecisions = 0
         state.shiftIncoming = 0
         state.shiftSolved = 0
         state.shiftFailed = 0
@@ -527,12 +796,99 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                 it.status = it.handoffStatus.ifBlank { "OPEN" }
                 it.handoffStatus = ""
             }
-        newIncident(NativeCatalog.events[1])
+        // Varied but fair opener: a single-patrol call fitting the time of day, never a P1 at minute 0.
+        newIncident(pickTemplate(opener = true))
         emit("Schicht begonnen", "Neuer Notruf eingegangen")
     }
 
+    /** Hour of day of the simulation (0–23). */
+    fun hour(): Int = ((state.absoluteMinute % 1440) / 60).toInt()
+
+    /** Relative call volume by hour: quiet early morning, rush hours, busy evenings. */
+    fun hourFactor(h: Int = hour()): Double =
+        doubleArrayOf(
+            .75, .62, .5, .42, .38, .45, .7, .95, 1.1, 1.0, .95, 1.0,
+            1.05, 1.0, 1.0, 1.1, 1.25, 1.3, 1.25, 1.2, 1.15, 1.1, 1.0, .9,
+        )[h.mod(24)]
+
+    /** Time-of-day weight of a scenario, so a night shift does not feel like a lunch shift. */
+    fun templateWeight(t: IncidentTemplate, h: Int = hour()): Double {
+        val title = t.title.lowercase()
+        val night = h < 6 || h >= 22
+        val rush = h in 7..9 || h in 16..19
+        var w = 1.0
+        if (title.contains("verkehr") || title.contains("unfall") || title.contains("falschpark"))
+            w *= if (rush) 2.2 else if (night) .5 else 1.0
+        if (title.contains("ruhestörung") || title.contains("gaststätte") || title.contains("schlägerei"))
+            w *= if (night) 2.4 else .6
+        if (title.contains("einbruch")) w *= if (night) 2.0 else .8
+        if (title.contains("laden") || title.contains("markt") || title.contains("demonstration") || title.contains("veranstaltung"))
+            w *= if (h in 9..19) 1.8 else .25
+        if (t.priority == 1) w *= .55
+        return w
+    }
+
+    fun pickTemplate(h: Int = hour(), opener: Boolean = false): IncidentTemplate {
+        val all =
+            allTemplates()
+                .filter {
+                    !opener ||
+                        (it.priority >= 2 &&
+                            it.requiredTypes.size == 1 &&
+                            it.requiredTypes[0] == "STREIFE" &&
+                            it.chain.isEmpty())
+                }
+                .filter { it.lat == null || it.lon == null || (region().contains(GeoPoint(it.lon, it.lat)) && inScope(GeoPoint(it.lon, it.lat))) }
+                .ifEmpty { allTemplates().filter { it.lat == null } }
+        val weights = all.map { templateWeight(it, h) }
+        var x = rnd() * weights.sum()
+        for (i in all.indices) {
+            x -= weights[i]
+            if (x <= 0) return all[i]
+        }
+        return all.last()
+    }
+
+    /** Population-weighted call position near a real town inside the jurisdiction. */
+    fun samplePosition(r: GeoRegion = region()): GeoPoint {
+        val places = placeProvider(r).filter { state.scope == "STATE" || inScope(GeoPoint(it.lon, it.lat)) }
+        if (places.isNotEmpty() && rnd() < .88) {
+            val weights = places.map { it.population.coerceAtLeast(1000).toDouble().pow(.8) }
+            repeat(30) {
+                var x = rnd() * weights.sum()
+                var pick = places.last()
+                for (i in places.indices) {
+                    x -= weights[i]
+                    if (x <= 0) {
+                        pick = places[i]
+                        break
+                    }
+                }
+                val spread =
+                    when {
+                        pick.population > 500000 -> .06
+                        pick.population > 100000 -> .035
+                        pick.kind == "suburb" -> .012
+                        else -> .018
+                    }
+                val a = rnd() * 2 * PI
+                val d = sqrt(rnd()) * spread
+                val p = GeoPoint(pick.lon + cos(a) * d * 1.6, pick.lat + sin(a) * d)
+                if (r.contains(p) && inScope(p)) return p
+            }
+        }
+        return OperationsAreas.sample(r, state.scope, rng)
+    }
+
+    fun locationName(r: GeoRegion, p: GeoPoint): String {
+        val places = placeProvider(r)
+        val near = places.minByOrNull { GeoData.km(GeoPoint(it.lon, it.lat), p) }
+        if (near != null) return near.name
+        return r.cities.minByOrNull { GeoData.km(GeoPoint(it.lon, it.lat), p) }?.name ?: r.name
+    }
+
     fun newIncident(
-        template: IncidentTemplate = allTemplates()[rng.nextInt(allTemplates().size)],
+        template: IncidentTemplate = pickTemplate(),
         position: GeoPoint? = null,
     ): IncidentState {
         val r = region()
@@ -540,15 +896,15 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
             position
                 ?: if (template.lat != null && template.lon != null)
                     GeoPoint(template.lon, template.lat)
-                else OperationsAreas.sample(r, state.scope, rng)
+                else samplePosition(r)
         require(r.contains(p) && inScope(p)) { "Einsatzort außerhalb des Zuständigkeitsgebiets" }
-        val city = r.cities.minByOrNull { GeoData.km(GeoPoint(it.lon, it.lat), p) }!!
+        val cityName = locationName(r, p)
         val first = template.chain.firstOrNull()
         val call =
             IncidentState(
                 "E-${state.nextId++}",
                 first?.title ?: template.title,
-                city.name,
+                cityName,
                 r.code,
                 p.lat,
                 p.lon,
@@ -559,7 +915,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                 requiredTypes =
                     (if (first != null) first.requiredTypes else template.requiredTypes)
                         .toMutableList(),
-                deadline = template.deadline,
+                deadline = (template.deadline * difficultyDeadline() * regionDeadlineFactor(r)).roundToInt().coerceIn(10, 1440),
                 followUp = template.followUp,
                 chain = template.chain.toMutableList(),
                 stageId = first?.id ?: "",
@@ -567,9 +923,11 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                 reward = template.reward,
                 followUpType = template.followUpType,
             )
+        if (Scenarios.find(call.title) != null) call.scenario = call.title
         state.incidents.add(0, call)
         state.shiftIncoming++
         emit("Neuer Notruf P${call.priority}", call.title)
+        trigger(call, "CALL")
         return call
     }
 
@@ -585,27 +943,41 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
     }
 
     fun dispatch(call: IncidentState, u: UnitState): Boolean {
+        lastError = ""
         if (
             state.phase != "RUNNING" ||
-                call.status !in listOf("OPEN", "DRIVING") ||
-                !available(u) ||
+                call.status !in listOf("OPEN", "DRIVING", "WORKING") ||
+                !dispatchable(u) ||
+                u.id in call.assignedUnits ||
                 u.region != call.region ||
                 u.vehicleCondition < 20 ||
-                remainingTypes(call).none { canHandle(u, it) }
+                call.requiredTypes.none { canHandle(u, it) } ||
+                // Once all roles are covered, up to three extra units may reinforce the scene.
+                (remainingTypes(call).none { canHandle(u, it) } &&
+                    call.assignedUnits.size >= call.requiredTypes.size + 3)
         )
             return false
         ensureRoster(u)
         if (state.fatigueEnabled && u.officers.any { it.energy < 15 }) return false
-        val route =
-            NativeRouting.route(
-                GeoPoint(u.lon, u.lat),
-                GeoPoint(call.lon, call.lat),
-                u.vehicleSpeed,
-            )
+        if (state.trainingRequired && u.type in listOf("SEK", "MEK")) {
+            val course = if (u.type == "SEK") "SEK-Fortbildung" else "MEK-Observation"
+            if (u.officers.none { course in it.qualifications }) {
+                lastError = "Ausbildungspflicht: ${u.callsign} braucht den Lehrgang $course."
+                return false
+            }
+        }
+        val fee = deploymentCost(u.type)
+        if (fee > 0 && !spend(fee)) {
+            lastError = "Budget reicht nicht für den ${u.type}-Einsatz (${fee} €)."
+            return false
+        }
+        state.shiftSpecialCost += fee
+        val readiness = readiness(u)
+        val route = NativeRouting.routeFor(u, GeoPoint(call.lon, call.lat))
         val eta = route.durationMinutes
         u.routePoints = route.points.toMutableList()
         u.routeBasis = route.basis
-        call.status = "DRIVING"
+        if (call.status == "OPEN") call.status = "DRIVING"
         call.assignedUnit = u.id
         call.assignedUnits.add(u.id)
         u.status = "DRIVING"
@@ -617,15 +989,58 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         u.travelTotal = eta
         u.travelLeft = eta
         u.workLeft = call.duration
-        u.readinessLeft =
-            when (u.type) {
-                "SEK" -> 12
-                "MEK" -> 9
-                else -> 2
-            }
+        u.readinessLeft = readiness
         if (u.type in listOf("SEK", "MEK")) state.shiftSpecial++
         emit("Einheit unterwegs", "${u.callsign} · ${eta+u.readinessLeft} Sim.-Min.")
         return true
+    }
+
+    /** Send several units in one radio order. Returns how many actually departed. */
+    fun dispatchAll(call: IncidentState, units: List<UnitState>): Int = units.count { dispatch(call, it) }
+
+    /**
+     * Withdraw a unit from its incident; it drives back to its station and is immediately
+     * re-dispatchable. A call left without forces goes back to the open queue.
+     */
+    fun recall(u: UnitState): Boolean {
+        if (state.phase != "RUNNING" || u.incidentId.isBlank()) return false
+        val call = state.incidents.find { it.id == u.incidentId } ?: return false
+        if (call.status !in listOf("DRIVING", "WORKING")) return false
+        call.assignedUnits.remove(u.id)
+        if (call.assignedUnit == u.id) call.assignedUnit = call.assignedUnits.lastOrNull() ?: ""
+        sendHome(u)
+        val remaining = call.assignedUnits.mapNotNull { id -> state.units.find { it.id == id } }
+        if (remaining.isEmpty()) {
+            call.status = "OPEN"
+        } else if (call.status == "WORKING" && remainingTypes(call).isNotEmpty()) {
+            // Without the required forces the work pauses until a replacement arrives.
+            call.status = "DRIVING"
+            remaining.forEach { if (it.status == "WORKING") it.status = "ON_SCENE" }
+        }
+        emit("Einheit abgezogen", "${u.callsign} verlässt ${call.title}")
+        return true
+    }
+
+    /** Re-route a bound unit directly to another, more urgent call. */
+    fun redirect(u: UnitState, call: IncidentState): Boolean {
+        if (u.incidentId == call.id) return false
+        if (u.incidentId.isNotBlank() && !recall(u)) return false
+        return dispatch(call, u)
+    }
+
+    private fun sendHome(u: UnitState) {
+        u.incidentId = ""
+        u.startLat = u.lat
+        u.startLon = u.lon
+        u.destLat = u.homeLat
+        u.destLon = u.homeLon
+        u.readinessLeft = 0
+        val route = NativeRouting.routeFor(u, GeoPoint(u.homeLon, u.homeLat))
+        u.routePoints = route.points.toMutableList()
+        u.routeBasis = route.basis
+        u.travelTotal = route.durationMinutes
+        u.travelLeft = u.travelTotal
+        u.status = if (u.travelTotal <= 0 || GeoData.km(GeoPoint(u.lon, u.lat), GeoPoint(u.homeLon, u.homeLat)) < .05) "FREE" else "RETURNING"
     }
 
     private fun rotate(u: UnitState) {
@@ -674,7 +1089,17 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                 u.status = "FREE"
                 u.lat = u.homeLat
                 u.lon = u.homeLon
-            } else u.status = "ON_SCENE"
+            } else {
+                u.status = "ON_SCENE"
+                val call = state.incidents.find { it.id == u.incidentId }
+                if (call != null) {
+                    if (call.firstArrival < 0) {
+                        call.firstArrival = call.age
+                        emit("Am Einsatzort", "${u.callsign} · ${call.title}")
+                        trigger(call, "ARRIVAL")
+                    } else emit("Am Einsatzort", "${u.callsign} · ${call.title}")
+                }
+            }
         }
     }
 
@@ -682,22 +1107,10 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         for (id in call.assignedUnits) {
             val u = state.units.find { it.id == id } ?: continue
             if (u.incidentId != call.id) continue
-            u.incidentId = ""
-            u.startLat = u.lat
-            u.startLon = u.lon
-            u.destLat = u.homeLat
-            u.destLon = u.homeLon
-            val route =
-                NativeRouting.route(
-                    GeoPoint(u.lon, u.lat),
-                    GeoPoint(u.homeLon, u.homeLat),
-                    u.vehicleSpeed,
-                )
-            u.routePoints = route.points.toMutableList()
-            u.routeBasis = route.basis
-            u.travelTotal = route.durationMinutes
-            u.travelLeft = u.travelTotal
-            u.status = "RETURNING"
+            val worked = u.status == "WORKING"
+            sendHome(u)
+            val recovery = recoveryMinutes(u.type)
+            if (worked && recovery > 0) u.restUntil = state.absoluteMinute + u.travelTotal + recovery
         }
     }
 
@@ -714,8 +1127,9 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                     next.priority,
                     next.required,
                     next.duration,
-                    "Folgeereignis von ${call.title}",
+                    next.radio.ifBlank { "Folgeereignis von ${call.title}" },
                     requiredTypes = next.requiredTypes,
+                    deadline = if (next.deadline > 0) next.deadline else 120,
                     chain = emptyList(),
                 )
             val follow = newIncident(t, GeoPoint(call.lon, call.lat))
@@ -747,6 +1161,180 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
             .forEach { it.workLeft += if (choice == "SUPPORT") 3 else 10 }
         return true
     }
+
+    /**
+     * Explainable success chance: response time against the deadline, fitting forces, training
+     * and equipment, fatigue, reinforcement, danger and management decisions. Chance remains only
+     * a small uncertainty on top of these factors.
+     */
+    fun assess(call: IncidentState, units: List<UnitState>): Pair<Double, List<String>> {
+        val reasons = mutableListOf<String>()
+        var p = .86
+        val arrival = if (call.firstArrival >= 0) call.firstArrival else call.age
+        val ratio = arrival.toDouble() / call.deadline.coerceAtLeast(1)
+        when {
+            ratio <= .3 -> {
+                p += .08
+                reasons.add("schnell vor Ort ($arrival Min)")
+            }
+            ratio > .75 -> {
+                p -= .14
+                reasons.add("späte Ankunft ($arrival von ${call.deadline} Min)")
+            }
+            ratio > .5 -> {
+                p -= .05
+                reasons.add("Anfahrt lang ($arrival Min)")
+            }
+        }
+        val need = call.requiredTypes.toMutableList()
+        var substitutes = 0
+        for (u in units) {
+            if (need.remove(u.type)) continue
+            val i = need.indexOfFirst { canHandle(u, it) }
+            if (i >= 0) {
+                need.removeAt(i)
+                substitutes++
+            }
+        }
+        if (substitutes > 0) {
+            p -= .04 * substitutes
+            reasons.add("$substitutes× Ersatzkraft statt Fachkraft")
+        } else reasons.add("passende Kräfte")
+        val extra = units.size - call.requiredTypes.size
+        if (extra > 0) {
+            p += min(.08, .04 * extra)
+            reasons.add("Verstärkung (+$extra)")
+        }
+        val staff = units.flatMap { it.officers }
+        if (staff.isNotEmpty()) {
+            val skill = staff.map { it.skill + it.equipment.sumOf { item -> GameContent.equipmentBonus(item) } }.average()
+            val delta = ((skill - 66) * .006).coerceIn(-.12, .12)
+            p += delta
+            if (delta >= .03) reasons.add("erfahrene, gut ausgestattete Besatzung")
+            if (delta <= -.03) reasons.add("wenig Erfahrung/Ausrüstung")
+            val energy = staff.map { it.energy }.average()
+            if (state.fatigueEnabled && energy < 60) {
+                p -= (60 - energy) * .004
+                reasons.add("erschöpfte Besatzung (${energy.roundToInt()} %)")
+            }
+        }
+        if (call.priority == 1) {
+            p -= .06
+            reasons.add("hohe Gefahrenlage")
+        }
+        if (call.riskDelta != 0.0) {
+            p -= call.riskDelta
+            val pts = (call.riskDelta * 100).roundToInt()
+            reasons.add(
+                when {
+                    call.notes.isEmpty() -> if (call.decision == "SUPPORT") "Betreuung verstärkt" else "Gespräch verlängert"
+                    pts < 0 -> "Entscheidungen senkten das Risiko (${-pts} Pkt.)"
+                    else -> "Entscheidungen erhöhten das Risiko ($pts Pkt.)"
+                }
+            )
+        }
+        if (call.notes.any { it.startsWith("⏱") }) reasons.add("Entscheidung verpasst")
+        if (misusedSpecialists(call, units)) reasons.add("Spezialkräfte für Routinelage gebunden")
+        return p.coerceIn(.3, .97) to reasons
+    }
+
+    /** Gains shrink near 100, late arrival costs trust even when the call is solved. */
+    fun reputationGain(call: IncidentState): Int {
+        // Routine (P3) work is expected service; trust grows with urgent calls handled well.
+        val base = when (call.priority) { 1 -> 2.0; 2 -> 1.0; else -> 0.0 }
+        val room = (100 - state.reputation) / 30.0
+        val late = call.firstArrival >= 0 && call.firstArrival > call.deadline * .75
+        val gain = if (late) -1 else ceil(base * room.coerceAtMost(1.0)).toInt()
+        return if (rnd() < .5 && state.reputation > 90 && !late) 0 else gain
+    }
+
+    fun difficultyRate() =
+        when (state.difficulty) {
+            "LEICHT" -> .7
+            "SCHWER" -> 1.35
+            else -> 1.0
+        }
+
+    fun difficultyDeadline() =
+        when (state.difficulty) {
+            "LEICHT" -> 1.25
+            "SCHWER" -> .85
+            else -> 1.0
+        }
+
+    // --- Onboarding --------------------------------------------------------------------------
+
+    private val tutorialCalls =
+        listOf(
+            IncidentTemplate("Ruhestörung", 3, "STREIFE", 6, "Laute Musik in einem Mehrfamilienhaus.", deadline = 90, reward = 400),
+            IncidentTemplate("Verkehrsunfall", 2, "STREIFE", 10, "Zwei Autos an einer Kreuzung, eine Person klagt über Nackenschmerzen.", deadline = 90, reward = 800),
+            IncidentTemplate("Auseinandersetzung vor Gaststätte", 2, "STREIFE", 12, "Streit vor einer Kneipe, mehrere Beteiligte.", requiredTypes = listOf("STREIFE", "STREIFE"), deadline = 90, reward = 900),
+        )
+
+    /** Hint shown on the map for the current tutorial step. */
+    fun tutorialHint(): String =
+        when (state.tutorialStep) {
+            1 -> "Einsatz 1/3: Tippe den gelben Notruf auf der Karte an. Eine passende Streife ist vorgewählt – tippe „Entsenden“ und sieh dem Fahrzeug zu."
+            2 -> "Einsatz 2/3: Lies den Anrufer und triff in der orangen Karte eine Entscheidung (z. B. Rettungsdienst mitalarmieren). Jede Option zeigt vorher ihre Folgen."
+            3 -> "Einsatz 3/3: Hier werden zwei Streifen gebraucht. Wähle beide aus (Mehrfachauswahl) oder schicke später Verstärkung nach."
+            else -> ""
+        }
+
+    /** Start a guided Hamburg shift with three easy calls; afterwards it continues as a free shift. */
+    fun startTutorial() {
+        if (state.phase != "PLANNING") return
+        state.mode = "CAREER"
+        if (regions.any { it.code == "DE-HH" }) {
+            state.region = "DE-HH"
+            state.scope = "STATE"
+        }
+        state.autoCalls = false
+        setShift(10, 8)
+        startShift()
+        state.incidents.removeAll { it.status == "OPEN" && it.assignedUnits.isEmpty() && it.region == state.region }
+        state.shiftIncoming = 0
+        state.tutorialStep = 1
+        spawnTutorialCall()
+    }
+
+    private fun spawnTutorialCall() {
+        val t = tutorialCalls.getOrNull(state.tutorialStep - 1) ?: return
+        // Close to a station so the first drive is short and visible.
+        val home = state.units.firstOrNull { it.region == state.region && it.type == "STREIFE" && available(it) }
+        val p =
+            home?.let { u ->
+                (0 until 12).map { k -> GeoPoint(u.homeLon + .012 * cos(k * .52), u.homeLat + .007 * sin(k * .52)) }
+                    .firstOrNull { region().contains(it) && inScope(it) }
+            } ?: samplePosition()
+        val call = newIncident(t, p)
+        call.flags.add("tutorial")
+        // Calls 1 and 3 skip the call-taking question so each step teaches one thing.
+        if (state.tutorialStep != 2 && call.stagesDone.isEmpty()) {
+            call.pending = ""
+            call.stagesDone.add("call")
+        }
+    }
+
+    private fun tutorialProgress(call: IncidentState) {
+        if (state.tutorialStep !in 1..3 || "tutorial" !in call.flags) return
+        state.tutorialStep++
+        if (state.tutorialStep <= 3) spawnTutorialCall()
+        else {
+            state.autoCalls = true
+            emit("Tutorial abgeschlossen", "Ab jetzt laufen Notrufe wie im echten Dienst ein.")
+        }
+    }
+
+    fun failurePenalty(call: IncidentState) =
+        when (call.priority) {
+            1 -> 5
+            2 -> 3
+            else -> 1
+        }
+
+    /** SEK/MEK sent to a call that requires neither. */
+    fun misusedSpecialists(call: IncidentState, units: List<UnitState>) =
+        units.any { it.type in listOf("SEK", "MEK") } && call.requiredTypes.none { it in listOf("SEK", "MEK") }
 
     fun advance(minutes: Int) {
         if (state.phase != "RUNNING" || state.paused) return
@@ -788,14 +1376,25 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                 if (u.status in listOf("DRIVING", "RETURNING")) move(u)
             }
             for (call in state.incidents.toList().filter { it.region == state.region }) {
+                if (call.pending.isNotBlank() && call.status in listOf("OPEN", "DRIVING", "WORKING") && call.age - call.pendingAge >= DECISION_TIMEOUT) {
+                    choose(call, pendingStage(call)?.default ?: "", auto = true)
+                }
+                if (call.status == "WORKING") call.age++
                 if (call.status in listOf("OPEN", "DRIVING")) {
                     call.age++
                     if (call.age > call.deadline) {
+                        call.outcome =
+                            if (call.assignedUnits.isEmpty()) "Fehlschlag: Frist abgelaufen, keine Kräfte entsandt"
+                            else "Fehlschlag: Frist abgelaufen, benötigte Kräfte nicht rechtzeitig vollständig vor Ort"
                         call.status = "FAILED"
+                        call.closedAt = state.absoluteMinute
                         state.shiftFailed++
-                        state.reputation = (state.reputation - 2).coerceAtLeast(0)
+                        state.reputation = (state.reputation - failurePenalty(call)).coerceAtLeast(0)
+                        call.pending = ""
                         release(call)
                         branch(call, false)
+                        if ("tutorial" !in call.flags) scenarioFollowUps(call, false)
+                        tutorialProgress(call)
                         continue
                     }
                 }
@@ -813,32 +1412,58 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                     }
                 }
                 if (call.status == "WORKING") {
-                    assigned.forEach { it.workLeft-- }
-                    if (assigned.isNotEmpty() && assigned.all { it.workLeft <= 0 }) {
-                        val staff = assigned.flatMap { it.officers }
-                        val skill =
-                            staff
-                                .map {
-                                    it.skill +
-                                        it.equipment.sumOf { item ->
-                                            GameContent.equipmentBonus(item)
-                                        } - (100 - it.energy) * .2
-                                }
-                                .average()
-                        val probability =
-                            (.65 + (skill - 60) * .008 - call.riskDelta).coerceIn(.2, .99)
+                    val joining = assigned.filter { it.status == "ON_SCENE" }
+                    if (joining.isNotEmpty()) {
+                        // Reinforcement on scene shortens the remaining work for everybody.
+                        val left =
+                            assigned.filter { it.status == "WORKING" }.maxOfOrNull { it.workLeft }
+                                ?: call.duration
+                        val shortened = (left * .75).roundToInt().coerceAtLeast(1)
+                        assigned
+                            .filter { it.status == "WORKING" || it.status == "ON_SCENE" }
+                            .forEach {
+                                it.status = "WORKING"
+                                it.workLeft = shortened
+                            }
+                        emit("Verstärkung eingetroffen", call.title)
+                    }
+                    val working = assigned.filter { it.status == "WORKING" }
+                    working.forEach { if (it.workLeft > 0) it.workLeft-- }
+                    if ("work" !in call.stagesDone && working.isNotEmpty() && working.maxOf { it.workLeft } <= call.duration / 2)
+                        trigger(call, "WORK")
+                    var rolesComplete = remainingTypes(call).isEmpty()
+                    if (working.isNotEmpty() && working.all { it.workLeft <= 0 } && !rolesComplete) {
+                        // Requested reinforcement never came: after 45 minutes the scene is closed
+                        // with what is there, at a clearly higher risk.
+                        if (call.waitSince < 0) call.waitSince = call.age
+                        else if (call.age - call.waitSince >= 45) {
+                            call.riskDelta += .15
+                            call.notes.add("Nachforderung nicht erfüllt – Lage mit vorhandenen Kräften abgeschlossen")
+                            rolesComplete = true
+                        }
+                    }
+                    if (working.isNotEmpty() && working.all { it.workLeft <= 0 } && rolesComplete) {
+                        // A decision nobody answered is taken by default before the result.
+                        if (call.pending.isNotBlank()) choose(call, pendingStage(call)?.default ?: "", auto = true)
+                        val staff = working.flatMap { it.officers }
+                        val (probability, reasons) = assess(call, working)
                         val success = rnd() < probability
+                        call.outcome =
+                            "${if (success) "Erfolg" else "Fehlschlag"} bei ${(probability * 100).roundToInt()} % Chance: " +
+                                reasons.joinToString(" · ").ifEmpty { "Standardlage" }
                         call.status = if (success) "SOLVED" else "FAILED"
+                        call.closedAt = state.absoluteMinute
                         if (success) {
                             state.shiftSolved++
-                            state.reputation = (state.reputation + 1).coerceAtMost(100)
+                            state.reputation = (state.reputation + reputationGain(call)).coerceAtMost(100)
                             val reward = call.reward
                             state.shiftIncome += reward
                             if (limited()) state.budget += reward
                         } else {
                             state.shiftFailed++
-                            state.reputation = (state.reputation - 2).coerceAtLeast(0)
+                            state.reputation = (state.reputation - failurePenalty(call)).coerceAtLeast(0)
                         }
+                        if (misusedSpecialists(call, working)) state.reputation = (state.reputation - 1).coerceAtLeast(0)
                         staff.forEach {
                             it.experience += if (success) 14 else 5
                             if (it.experience >= 100) {
@@ -848,18 +1473,20 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                         }
                         release(call)
                         branch(call, success)
+                        if ("tutorial" !in call.flags) scenarioFollowUps(call, success)
+                        tutorialProgress(call)
                         emit(
                             if (success) "Einsatz beendet" else "Einsatz fehlgeschlagen",
-                            call.title,
+                            "${call.title} – ${call.outcome}",
                         )
                     }
                 }
             }
             if (
                 state.autoCalls &&
-                    state.elapsed % state.callInterval.coerceIn(10, 240) == 0 &&
                     openIncidents() < 30 &&
-                    state.elapsed < state.duration - 25
+                    state.elapsed < state.duration - 25 &&
+                    rnd() < hourFactor() * difficultyRate() / state.callInterval.coerceIn(10, 240)
             )
                 newIncident()
             if (state.elapsed >= state.duration) finishShift()
@@ -887,7 +1514,10 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
             }
         val wages = (duty.sumOf { it.crew } * 22.5 * state.elapsed / 60.0).roundToInt()
         val maintenance = duty.sumOf { (100 - it.vehicleCondition) * 2 }
-        val funding = if (state.mode == "CAREER") (9000 * state.elapsed / 480.0).roundToInt() else 0
+        val funding =
+            if (state.mode == "CAREER")
+                (9000 * state.elapsed / 480.0 * (1 + .1 * (state.careerLevel - 1)) * (.7 + state.reputation / 100.0 * .4)).roundToInt()
+            else 0
         if (limited()) state.budget += funding - wages - maintenance
         val done = mutableListOf<String>()
         for (u in state.units.filter { it.region == state.region }) if (u.trainingLeft > 0) {
@@ -931,6 +1561,8 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                 state.shiftSpecial,
                 done,
                 fatigue,
+                state.shiftSpecialCost,
+                state.shiftDecisions,
             ),
         )
         state.phase = "DEBRIEF"
@@ -938,8 +1570,33 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         emit("Schichtende", "Tag ${state.day} abgeschlossen")
     }
 
+    /** Career levels: requirements and newly opened states. */
+    data class CareerLevel(val level: Int, val name: String, val shifts: Int, val reputation: Int, val regions: List<String>)
+
+    val careerLevels =
+        listOf(
+            CareerLevel(1, "Leitstelle Hamburg", 0, 0, listOf("DE-HH")),
+            CareerLevel(2, "Regionalleitstelle Nord", 2, 78, listOf("DE-NI", "DE-SH")),
+            CareerLevel(3, "Überregionale Leitstelle", 5, 82, listOf("DE-BY", "DE-HB", "DE-MV", "DE-BE")),
+            CareerLevel(4, "Lagezentrum Deutschland", 8, 86, emptyList()),
+        )
+
+    /** Promotion check after a completed day; returns the new level's name or null. */
+    fun evaluateCareer(): String? {
+        if (state.mode != "CAREER") return null
+        val next = careerLevels.firstOrNull { it.level == state.careerLevel + 1 } ?: return null
+        if (state.completedShifts < next.shifts || state.reputation < next.reputation || state.budget <= 0) return null
+        state.careerLevel = next.level
+        state.unlockedRegions.addAll(if (next.level == 4) regions.map { it.code } else next.regions)
+        emit("Beförderung", "${next.name}: neue Zuständigkeiten freigeschaltet")
+        return next.name
+    }
+
     fun nextDay() {
         if (state.phase != "DEBRIEF") return
+        evaluateCareer()
+        // Public trust has to be earned again every day: overnight it drifts back towards 72.
+        if (state.mode == "CAREER") state.reputation = (state.reputation - (state.reputation - 72) * .2).roundToInt().coerceIn(0, 100)
         state.day++
         state.phase = "PLANNING"
         state.paused = true
@@ -991,9 +1648,25 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
             o.equipment.add(item)
             return true
         }
-        if (o.equipment.count { it != "P99" } >= 6) return false
+        if (!GameContent.compatible(u.type, item)) {
+            lastError = "$item passt nicht zu ${u.type}."
+            return false
+        }
+        val slot = GameContent.slotOf[item] ?: return false
+        if (o.equipment.count { GameContent.slotOf[it] == slot } >= (GameContent.slotLimits[slot] ?: 0)) {
+            lastError = "Platz „$slot“ ist belegt – zuerst etwas ablegen."
+            return false
+        }
+        if (GameContent.loadWeight(o.equipment + item) > GameContent.MAX_WEIGHT) {
+            lastError = "Zu schwer: höchstens ${GameContent.MAX_WEIGHT.toInt()} kg pro Person."
+            return false
+        }
         if (item !in o.owned) {
-            if (!spend(GameContent.prices[item] ?: return false)) return false
+            if ((state.depot[item] ?: 0) > 0) state.depot[item] = state.depot.getValue(item) - 1
+            else if (!spend(GameContent.prices[item] ?: return false)) {
+                lastError = "Budget reicht nicht."
+                return false
+            }
             o.owned.add(item)
         }
         o.equipment.add(item)
@@ -1009,6 +1682,78 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
     }
 
     fun buyEquipment(u: UnitState, item: String) = equipOfficer(u, 0, item)
+
+    /** Minimum crew to drive out; maximum seats in the vehicle. */
+    fun minCrew(type: String) = if (type == "SEK") 4 else if (type == "HELI") 2 else if (type in listOf("RETTUNG", "FEUERWEHR")) 2 else 2
+
+    fun maxCrew(type: String) = when (type) { "SEK" -> 6; "BEREITSCHAFT" -> 6; "HELI" -> 3; else -> 3 }
+
+    /**
+     * Personnel separately from vehicles: move one officer (with personal kit and qualifications)
+     * from one vehicle crew to another in the planning phase. Crews below minimum cannot deploy.
+     */
+    fun transferOfficer(from: UnitState, index: Int, to: UnitState): Boolean {
+        lastError = ""
+        if (state.phase != "PLANNING") {
+            lastError = "Versetzungen nur in der Planungsphase."
+            return false
+        }
+        if (from.id == to.id || from.region != to.region) return false
+        if (from.incidentId.isNotBlank() || to.incidentId.isNotBlank() || from.trainingLeft > 0 || to.trainingLeft > 0) {
+            lastError = "Beide Fahrzeuge müssen frei sein."
+            return false
+        }
+        if (!police(from.type) || !police(to.type)) {
+            lastError = "Nur innerhalb der Polizei versetzbar."
+            return false
+        }
+        if (from.officers.size <= 1) {
+            lastError = "Das letzte Besatzungsmitglied kann nicht versetzt werden."
+            return false
+        }
+        if (to.officers.size >= maxCrew(to.type)) {
+            lastError = "${to.callsign} ist voll besetzt (${maxCrew(to.type)} Plätze)."
+            return false
+        }
+        val o = from.officers.getOrNull(index) ?: return false
+        // The whole post moves: the officer and the matching relief-shift colleagues.
+        for (k in from.reliefTeams.indices) {
+            val team = from.reliefTeams[k]
+            if (index < team.size && team.size > 1) {
+                val r = team.removeAt(index)
+                if (k < to.reliefTeams.size) to.reliefTeams[k].add(r)
+            }
+        }
+        from.officers.removeAt(index)
+        from.crew = from.officers.size
+        from.officer = from.officers.first()
+        to.officers.add(o)
+        to.crew = to.officers.size
+        return true
+    }
+
+    fun understaffed(u: UnitState) = u.officers.size < minCrew(u.type)
+
+    /** Buy one item into the station depot. */
+    fun buyStock(item: String): Boolean {
+        if (item == "P99" || item !in GameContent.equipment) return false
+        if (!spend(GameContent.prices[item] ?: return false)) {
+            lastError = "Budget reicht nicht."
+            return false
+        }
+        state.depot[item] = (state.depot[item] ?: 0) + 1
+        return true
+    }
+
+    /** Hand an owned item back to the depot so a colleague can use it. */
+    fun returnToDepot(u: UnitState, index: Int, item: String): Boolean {
+        val o = u.officers.getOrNull(index) ?: return false
+        if (item == "P99" || item !in o.owned || u.incidentId.isNotBlank()) return false
+        o.equipment.remove(item)
+        o.owned.remove(item)
+        state.depot[item] = (state.depot[item] ?: 0) + 1
+        return true
+    }
 
     fun maintain(u: UnitState): Boolean {
         if (state.phase != "PLANNING" || u.incidentId.isNotBlank() || u.status == "RETURNING")
@@ -1044,7 +1789,65 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         return true
     }
 
+    /** Human-readable validation for the scenario editor (empty = valid). */
+    fun validateTemplate(t: IncidentTemplate, replacing: String = ""): List<String> {
+        val errors = mutableListOf<String>()
+        if (t.title.isBlank()) errors.add("Der Einsatz braucht einen Namen.")
+        if (t.title.length > 90) errors.add("Name höchstens 90 Zeichen.")
+        if ((state.customTemplates.any { it.title.equals(t.title, true) && it.title != replacing }) ||
+            (replacing.isBlank() && NativeCatalog.events.any { it.title.equals(t.title, true) }))
+            errors.add("Es gibt bereits einen Einsatz „${t.title}“ – bitte anderen Namen wählen.")
+        if (t.duration !in 1..360) errors.add("Bearbeitungsdauer muss zwischen 1 und 360 Minuten liegen.")
+        if (t.deadline !in 10..1440) errors.add("Frist muss zwischen 10 und 1440 Minuten liegen.")
+        if (t.requiredTypes.isEmpty()) errors.add("Mindestens eine benötigte Einheit wählen.")
+        if (t.chain.size > 20) errors.add("Höchstens 20 Stufen.")
+        val ids = t.chain.map { it.id }
+        if (ids.toSet().size != ids.size) errors.add("Stufen-IDs sind doppelt.")
+        for (st in t.chain) {
+            if (st.title.isBlank()) errors.add("Eine Stufe hat keinen Titel.")
+            if (st.requiredTypes.isEmpty()) errors.add("Stufe „${st.title}“ braucht mindestens eine Einheit.")
+            if (st.duration !in 1..360) errors.add("Stufe „${st.title}“: Dauer 1–360 Minuten.")
+            if (st.onSuccess.isNotBlank() && st.onSuccess !in ids) errors.add("Stufe „${st.title}“ verweist bei Erfolg auf eine fehlende Stufe.")
+            if (st.onFailure.isNotBlank() && st.onFailure !in ids) errors.add("Stufe „${st.title}“ verweist bei Fehlschlag auf eine fehlende Stufe.")
+        }
+        // Cycle detection with a readable path.
+        val byId = t.chain.associateBy { it.id }
+        fun cycle(id: String, path: List<String>): List<String>? {
+            if (id in path) return path.dropWhile { it != id } + id
+            val n = byId[id] ?: return null
+            for (next in listOf(n.onSuccess, n.onFailure).filter { it.isNotBlank() }) cycle(next, path + id)?.let { return it }
+            return null
+        }
+        t.chain.firstNotNullOfOrNull { cycle(it.id, emptyList()) }?.let { path ->
+            errors.add("Schleife: " + path.joinToString(" → ") { byId[it]?.title ?: it } + " – Ketten müssen enden.")
+        }
+        if (t.chain.isNotEmpty()) {
+            val reach = mutableSetOf<String>()
+            fun walk(id: String) {
+                if (!reach.add(id)) return
+                byId[id]?.let { n -> listOf(n.onSuccess, n.onFailure).filter { it.isNotBlank() }.forEach(::walk) }
+            }
+            walk(t.chain.first().id)
+            t.chain.filter { it.id !in reach }.forEach { errors.add("Stufe „${it.title}“ ist von der ersten Stufe aus nicht erreichbar.") }
+        }
+        if (t.lat != null && t.lon != null && t.region.isNotBlank()) {
+            val r = regions.firstOrNull { it.code == t.region || it.code == "DE-${t.region}" }
+            if (r != null && !r.contains(GeoPoint(t.lon, t.lat))) errors.add("Der gewählte Ort liegt nicht im Bundesland.")
+        }
+        return errors
+    }
+
+    /** Replace an existing custom template (editor save of an edited scenario). */
+    fun replaceTemplate(old: String, t: IncidentTemplate): Boolean {
+        if (validateTemplate(t, old).isNotEmpty()) return false
+        val i = state.customTemplates.indexOfFirst { it.title == old }
+        if (i < 0) return false
+        state.customTemplates[i] = t
+        return true
+    }
+
     fun addTemplate(t: IncidentTemplate): Boolean {
+        if (validateTemplate(t).isNotEmpty()) return false
         if (
             t.title.isBlank() ||
                 t.duration !in 1..360 ||
@@ -1091,6 +1894,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
     }
 
     companion object {
+        const val DECISION_TIMEOUT = 12
         val TYPES =
             listOf(
                 "STREIFE",

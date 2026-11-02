@@ -62,6 +62,9 @@ class NativeAudio(context: Context) {
         if (this.master == 0f) stop()
     }
 
+    private val lastPlayed = HashMap<String, Long>()
+    private val recent = ArrayList<Long>()
+
     fun cue(name: String) {
         if (!active || muted || closed) return
         if (!focused)
@@ -83,6 +86,15 @@ class NativeAudio(context: Context) {
             }
         val id = sounds[key] ?: return
         if (id !in loaded) return
+        // No stacking or spam: each cue at most every 1.5 s (radio 2.5 s, alarms 4 s), and at
+        // most three cues in any two seconds.
+        val now = android.os.SystemClock.uptimeMillis()
+        val gap = when (key) { "radio_squelch" -> 2500L; "p1_alarm", "p2_alarm" -> 4000L; else -> 1500L }
+        if (now - (lastPlayed[key] ?: 0L) < gap) return
+        recent.removeAll { now - it > 2000 }
+        if (recent.size >= 3 && key != "p1_alarm") return
+        lastPlayed[key] = now
+        recent.add(now)
         val volume =
             master *
                 when (key) {

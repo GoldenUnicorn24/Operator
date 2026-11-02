@@ -6,6 +6,9 @@ import org.json.JSONObject
 
 /** Validated native saves. Originals remain untouched until a complete replacement is durable. */
 object GameStore {
+    val ALL_STATES =
+        listOf("DE-BW", "DE-BY", "DE-BE", "DE-BB", "DE-HB", "DE-HH", "DE-HE", "DE-MV", "DE-NI", "DE-NW", "DE-RP", "DE-SL", "DE-SN", "DE-ST", "DE-SH", "DE-TH")
+
     private const val FILE = "einsatzleitstelle-native-v1.json"
 
     private val writer = java.util.concurrent.Executors.newSingleThreadExecutor()
@@ -121,6 +124,8 @@ object GameStore {
             .put("onSuccess", n.onSuccess)
             .put("onFailure", n.onFailure)
             .put("requiredTypes", strings(n.requiredTypes))
+            .put("radio", n.radio)
+            .put("deadline", n.deadline)
 
     private fun template(t: IncidentTemplate) =
         JSONObject()
@@ -177,6 +182,12 @@ object GameStore {
             .put("ambientVolume", s.ambientVolume.toDouble())
             .put("randomSeed", s.randomSeed)
             .put("legacySource", s.legacySource)
+            .put("careerLevel", s.careerLevel)
+            .put("difficulty", s.difficulty)
+            .put("trainingRequired", s.trainingRequired)
+            .put("tutorialStep", s.tutorialStep)
+            .put("depot", JSONObject().also { d -> s.depot.forEach { (k, v) -> d.put(k, v) } })
+            .put("unlockedRegions", strings(s.unlockedRegions))
             .put("logs", strings(s.logs))
         o.put(
             "units",
@@ -263,6 +274,16 @@ object GameStore {
                     .put("riskDelta", i.riskDelta)
                     .put("handoffStatus", i.handoffStatus)
                     .put("scope", i.scope)
+                    .put("outcome", i.outcome)
+                    .put("firstArrival", i.firstArrival)
+                    .put("closedAt", i.closedAt)
+                    .put("scenario", i.scenario)
+                    .put("stagesDone", strings(i.stagesDone))
+                    .put("pending", i.pending)
+                    .put("pendingAge", i.pendingAge)
+                    .put("flags", strings(i.flags))
+                    .put("notes", strings(i.notes))
+                    .put("waitSince", i.waitSince)
             },
         )
         o.put("customTemplates", jsonArray(s.customTemplates) { template(it as IncidentTemplate) })
@@ -290,6 +311,8 @@ object GameStore {
                     .put("specialDispatches", r.specialDispatches)
                     .put("trainingDone", strings(r.trainingDone))
                     .put("fatigue", r.fatigue)
+                    .put("specialCosts", r.specialCosts)
+                    .put("decisions", r.decisions)
             },
         )
         return o
@@ -374,10 +397,27 @@ object GameStore {
                     v.optString("onSuccess"),
                     v.optString("onFailure"),
                     requirements,
+                    v.optString("radio").take(600),
+                    n(v, "deadline", 0, 0, 1440),
                 )
             out.add(stage)
         }
         return out
+    }
+
+    /** Shareable scenario pack (editor export). */
+    fun exportTemplates(list: List<IncidentTemplate>): JSONObject =
+        JSONObject().put("format", "einsatzleitstelle110-scenarios").put("version", 1).put("templates", jsonArray(list) { template(it as IncidentTemplate) })
+
+    /** Parse a scenario pack; throws IllegalArgumentException with a readable message. */
+    fun importTemplates(raw: String): List<IncidentTemplate> {
+        require(raw.length <= 2 * 1024 * 1024) { "Datei größer als 2 MB" }
+        val root = try { JSONObject(raw) } catch (e: Exception) { throw IllegalArgumentException("Keine gültige JSON-Datei") }
+        require(root.optString("format") == "einsatzleitstelle110-scenarios") { "Kein Einsatzpaket dieses Spiels" }
+        val a = array(root, "templates", 200)
+        return (0 until a.length()).map {
+            try { readTemplate(a.getJSONObject(it)) } catch (e: Exception) { throw IllegalArgumentException("Einsatz ${it + 1} ist beschädigt: ${e.message}") }
+        }
     }
 
     private fun readTemplate(v: JSONObject) =
@@ -440,8 +480,21 @@ object GameStore {
                 ambientVolume = root.optDouble("ambientVolume", 0.0).toFloat(),
                 randomSeed = root.optLong("randomSeed", 982341),
                 legacySource = root.optString("legacySource"),
+                careerLevel = root.optInt("careerLevel", 4).coerceIn(1, 4),
+                difficulty = root.optString("difficulty", "NORMAL").takeIf { it in listOf("LEICHT", "NORMAL", "SCHWER") } ?: "NORMAL",
+                trainingRequired = root.optBoolean("trainingRequired", false),
+                tutorialStep = root.optInt("tutorialStep", 0).coerceIn(0, 4),
                 logs = texts(array(root, "logs", 250)),
             )
+        root.optJSONObject("depot")?.let { d ->
+            for (k in d.keys()) if (k in GameContent.equipment && k != "P99") s.depot[k] = d.optInt(k, 0).coerceIn(0, 999)
+        }
+        // Older saves had no career gating: keep every state open for them.
+        s.unlockedRegions.clear()
+        val unlocked = root.optJSONArray("unlockedRegions")
+        if (unlocked == null) s.unlockedRegions.addAll(ALL_STATES)
+        else s.unlockedRegions.addAll(texts(array(root, "unlockedRegions", 16)).filter { it in ALL_STATES })
+        s.unlockedRegions.add(s.region)
         require(
             s.mode in listOf("CAREER", "SANDBOX") &&
                 s.phase in listOf("PLANNING", "RUNNING", "DEBRIEF") &&
@@ -492,7 +545,7 @@ object GameStore {
             val teams = array(v, "reliefTeams", 2)
             for (k in 0 until teams.length()) {
                 val a = teams.getJSONArray(k)
-                require(a.length() == officers.size)
+                require(a.length() in 1..8)
                 relief.add(
                     (0 until a.length()).map { readOfficer(a.getJSONObject(it)) }.toMutableList()
                 )
@@ -622,6 +675,16 @@ object GameStore {
                     100000,
                 )
             i.followUpType = v.optString("followUpType", "KRIPO")
+            i.outcome = v.optString("outcome").take(400)
+            i.firstArrival = v.optInt("firstArrival", -1).coerceIn(-1, 1440)
+            i.closedAt = v.optLong("closedAt", -1L).coerceAtLeast(-1L)
+            i.scenario = v.optString("scenario").take(120)
+            i.stagesDone = texts(array(v, "stagesDone", 20))
+            i.pending = v.optString("pending").take(40)
+            i.pendingAge = v.optInt("pendingAge", 0).coerceIn(0, 1440)
+            i.flags = texts(array(v, "flags", 40)).toMutableSet()
+            i.notes = texts(array(v, "notes", 40))
+            i.waitSince = v.optInt("waitSince", -1).coerceIn(-1, 1440)
             require(i.followUpType in GameController.TYPES)
             if (i.assignedUnits.isEmpty() && i.assignedUnit.isNotBlank())
                 i.assignedUnits.add(i.assignedUnit)
@@ -667,6 +730,8 @@ object GameStore {
                     n(v, "specialDispatches", 0),
                     texts(array(v, "trainingDone", 2000)),
                     n(v, "fatigue", 0, 0, 100),
+                    n(v, "specialCosts", 0, 0, 10000000),
+                    n(v, "decisions", 0, 0, 10000),
                 )
             )
         }

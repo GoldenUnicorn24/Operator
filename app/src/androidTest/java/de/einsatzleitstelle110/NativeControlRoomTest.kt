@@ -70,9 +70,48 @@ class NativeControlRoomTest {
         return false
     }
 
+    private fun tapPrefix(view: View, prefix: String): Boolean {
+        if (view is android.widget.TextView && view.text.toString().startsWith(prefix) && view.isEnabled) {
+            view.performClick()
+            return true
+        }
+        if (view is ViewGroup)
+            for (i in 0 until view.childCount) if (tapPrefix(view.getChildAt(i), prefix)) return true
+        return false
+    }
+
+    private fun mapView(a: MainActivity) =
+        MainActivity::class.java.getDeclaredField("map").apply { isAccessible = true }.get(a) as TacticalMapView
+
+    /** The topographic base map renders on a background thread; wait for it before evidence shots. */
+    private fun waitForBaseMap(scenario: ActivityScenario<MainActivity>) {
+        var ready = false
+        val until = System.currentTimeMillis() + 15000
+        while (!ready && System.currentTimeMillis() < until) {
+            scenario.onActivity { a -> ready = mapView(a).baseMapReady() }
+            if (!ready) Thread.sleep(250)
+        }
+        assertTrue("base map rendered", ready)
+        Thread.sleep(400)
+    }
+
+    private fun autoDispatch(g: GameController) {
+        for (call in g.state.incidents.filter { it.region == g.state.region && it.status in listOf("OPEN", "DRIVING") }.sortedBy { it.priority })
+            for (need in g.remainingTypes(call)) {
+                val pick = g.candidates(call).firstOrNull { (u, _) -> g.canHandle(u, need) } ?: continue
+                g.dispatch(call, pick.first)
+            }
+    }
+
     private fun assertNative(view: View) {
         assertFalse(view.javaClass.name.startsWith("android.webkit."))
         if (view is ViewGroup) for (i in 0 until view.childCount) assertNative(view.getChildAt(i))
+    }
+
+    /** Measured on the emulator (not a physical device): written next to the screenshots. */
+    private fun perf(line: String) {
+        android.util.Log.i("NativePerf", line)
+        File(instrument.targetContext.getExternalFilesDir(null), "perf.txt").appendText(line + "\n")
     }
 
     private fun overview(
@@ -82,6 +121,7 @@ class NativeControlRoomTest {
         file: String,
     ) {
         reset()
+        var t0 = 0L
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             instrument.waitForIdleSync()
             scenario.onActivity { a ->
@@ -90,7 +130,11 @@ class NativeControlRoomTest {
                 g.state.mode = "SANDBOX"
                 g.state.unlimitedBudget = true
                 g.state.autoCalls = false
+                t0 = System.nanoTime()
                 g.setRegion(region)
+                val tg = System.nanoTime()
+                val graph = NativeRouting.graph(region)
+                perf("$region Straßengraph: ${(System.nanoTime() - tg) / 1_000_000} ms, ${graph?.nodeCount} Knoten")
                 g.startShift()
                 for (i in names.indices) g.newIncident(
                     IncidentTemplate(
@@ -105,7 +149,159 @@ class NativeControlRoomTest {
                 g.state.paused = true
                 invoke(a, "showTab", "MAP")
             }
+            waitForBaseMap(scenario)
+            perf("$region Region gewählt bis Grundkarte fertig: ${(System.nanoTime() - t0) / 1_000_000} ms")
+            scenario.onActivity { a ->
+                val g = game(a)
+                g.state.paused = false
+                val v = mapView(a)
+                val bmp = android.graphics.Bitmap.createBitmap(v.width, v.height, android.graphics.Bitmap.Config.ARGB_8888)
+                val canvas = android.graphics.Canvas(bmp)
+                v.draw(canvas)
+                val n = 30
+                val ts = System.nanoTime()
+                repeat(n) { v.draw(canvas) }
+                perf("$region Live-Overlay (Software-Canvas, ${g.state.units.count { it.region == region }} Einheiten, ${g.state.incidents.size} Lagen): Ø ${(System.nanoTime() - ts) / n / 100_000 / 10.0} ms je Bild")
+                bmp.recycle()
+                g.state.paused = true
+            }
             screenshot(file)
+        }
+    }
+
+    /**
+     * M1 vertical slice on a device: Hamburg career shift, call opened from the live map,
+     * multi-unit dispatch from the map panel, vehicles driving on the routed roads, withdrawal,
+     * a full 8-hour day and the shift report.
+     */
+    @Test
+    fun hamburgLiveMapDispatchAndEightHourShift() {
+        reset()
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            instrument.waitForIdleSync()
+            scenario.onActivity { a ->
+                dismiss(a)
+                assertNative(a.window.decorView)
+                val g = game(a)
+                assertEquals("DE-HH", g.state.region)
+                g.state.mode = "CAREER"
+                g.state.randomSeed = 20261102
+                g.setShift(14, 8)
+                g.startShift()
+                g.state.paused = true
+                invoke(a, "showTab", "MAP")
+            }
+            waitForBaseMap(scenario)
+            screenshot("native-hamburg-live.png")
+            scenario.onActivity { a ->
+                // Tutorial banner on the live map (then skipped again for the rest of the test).
+                val g = game(a)
+                g.state.tutorialStep = 1
+                invoke(a, "showTab", "MAP")
+                assertTrue(g.tutorialHint().isNotBlank())
+            }
+            instrument.waitForIdleSync()
+            Thread.sleep(400)
+            screenshot("native-tutorial.png")
+            scenario.onActivity { a ->
+                game(a).state.tutorialStep = 0
+                invoke(a, "showTab", "MAP")
+            }
+            var callId = ""
+            scenario.onActivity { a ->
+                val g = game(a)
+                val call = g.state.incidents.first { it.status == "OPEN" }
+                callId = call.id
+                invoke(a, "openCall", call)
+            }
+            instrument.waitForIdleSync()
+            Thread.sleep(500)
+            screenshot("native-dispatch-panel.png")
+            scenario.onActivity { a ->
+                val g = game(a)
+                val call = g.state.incidents.first { it.id == callId }
+                assertTrue("dispatch button in the map panel", tapPrefix(a.window.decorView, "Entsenden ("))
+                assertEquals("DRIVING", call.status)
+                assertTrue(call.assignedUnits.isNotEmpty())
+                val u = g.state.units.first { it.id == call.assignedUnits.first() }
+                assertNotEquals("DISTANCE_APPROXIMATION", u.routeBasis)
+                assertTrue(u.routePoints.size > 4)
+                // A second call across the city: a patrol drives a long road route.
+                val far =
+                    g.newIncident(
+                        IncidentTemplate("Verkehrsunfall", 2, "STREIFE", 22, "Zusammenstoß auf einer Hauptstraße", deadline = 90),
+                        GeoPoint(9.985, 53.462),
+                    )
+                val driver =
+                    g.candidates(far).filter { (c, eta) -> c.type == "STREIFE" && c.status == "FREE" && eta >= 10 }.minByOrNull { it.second }?.first
+                        ?: g.candidates(far).first { (c, _) -> c.type == "STREIFE" }.first
+                assertTrue(g.dispatch(far, driver))
+                assertNotEquals("DISTANCE_APPROXIMATION", driver.routeBasis)
+                g.state.paused = false
+                g.advance(driver.readinessLeft + (driver.travelTotal / 2).coerceAtLeast(1))
+                g.state.paused = true
+                assertEquals("DRIVING", driver.status)
+                invoke(a, "openCall", far)
+                mapView(a).zoom = 1f
+                mapView(a).focus(driver.lon, driver.lat)
+            }
+            waitForBaseMap(scenario)
+            screenshot("native-vehicle-route.png")
+            scenario.onActivity { a ->
+                val g = game(a)
+                // Withdraw and re-dispatch: the unit turns around and stays alarmable.
+                val call = g.state.incidents.first { it.id == callId }
+                val u = g.state.units.first { it.id == call.assignedUnits.first() }
+                g.state.paused = false
+                assertTrue(g.recall(u))
+                assertTrue(g.dispatchable(u))
+                assertTrue(g.dispatch(call, u))
+                var guard = 0
+                while (g.state.phase == "RUNNING" && guard++ < 600) {
+                    autoDispatch(g)
+                    g.advance(1)
+                }
+                assertEquals("DEBRIEF", g.state.phase)
+                val r = g.state.reports.first()
+                assertEquals(1, g.state.reports.size)
+                assertTrue("calls ${r.served}", r.served >= 8)
+                assertTrue("solved ${r.solved}/${r.served}", r.solved >= r.served / 2)
+                invoke(a, "showDebrief")
+            }
+            screenshot("native-hamburg-8h-report.png")
+            scenario.onActivity { a ->
+                dismiss(a)
+                val g = game(a)
+                g.nextDay()
+                invoke(a, "showTab", "MANAGE")
+            }
+            instrument.waitForIdleSync()
+            Thread.sleep(400)
+            screenshot("native-career.png")
+            scenario.onActivity { a ->
+                val g = game(a)
+                val t =
+                    IncidentTemplate(
+                        "Einbruch mit Folgeermittlung",
+                        2,
+                        "STREIFE",
+                        15,
+                        "Nachbar hört Glas splittern",
+                        chain =
+                            listOf(
+                                ChainStage("s1", "Einbruch gemeldet", "STREIFE", 15, 2, "s2", "s3", listOf("STREIFE")),
+                                ChainStage("s2", "Spurensicherung", "KRIPO", 25, 3, "s4", "", listOf("KRIPO"), "Kripo übernimmt", 180),
+                                ChainStage("s3", "Fahndung", "STREIFE", 20, 2, "", "", listOf("STREIFE", "HUND"), "Täter flüchtig", 60),
+                                ChainStage("s4", "Observation der Hehler", "MEK", 40, 2, "", "", listOf("MEK"), "Hinweis auf Hehler", 240),
+                            ),
+                    )
+                assertEquals(emptyList<String>(), g.validateTemplate(t))
+                assertTrue(g.addTemplate(t))
+                ChainEditor(a, g, UiKit(a), t) {}.show()
+            }
+            instrument.waitForIdleSync()
+            Thread.sleep(600)
+            screenshot("native-editor.png")
         }
     }
 
@@ -171,6 +367,8 @@ class NativeControlRoomTest {
                             .getDeclaredField("map")
                             .apply { isAccessible = true }
                             .get(a) as TacticalMapView
+                    // "Land" shows the complete state including exclaves (Neuwerk, islands).
+                    view.fitWholeState()
                     val transform =
                         TacticalMapView::class
                             .java

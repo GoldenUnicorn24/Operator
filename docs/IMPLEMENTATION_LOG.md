@@ -67,3 +67,36 @@ Weitere Gerätebelege: echte Wandsbek-Karte, persönliche P99-/MP5-Ansicht, Beam
 Native Android-35-Abnahme in Lauf 41362143918: OK (3 tests), alle 16 Bounds, Wandsbek/P99/Spezialkräfte, 24h/Rotation/Übergabe, tatsächliche Datei und Wiederöffnung, Niedersachsen/Bayern. Produktionsbuild, 27 Kotlin-Tests, Lint und Paketprüfung erfolgreich. Nachgelagerter Diagnosebefehl dumpsys lastanr liefert ohne ANR Exit2; als optionale Diagnose korrigiert. Die reguläre Veröffentlichungs-Pipeline hält erfolgreiche Builds und echte Android-Tests als Voraussetzung für den APK-Upload bei.
 
 Wiederholung 41362853131 bestätigt erneut OK (3 tests), einschließlich aller sechs PNGs. Die Emulator-Action interpretiert jedoch jede `script`-Zeile separat; eine mehrzeilige Screenshot-Schleife war daher im Nachbereitungsschritt ungültig. Den vollständigen Geräteablauf in `.github/scripts/native-device-check.sh` verlagert, Syntax mit `bash -n` geprüft und auf die bereits erfolgreich heruntergeladenen sechs Screenshots vereinheitlicht. Keine Spieltests entfernt oder abgeschwächt.
+
+
+## V1-Auftrag (Claude) – Audit und Meilenstein M1 · 2026-11-02
+Arbeitsbranch `claude/operator-v1-gameplay` von `codex/operator-v1` (Stand 536dfe0, 0.9.0-native-preview, PR #3 offen; dessen Änderungen bleiben erhalten).
+
+**Audit – wichtigste echte Spielflussprobleme vor M1:**
+1. Straßen nur für Hamburg; die übrigen 15 Länder zeigten gestrichelte Stadt-zu-Stadt-Linien und fuhren Luftlinie.
+2. Fahrzeuge wurden zwischen Ticks linear interpoliert und schnitten bei hoher Geschwindigkeit quer durch Blöcke; Pinch-Zoom nicht fingerzentriert; Hamburg wegen Neuwerk winzig.
+3. Disposition nur Einheit für Einheit über einen kartenverdeckenden Dialog; kein Abziehen, Umdisponieren oder Nachalarmieren auf Rückfahrt; Verstärkung nicht möglich.
+4. Jede Schicht begann mit demselben Verkehrsunfall; Notrufe in festem 30-Minuten-Takt; zwei „Entscheidungen“ mit identischer Risikowirkung; Erfolg ≈ Würfelwurf (~65 %) ohne Begründung.
+5. 24 von 32 Einheiten pro Land hatten zufällige Heimatpunkte statt Wachen.
+
+**Architekturentscheidungen:** Karte bleibt nativer Canvas (keine WebView, keine Internetberechtigung). MapLibre Native wurde bewusst nicht eingebunden: ohne Tile-Server bräuchte es mehrere hundert MB Offline-Pakete oder eine Online-Pflicht; stattdessen gebündelte Vektordaten (OSM-Auszug einmalig in CI, ODbL; Natural Earth gemeinfrei) mit Hintergrund-Rendering in Bitmaps (`MapRenderer`) und einem Live-Overlay (`TacticalMapView`). Routing als eigener Graph pro Land (`RoadGraph`, CSR, Hauptkomponente, Raster-Index); ETA-Listen über eine Dijkstra-Distanzkarte je Einsatzort statt A* je Kandidat. UI-Panel (`DispatchPanel`/`UiKit`) getrennt von `MainActivity`; Engine-Erweiterungen bleiben rein (JVM-testbar).
+
+**Werkzeugkette:** lokal kein Android-SDK erreichbar (Google-/Maven-Server gesperrt). Engine und JVM-Tests lokal mit dem Kotlin-2.0.21-Compiler aus der Gradle-Distribution und JUnit 4.13.2 geprüft; APK, Lint und Emulator ausschließlich in GitHub Actions. Gerätescreenshots werden von der CI nach `docs/evidence/claude-m1/` committet.
+
+**Geodaten:** erster OSM-Lauf scheiterte an 504-Timeouts der Overpass-Server (Berlin) und verwarf alles; Pipeline seither länderweise, fortsetzbar, mit Teil-Commits und Zeitbudget. Zweiter Lauf 41370046831: alle 16 Länder, 478.471 Straßenabschnitte, ~1,0 Mio. Stützpunkte, 2.546 Orte, 23 MB JSON. Lokal gemessen (JVM, kein Gerätewert): Niedersachsen Laden+Graph 360 ms / 42.057 Knoten, Hannover–Oldenburg 154 km A* 25 ms; Bayern 63.658 Knoten, München–Nürnberg 169 km A* 4 ms. Hamburger 14–22-Uhr-Testschicht auf OSM-Netz: 18 Notrufe, 16 gelöst, 25/25 Fahrten auf Straßen.
+
+**Gerätelauf mit allen Landesnetzen:** 41373766228 – Build, 36 JVM-Tests, Lint, APK-Prüfung (verlangt jetzt alle 16 Straßennetze), Android 35 `OK (4 tests)`, Screenshots in `docs/evidence/claude-m1/`.
+
+**Ergebnis M1 (siehe CHANGELOG, Release-Notes `docs/RELEASE_CLAUDE_V1.md`):** CI-Lauf 41369424543 und Folgeläufe: Build, 35 Unit-Tests, Lint, Paketprüfung grün; Android-35-Emulator `OK (4 tests)` inklusive neuer Hamburger Live-Karten-/Dispositions-/8h-Schicht-Prüfung. Lokale JVM-Simulation einer Hamburger 14–22-Uhr-Schicht mit automatischer Disposition: 17 Notrufe, 16 gelöst, 24 von 24 Fahrten auf dem Straßennetz (Werte variieren mit Seed/Daten).
+
+**Offen (M2–M4):** mehrstufige Einsatzabläufe mit eigenen Dialogen und ≥30 ausgearbeiteten Typen, SEK/MEK-Spezifik, Personal/Fahrzeug getrennt, Loadout-Bildschirm, visueller Ketteneditor, 10-Tage-Karriere, Mixer/Onboarding, Leistungsmessung auf physischem Gerät.
+
+## Meilenstein M2 · 2026-11-02
+Datengetriebenes Szenariomodell `Scenarios.kt` (Effect/Option/Stage/FollowUp/Scenario), an Vorlagen über den Titel gekoppelt; Zustand je Einsatz (`scenario`, `stagesDone`, `pending`, `flags`, `notes`, `waitSince`) versioniert gespeichert, tief kopiert in Snapshots. Erfolg bleibt erklärbar (`assess`), Zufall nur Restunsicherheit. Entscheidung: SEK-Rüstzeit blieb bei 12 Min (bestehende Tests/Erwartungen), Differenzierung über Pauschale, Erholung und eigene Optionen. Lokale Hamburger Testschicht mit automatischer Disposition ohne Spielerentscheidungen: 21 Notrufe, 18 gelöst – verpasste Entscheidungen kosten sichtbar Erfolgschance.
+
+## Meilenstein M3 · 2026-11-02
+Karriere als gespeicherter Zustand (`careerLevel`, `unlockedRegions`), Prüfung in `nextDay`; alte Saves ohne Feld bekommen alle 16 Länder (keine Funktionsverluste). Balancing per 10-Tage-Bot-Simulation iteriert: erster Entwurf lief nach drei Tagen dauerhaft auf Ruf 100 → abnehmende Gewinne, kein P3-Gewinn, nächtliche Drift. Loadout-Regeln in `GameContent` (Slots, Gewicht, Kompatibilität), Lager `depot` gespeichert; MP5 bleibt für Streifen erlaubt (bisheriges Versprechen), G36 nur Spezial-/Bereitschaftskräfte. Editor als eigene Klasse `ChainEditor` mit `ChainGraphView`; Validierung `validateTemplate` mit lesbaren Meldungen; `ChainStage` um Funktext und Timer erweitert (gespeichert, rückwärtskompatibel). Zufällige Auswahl ignoriert eigene Einsätze mit festem Ort außerhalb der Zuständigkeit (vorher möglicher Absturz).
+Offen für M4: Onboarding, getrennte Personal-/Fahrzeugzuweisung, Audio-Mixer-Ausbau, Binärformat der Kartendaten, Messungen auf echtem Gerät.
+
+## Meilenstein M4 · 2026-11-02
+Binärformat `geo/roads-*.bin` (varint, Delta-Koordinaten), JSON-Quelle nach `data/osm` (ODbL-Offenlegung). Tutorial als Engine-Zustand `tutorialStep`. Versetzung verschiebt die ganze Planstelle (inkl. Ablöseteams), Ladeprüfung toleriert ungleiche Teamgrößen. Abnahmetest deckte unfaire Flächenländer auf (NI 7/20) → Größen-Skalierung von Fristen und Kräften; danach NI 15/20, BY 13/15, HH 19/24 (+3 übergeben). Emulator-Messwerte (CI, x86_64, kein physisches Gerät) in `docs/evidence/claude-m1/perf-emulator.txt`. Version 0.10.0-v1-kandidat (versionCode 111) – bewusst kein 1.0, siehe `docs/ACCEPTANCE_CLAUDE_V1.md`.

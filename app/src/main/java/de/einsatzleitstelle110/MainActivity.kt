@@ -1,6 +1,7 @@
 package de.einsatzleitstelle110
 
 import android.app.Activity
+import kotlin.math.roundToInt
 import android.app.AlertDialog
 import android.app.Dialog
 import android.content.Intent
@@ -38,6 +39,11 @@ class MainActivity : Activity() {
     private lateinit var body: FrameLayout
     private lateinit var navigation: LinearLayout
     private lateinit var clockView: TextView
+    private lateinit var dispatch: DispatchPanel
+    private val ui by lazy { UiKit(this) }
+    private var queueView: LinearLayout? = null
+    private var speedView: TextView? = null
+    private var queueVersion = ""
     private var mapCounter: TextView? = null
     private var mapAction: TextView? = null
     private var incomingView: TextView? = null
@@ -53,6 +59,8 @@ class MainActivity : Activity() {
     private val SAVE = 701
     private val LOAD = 702
     private val PORTRAIT = 703
+    private val PACK_SAVE = 704
+    private val PACK_LOAD = 705
     private var pendingOfficer: Officer? = null
     private val images =
         object : LruCache<String, Bitmap>(16 * 1024 * 1024) {
@@ -235,6 +243,7 @@ class MainActivity : Activity() {
         val saved = GameStore.load(this) ?: GameState()
         if (saved.phase == "RUNNING") saved.paused = true
         game = GameController(saved, regions)
+        game.placeProvider = { MapData.places(this, it) }
         game.seedUnitsIfNeeded()
         audio = NativeAudio(this)
         audio.muted = saved.mute
@@ -245,7 +254,7 @@ class MainActivity : Activity() {
             saved.ambientVolume,
         )
         installNotifications()
-        map = TacticalMapView(this, game, { showIncident(it) }, { showUnit(it) })
+        createMap()
         val root = column().apply { setBackgroundColor(dark) }
         val header =
             row().apply {
@@ -275,9 +284,51 @@ class MainActivity : Activity() {
         else if (saved.phase == "PLANNING" && saved.day == 1) handler.post { showWelcome() }
     }
 
+    /** Live map plus the dispatch panel that sits on top of it. */
+    private fun createMap() {
+        game.placeProvider = { MapData.places(this, it) }
+        map = TacticalMapView(this, game, { openCall(it) }, { showUnit(it) })
+        dispatch =
+            DispatchPanel(
+                this,
+                game,
+                map,
+                ui,
+                onChanged = {
+                    save()
+                    if (tab == "MAP") rebuildMapChrome() else updateLive()
+                },
+                onUnitDetails = { showUnit(it) },
+                toast = { toast(it) },
+            )
+        map.onEmptyTap = {
+            if (dispatch.isOpen) {
+                dispatch.close()
+                rebuildMapChrome()
+            }
+        }
+        map.prepareRegion()
+    }
+
+    /** Open a call's file on the live map (from a marker, the queue or the call list). */
+    private fun openCall(call: IncidentState) {
+        sheet?.dismiss()
+        if (tab != "MAP") showTab("MAP")
+        dispatch.open(call)
+        rebuildMapChrome()
+    }
+
     private fun installNotifications() {
-        game.notify = { name, _ ->
+        game.notify = { name, message ->
             when {
+                name == "Tutorial abgeschlossen" -> {
+                    audio.cue("SUCCESS")
+                    toast("Tutorial geschafft! $message")
+                }
+                name == "Beförderung" -> {
+                    audio.cue("SUCCESS")
+                    toast("Beförderung! $message")
+                }
                 name.startsWith("Neuer Notruf") -> {
                     audio.cue("CALL")
                     if (name.contains("P1")) audio.cue("P1")
@@ -292,6 +343,9 @@ class MainActivity : Activity() {
                     audio.cue("RADIO")
                     audio.cue("AMBIENT")
                 }
+                name == "Am Einsatzort" || name == "Verstärkung eingetroffen" || name == "Einheit abgezogen" ||
+                    name == "Funkmeldung" || name == "Nachforderung" ->
+                    audio.cue("RADIO")
                 name == "Einsatz beendet" -> audio.cue("SUCCESS")
                 name == "Einsatz fehlgeschlagen" -> audio.cue("FAILED")
                 name == "Schichtende" -> audio.cue("SHIFT")
@@ -304,8 +358,9 @@ class MainActivity : Activity() {
             override fun run() {
                 if (isFinishing) return
                 val old = game.state.phase
+                // Open decisions slow the clock to at most ×4 so nobody misses a radio report.
                 if (foreground && old == "RUNNING" && !game.state.paused)
-                    game.advance(game.state.speed)
+                    game.advance(if (game.pendingDecisions() > 0) minOf(game.state.speed, 4) else game.state.speed)
                 if (old != game.state.phase) save()
                 updateLive()
                 if (old == "RUNNING" && !game.state.paused && ++saveTick % 15 == 0) save()
@@ -368,8 +423,10 @@ class MainActivity : Activity() {
     private fun updateLive() {
         clockView.text =
             "TAG ${game.state.day}\n${game.clock()} ${if(game.state.phase=="RUNNING")if(game.state.paused)"Pause" else "×${game.state.speed}" else "Planung"}"
+        val left = (game.state.duration - game.state.elapsed).coerceAtLeast(0)
         mapCounter?.text =
-            "${game.openIncidents()} aktive Notrufe  ·  ${game.freeUnits()} freie Kräfte"
+            "${game.openIncidents()} Lagen  ·  ${game.freeUnits()} Kräfte frei" +
+                if (game.state.phase == "RUNNING") "  ·  Schichtende in %d:%02d".format(left / 60, left % 60) else ""
         mapAction?.text =
             when (game.state.phase) {
                 "PLANNING" -> "Schicht planen"
@@ -380,7 +437,12 @@ class MainActivity : Activity() {
             game.state.incidents
                 .firstOrNull { it.region == game.state.region && it.status == "OPEN" }
                 ?.let { "P${it.priority}  ${it.title} · ${it.location}" } ?: "Keine offenen Notrufe"
-        if (tab == "MAP") map.invalidate()
+        if (tab == "MAP") {
+            if (game.state.tutorialStep != lastTutorialStep && !(::dispatch.isInitialized && dispatch.isOpen)) rebuildMapChrome()
+            map.invalidate()
+            if (::dispatch.isInitialized && dispatch.isOpen) dispatch.refresh() else updateQueue()
+            speedView?.text = speedLabel()
+        }
         val version =
             game.state.incidents.joinToString { it.id + it.status } +
                 game.state.units.joinToString { it.id + it.status + it.trainingLeft }
@@ -430,67 +492,104 @@ class MainActivity : Activity() {
         updateLive()
     }
 
+    private var mapChrome: FrameLayout? = null
+    private var lastTutorialStep = 0
+
     private fun showMap() {
         (map.parent as? ViewGroup)?.removeView(map)
         body.addView(map, FrameLayout.LayoutParams(-1, -1))
-        map.setContentInsets(126f, 150f)
-        val top = column().apply { setPadding(dp(10), dp(8), dp(10), dp(8)) }
-        val selectors = row()
-        selectors.addView(
-            action(scopeName()) { chooseArea() },
-            LinearLayout.LayoutParams(0, dp(48), 1f),
-        )
-        selectors.addView(
-            action("⊕") { map.resetCamera() },
-            LinearLayout.LayoutParams(dp(50), dp(48)),
-        )
-        top.addView(selectors)
-        gap(top, 6)
-        val tools = row()
-        tools.addView(
-            action("Filter · ${map.filter}") { chooseFilter() },
-            LinearLayout.LayoutParams(0, dp(48), 1f),
-        )
-        tools.addView(
-            action("Land") { map.fitWholeState() },
-            LinearLayout.LayoutParams(dp(64), dp(48)),
-        )
-        tools.addView(
-            action("−") {
-                map.zoom = (map.zoom / 1.5f).coerceAtLeast(.8f)
-                map.invalidate()
-            },
-            LinearLayout.LayoutParams(dp(48), dp(48)),
-        )
-        tools.addView(
-            action("+") {
-                map.zoom = (map.zoom * 1.5f).coerceAtMost(10f)
-                map.invalidate()
-            },
-            LinearLayout.LayoutParams(dp(48), dp(48)),
-        )
-        top.addView(tools)
-        body.addView(top, FrameLayout.LayoutParams(-1, -2, Gravity.TOP))
-        val bottom =
-            column().apply {
-                setPadding(dp(14), dp(10), dp(14), dp(10))
-                background = rounded(panel)
+        map.setContentInsets(62f, 168f)
+        map.prepareRegion()
+        val chrome = FrameLayout(this)
+        mapChrome = chrome
+        body.addView(chrome, FrameLayout.LayoutParams(-1, -1))
+        rebuildMapChrome()
+    }
+
+    private fun speedLabel() =
+        if (game.state.phase != "RUNNING") "×${game.state.speed}"
+        else if (game.state.paused) "▶ ×${game.state.speed}" else "❚❚ ×${game.state.speed}"
+
+    /** Compact controls around the map: top toolbar, zoom, and either queue or dispatch panel. */
+    private fun rebuildMapChrome() {
+        val chrome = mapChrome ?: return
+        if (tab != "MAP") return
+        chrome.removeAllViews()
+        mapCounter = null
+        mapAction = null
+        incomingView = null
+        queueView = null
+        speedView = null
+        queueVersion = ""
+        val top = row().apply { setPadding(dp(8), dp(6), dp(8), dp(6)) }
+        fun tool(label: String, desc: String, w: Int, onClick: () -> Unit) =
+            ui.button(label) { onClick() }.apply { contentDescription = desc; textSize = 12f }
+                .also { top.addView(it, LinearLayout.LayoutParams(if (w == 0) 0 else dp(w), dp(44), if (w == 0) 1f else 0f).apply { marginEnd = dp(5) }) }
+        tool("▾ ${scopeName()}", "Zuständigkeit wählen", 0) { chooseArea() }
+        tool(if (map.filter == "ALLE") "Filter" else map.filter, "Kartenebenen filtern", 74) { chooseFilter() }
+        tool("Land", "Ganzes Bundesland zeigen", 54) {
+            map.fitWholeState()
+        }
+        tool(if (map.showLegend) "Legende ✓" else "Legende", "Legende ein- oder ausblenden", 82) {
+            map.showLegend = !map.showLegend
+            rebuildMapChrome()
+        }
+        chrome.addView(top, FrameLayout.LayoutParams(-1, -2, Gravity.TOP))
+        lastTutorialStep = game.state.tutorialStep
+        if (game.state.tutorialStep in 1..3 && game.state.phase == "RUNNING") {
+            val tip = column().apply {
+                setPadding(dp(12), dp(8), dp(12), dp(8))
+                background = ui.bg(Color.rgb(48, 38, 14), ui.amber, 12)
+                isClickable = true
             }
-        mapCounter = text("", 12f, mint, true)
-        bottom.addView(mapCounter)
-        incomingView =
-            text("", 14f, ink, true).apply {
-                setPadding(0, dp(8), 0, dp(8))
+            tip.addView(text(game.tutorialHint(), 13f, ink, true))
+            tip.addView(text("Tutorial überspringen", 12f, ui.amber, true).apply {
+                setPadding(0, dp(6), 0, 0)
                 setOnClickListener {
-                    game.state.incidents
-                        .firstOrNull { it.region == game.state.region && it.status == "OPEN" }
-                        ?.let { showIncident(it) }
+                    game.state.tutorialStep = 4
+                    game.state.autoCalls = true
+                    save()
+                    rebuildMapChrome()
                 }
-            }
-        bottom.addView(incomingView)
+            })
+            chrome.addView(tip, FrameLayout.LayoutParams(-1, -2, Gravity.TOP).apply { setMargins(dp(8), dp(58), dp(8), 0) })
+        }
+        val zoom = column().apply { setPadding(0, 0, dp(8), 0) }
+        zoom.addView(ui.button("+") { map.zoomBy(1.6f) }.apply { textSize = 20f; contentDescription = "Hineinzoomen" }, LinearLayout.LayoutParams(dp(46), dp(46)))
+        zoom.addView(View(this), LinearLayout.LayoutParams(1, dp(6)))
+        zoom.addView(ui.button("−") { map.zoomBy(1 / 1.6f) }.apply { textSize = 20f; contentDescription = "Herauszoomen" }, LinearLayout.LayoutParams(dp(46), dp(46)))
+        zoom.addView(View(this), LinearLayout.LayoutParams(1, dp(6)))
+        zoom.addView(ui.button("⌂") { map.resetCamera() }.apply { textSize = 17f; contentDescription = "Zurück zur Übersicht" }, LinearLayout.LayoutParams(dp(46), dp(46)))
+        if (::dispatch.isInitialized && dispatch.isOpen) {
+            (dispatch.root.parent as? ViewGroup)?.removeView(dispatch.root)
+            val h = (body.height.takeIf { it > 0 } ?: resources.displayMetrics.heightPixels) * 54 / 100
+            map.obstructedBottom = h.toFloat() + dp(6)
+            // Zoom controls sit just above the panel so nothing overlaps.
+            chrome.addView(row().apply {
+                addView(ui.button("+") { map.zoomBy(1.6f) }.apply { textSize = 18f; contentDescription = "Hineinzoomen" }, LinearLayout.LayoutParams(dp(46), dp(42)))
+                addView(ui.button("−") { map.zoomBy(1 / 1.6f) }.apply { textSize = 18f; contentDescription = "Herauszoomen" }, LinearLayout.LayoutParams(dp(46), dp(42)).apply { marginStart = dp(6) })
+            }, FrameLayout.LayoutParams(-2, -2, Gravity.END or Gravity.BOTTOM).apply { setMargins(0, 0, dp(10), h + dp(14)) })
+            chrome.addView(dispatch.root, FrameLayout.LayoutParams(-1, h, Gravity.BOTTOM).apply { setMargins(dp(6), 0, dp(6), dp(6)) })
+            map.reveal(dispatch.call!!.lon, dispatch.call!!.lat, (body.height - h).toFloat())
+            return
+        }
+        map.obstructedBottom = 0f
+        chrome.addView(zoom, FrameLayout.LayoutParams(-2, -2, Gravity.END or Gravity.CENTER_VERTICAL).apply { bottomMargin = dp(60) })
+        val bottom = column().apply {
+            setPadding(dp(12), dp(9), dp(12), dp(9))
+            background = ui.bg(Color.argb(240, 10, 24, 35), edge, 16)
+            isClickable = true
+        }
+        val head = row()
+        mapCounter = text("", 12f, mint, true)
+        head.addView(mapCounter, LinearLayout.LayoutParams(0, -2, 1f))
+        bottom.addView(head)
+        val queue = column().apply { setPadding(0, dp(4), 0, dp(6)) }
+        queueView = queue
+        bottom.addView(queue)
         val actions = row()
         mapAction =
-            action("", true) {
+            ui.button("", true) {
                 when (game.state.phase) {
                     "PLANNING" -> showShiftDialog()
                     "RUNNING" -> {
@@ -501,18 +600,53 @@ class MainActivity : Activity() {
                     else -> showDebrief()
                 }
             }
-        actions.addView(mapAction, LinearLayout.LayoutParams(0, dp(48), 1f))
-        actions.addView(
-            action("Notrufliste") { showTab("CALLS") },
-            LinearLayout.LayoutParams(0, dp(48), 1f),
-        )
+        actions.addView(mapAction, LinearLayout.LayoutParams(0, dp(46), 1f))
+        speedView =
+            ui.button(speedLabel()) {
+                val speeds = listOf(1, 4, 8, 16)
+                game.state.speed = speeds[(speeds.indexOf(game.state.speed) + 1).mod(speeds.size)]
+                updateLive()
+                save()
+            }.apply { contentDescription = "Spieltempo wechseln" }
+        actions.addView(speedView, LinearLayout.LayoutParams(dp(84), dp(46)).apply { marginStart = dp(6) })
+        actions.addView(ui.button("Liste") { showTab("CALLS") }.apply { contentDescription = "Notrufliste" }, LinearLayout.LayoutParams(dp(70), dp(46)).apply { marginStart = dp(6) })
         bottom.addView(actions)
-        body.addView(
-            bottom,
-            FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM).apply {
-                setMargins(dp(10), 0, dp(10), dp(8))
-            },
-        )
+        chrome.addView(bottom, FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM).apply { setMargins(dp(6), 0, dp(6), dp(6)) })
+        updateQueue()
+        updateLive()
+    }
+
+    /** Up to three most urgent calls as tappable rows under the map. */
+    private fun updateQueue() {
+        val q = queueView ?: return
+        val calls =
+            game.state.incidents
+                .filter { it.region == game.state.region && game.inScope(it.lat, it.lon) && it.status in listOf("OPEN", "DRIVING", "WORKING") }
+                .sortedWith(compareBy<IncidentState>({ if (it.status == "OPEN") 0 else 1 }, { it.priority }, { it.deadline - it.age }))
+        val version = calls.take(3).joinToString { it.id + it.status + it.pending + (it.deadline - it.age) / 5 } + calls.size
+        if (version == queueVersion) return
+        queueVersion = version
+        q.removeAllViews()
+        if (calls.isEmpty()) {
+            q.addView(text(if (game.state.phase == "RUNNING") "Keine offenen Notrufe – Kräfte bereit." else "Schicht planen, dann gehen die Notrufe ein.", 13f, muted))
+            return
+        }
+        for (c in calls.take(3)) {
+            val r = row().apply {
+                setPadding(dp(6), dp(5), dp(6), dp(5))
+                background = ui.bg(Color.rgb(14, 30, 42), Color.rgb(28, 48, 62), 10)
+                minimumHeight = dp(44)
+                setOnClickListener { openCall(c) }
+                contentDescription = "Notruf ${c.title} öffnen"
+            }
+            r.addView(ui.chip("P${c.priority}", ui.priorityColor(c.priority), c.status == "OPEN"))
+            if (c.pending.isNotBlank()) r.addView(ui.chip("⚠", ui.amber, true), LinearLayout.LayoutParams(-2, -2).apply { marginStart = dp(4) })
+            val state = when (c.status) { "OPEN" -> "offen"; "DRIVING" -> "Anfahrt"; else -> "vor Ort" }
+            r.addView(text("  ${c.title} · ${c.location}", 13f, ink, c.status == "OPEN").apply { maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END }, LinearLayout.LayoutParams(0, -2, 1f))
+            r.addView(text(if (c.status == "WORKING") state else "$state · ${(c.deadline - c.age).coerceAtLeast(0)}′", 11f, if (c.status == "OPEN" && c.deadline - c.age < 15) red else muted, true))
+            q.addView(r, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(4) })
+        }
+        if (calls.size > 3) q.addView(text("+ ${calls.size - 3} weitere Lagen · Liste", 11f, muted).apply { setPadding(dp(4), dp(4), 0, 0); setOnClickListener { showTab("CALLS") } })
     }
 
     private fun chooseFilter() {
@@ -542,6 +676,7 @@ class MainActivity : Activity() {
             .setItems(values) { _, i ->
                 map.filter = values[i]
                 map.invalidate()
+                rebuildMapChrome()
             }
             .setNeutralButton("Darstellung") { _, _ -> showMapOptions() }
             .show()
@@ -642,8 +777,15 @@ class MainActivity : Activity() {
                 sheet?.dismiss()
                 AlertDialog.Builder(this)
                     .setTitle("Bundesland")
-                    .setItems(game.regions.map { it.name }.toTypedArray()) { _, i ->
-                        game.setRegion(game.regions[i].code)
+                    .setItems(
+                        game.regions
+                            .map { (if (game.state.mode == "CAREER" && it.code !in game.state.unlockedRegions) "🔒 " else "") + it.name }
+                            .toTypedArray()
+                    ) { _, i ->
+                        if (!game.setRegion(game.regions[i].code)) {
+                            toast(game.lastError.ifBlank { "Bundesland jetzt nicht wählbar." })
+                            return@setItems
+                        }
                         map.resetCamera()
                         refresh()
                         if (game.state.region == "DE-HH") chooseArea()
@@ -686,6 +828,7 @@ class MainActivity : Activity() {
                 )
             )
             c.addView(text("${call.location} · ${statusName(call.status)}", 13f, muted))
+            if (call.outcome.isNotBlank()) c.addView(text(call.outcome, 12f, if (call.status == "SOLVED") mint else red))
             gap(c, 8)
             c.addView(text(call.description))
             gap(c)
@@ -697,144 +840,7 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun eta(u: UnitState, call: IncidentState): Int =
-        NativeRouting.route(GeoPoint(u.lon, u.lat), GeoPoint(call.lon, call.lat), u.vehicleSpeed)
-            .durationMinutes +
-            when (u.type) {
-                "SEK" -> 12
-                "MEK" -> 9
-                else -> 2
-            }
-
-    private fun showIncident(call: IncidentState) {
-        val content = column()
-        title(
-            content,
-            call.title,
-            "P${call.priority} · ${call.location} · ${statusName(call.status)}",
-        )
-        gap(content)
-        content.addView(text(call.description, 15f))
-        gap(content)
-        content.addView(
-            text(
-                "Noch benötigt: ${game.remainingTypes(call).joinToString{roleName(it)}.ifEmpty{"alle Kräfte zugewiesen"}}",
-                14f,
-                cyan,
-                true,
-            )
-        )
-        content.addView(
-            text(
-                "SEK und MEK können auch allgemeine Polizeiaufgaben übernehmen. Spezialeinheiten bleiben bei besonderen Lagen wichtig.",
-                12f,
-                muted,
-            )
-        )
-        gap(content)
-        if (
-            call.status in listOf("OPEN", "DRIVING") &&
-                game.remainingTypes(call).isNotEmpty() &&
-                game.state.phase == "RUNNING"
-        ) {
-            val units =
-                game.state.units
-                    .filter {
-                        it.region == call.region &&
-                            game.available(it) &&
-                            game.remainingTypes(call).any { need -> game.canHandle(it, need) }
-                    }
-                    .sortedBy { eta(it, call) }
-            if (units.isEmpty())
-                content.addView(
-                    text(
-                        "Zurzeit keine passende freie Einheit. Prüfe Ausbildung, Ruhe und laufende Einsätze.",
-                        14f,
-                        amber,
-                    )
-                )
-            for (u in units) {
-                val r = row()
-                r.addView(unitImage(u), LinearLayout.LayoutParams(dp(92), dp(64)))
-                val detail = column()
-                detail.addView(text(u.callsign, 15f, ink, true))
-                detail.addView(
-                    text(
-                        "${roleName(u.type)} · ca. ${eta(u,call)} Min${if(!game.inScope(u.lat,u.lon))" · Überörtlich"else""}",
-                        12f,
-                        muted,
-                    )
-                )
-                r.addView(detail, LinearLayout.LayoutParams(0, -2, 1f))
-                content.addView(r)
-                content.addView(
-                    action("${u.callsign} entsenden", true) {
-                        if (game.dispatch(call, u)) {
-                            sheet?.dismiss()
-                            showTab("MAP")
-                            map.focus(call.lon, call.lat)
-                            save()
-                        } else toast("Einheit ist inzwischen nicht mehr verfügbar.")
-                    }
-                )
-                gap(content, 12)
-            }
-        } else if (call.assignedUnit.isNotBlank()) {
-            content.addView(
-                text(
-                    "Zugewiesen: " +
-                        (game.state.units.find { it.id == call.assignedUnit }?.callsign
-                            ?: call.assignedUnit),
-                    14f,
-                    mint,
-                )
-            )
-        }
-        if (call.decision.isBlank() && call.status in listOf("OPEN", "DRIVING", "WORKING")) {
-            gap(content)
-            content.addView(text("Managemententscheidung", 16f, ink, true))
-            content.addView(
-                action("Zusätzliche Gesprächszeit · +10 Min") {
-                    if (game.decide(call, "DIALOG")) {
-                        save()
-                        showIncident(call)
-                    }
-                }
-            )
-            gap(content, 6)
-            content.addView(
-                action("Betreuung verstärken · 180 € / +3 Min") {
-                    if (game.decide(call, "SUPPORT")) {
-                        save()
-                        showIncident(call)
-                    } else toast("Budget reicht nicht aus.")
-                }
-            )
-            gap(content)
-        }
-        if (call.assignedUnits.isNotEmpty()) {
-            content.addView(text("Zugewiesene Kräfte", 15f, mint, true))
-            for (id in call.assignedUnits) {
-                val assigned = game.state.units.find { it.id == id } ?: continue
-                content.addView(
-                    text(
-                        "${assigned.callsign} · ${statusName(assigned.status)}${if(assigned.status=="DRIVING")" · ca.${assigned.travelLeft+assigned.readinessLeft} Min"else""}",
-                        13f,
-                        muted,
-                    )
-                )
-            }
-            gap(content)
-        }
-        content.addView(
-            action("Auf Karte ansehen") {
-                sheet?.dismiss()
-                showTab("MAP")
-                map.focus(call.lon, call.lat)
-            }
-        )
-        showSheet("Einsatz disponieren", content)
-    }
+    private fun showIncident(call: IncidentState) = openCall(call)
 
     private fun image(path: String, height: Int = 150, fit: Boolean = false): ImageView =
         ImageView(this).apply {
@@ -1020,74 +1026,148 @@ class MainActivity : Activity() {
             }
         )
         gap(c)
+        c.addView(action("Versetzen in anderes Fahrzeug") {
+            val targets = game.state.units.filter { it.region == u.region && it.id != u.id && it.type !in listOf("RETTUNG", "FEUERWEHR") }
+            AlertDialog.Builder(this)
+                .setTitle("${o.name} versetzen")
+                .setItems(targets.map { "${it.callsign} · ${roleName(it.type)} · ${it.officers.size}/${game.maxCrew(it.type)}" + if (game.understaffed(it)) " · unterbesetzt" else "" }.toTypedArray()) { _, i ->
+                    if (game.transferOfficer(u, index, targets[i])) {
+                        save()
+                        toast("${o.name} fährt jetzt auf ${targets[i].callsign}." + if (game.understaffed(u)) " ${u.callsign} ist unterbesetzt!" else "")
+                        showUnit(targets[i])
+                    } else toast(game.lastError.ifBlank { "Versetzung nicht möglich." })
+                }
+                .setNegativeButton("Abbrechen", null)
+                .show()
+        })
+        gap(c)
         c.addView(action("Zur Einheit") { showUnit(u) })
         showSheet("Beamtenprofil", c)
     }
 
+    /**
+     * Loadout: portrait with weight bar, visible slots per category and an inventory grid with
+     * images, price, depot stock and the concrete decisions each item unlocks.
+     */
     private fun showEquipment(u: UnitState, index: Int) {
         val officer = u.officers.getOrNull(index) ?: return
         val c = column()
-        title(c, "Persönliche Ausstattung", officer.name + " · " + u.callsign)
-        c.addView(
-            text(
-                "Waffen sind ausschließlich abstrahierte Bereitschafts- und Schutzwerte. Keine Bedienung oder taktischen Abläufe.",
-                12f,
-                muted,
-            )
+        val head = row()
+        head.addView(portrait(officer), LinearLayout.LayoutParams(dp(84), dp(100)))
+        val info = column().apply { setPadding(dp(12), 0, 0, 0) }
+        info.addView(text(officer.name, 17f, ink, true))
+        info.addView(text("${u.callsign} · ${roleName(u.type)}", 12f, muted))
+        val kg = GameContent.loadWeight(officer.equipment)
+        info.addView(text("Traglast %.1f / %d kg".format(kg, GameContent.MAX_WEIGHT.toInt()), 13f, if (kg > GameContent.MAX_WEIGHT * .85) amber else mint, true))
+        info.addView(
+            ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply {
+                max = 100
+                progress = (kg / GameContent.MAX_WEIGHT * 100).toInt().coerceIn(0, 100)
+            },
+            LinearLayout.LayoutParams(-1, dp(10)),
         )
+        if (officer.qualifications.isNotEmpty()) info.addView(text("Lehrgänge: " + officer.qualifications.joinToString(), 11f, cyan))
+        head.addView(info, LinearLayout.LayoutParams(0, -2, 1f))
+        c.addView(head)
         gap(c)
-        for (item in
-            GameContent.equipment.filter {
-                u.type !in listOf("RETTUNG", "FEUERWEHR") ||
-                    it !in listOf("P99", "MP5", "HK416", "G36", "Elektroimpulsgerät")
-            }) {
-            val owned = item in officer.owned
-            val equipped = item in officer.equipment
-            val group =
-                column().apply {
-                    background = rounded(panel)
-                    setPadding(dp(12), dp(10), dp(12), dp(10))
+        // Slots by category.
+        for ((slot, limit) in GameContent.slotLimits) {
+            val r = row().apply { setPadding(0, dp(3), 0, dp(3)) }
+            r.addView(text(slot, 12f, muted, true), LinearLayout.LayoutParams(dp(104), -2))
+            val worn = officer.equipment.filter { GameContent.slotOf[it] == slot }
+            for (k in 0 until limit) {
+                val item = worn.getOrNull(k)
+                val box = column().apply {
+                    gravity = Gravity.CENTER
+                    background = rounded(if (item != null) Color.rgb(20, 52, 44) else Color.rgb(16, 30, 42), if (item != null) mint else edge, 10)
+                    setPadding(dp(4), dp(4), dp(4), dp(4))
+                    contentDescription = item ?: "$slot frei"
                 }
-            group.addView(
-                image(EquipmentArt.equipmentImage(item), 170, true).apply {
-                    contentDescription = "Vorschau: $item"
-                },
-                LinearLayout.LayoutParams(-1, dp(170)),
-            )
-            gap(group, 8)
-            group.addView(text(item, 17f, ink, true))
-            group.addView(
-                text(
-                    if (item == "P99") "Persönliche Dienstwaffe · serienmäßig · kostenlos"
-                    else if (owned) "Im persönlichen Inventar"
-                    else "Beschaffung: ${euro(GameContent.prices[item]?:0)}",
-                    13f,
-                    if (item == "P99") mint else muted,
-                )
-            )
-            gap(group)
-            if (item == "P99")
-                group.addView(text("✓ Persönliche Grundausstattung", 14f, mint, true))
-            else
-                group.addView(
-                    action(
-                        if (equipped) "Ablegen" else if (owned) "Anlegen" else "Kaufen und anlegen",
-                        !equipped,
-                    ) {
-                        val ok =
-                            if (equipped) game.unequipOfficer(u, index, item)
-                            else game.equipOfficer(u, index, item)
-                        if (ok) {
-                            save()
-                            showEquipment(u, index)
-                        } else
-                            toast("Nicht möglich: laufender Einsatz, Budget oder belegte Plätze.")
-                    }
-                )
-            c.addView(group, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) })
+                if (item != null) {
+                    box.addView(image(EquipmentArt.equipmentImage(item), 40, true), LinearLayout.LayoutParams(-1, dp(40)))
+                    box.addView(text(item, 9f, ink, true).apply { gravity = Gravity.CENTER; maxLines = 1 })
+                    box.setOnClickListener { equipmentAction(u, index, item) }
+                } else box.addView(text("frei", 10f, muted).apply { gravity = Gravity.CENTER }, LinearLayout.LayoutParams(-1, dp(56)))
+                r.addView(box, LinearLayout.LayoutParams(0, dp(64), 1f).apply { marginEnd = dp(4) })
+            }
+            for (k in limit until 3) r.addView(View(this), LinearLayout.LayoutParams(0, dp(64), 1f))
+            c.addView(r)
         }
+        gap(c)
+        c.addView(text("Inventar & Beschaffung", 15f, ink, true))
+        c.addView(text("Antippen für Anlegen, Ablegen, Lager oder Kauf. Waffen sind abstrakte Spielwerte.", 11f, muted))
+        val items =
+            GameContent.equipment.filter {
+                u.type !in listOf("RETTUNG", "FEUERWEHR") || it !in listOf("P99", "MP5", "HK416", "G36", "Elektroimpulsgerät")
+            }
+        for (rowItems in items.chunked(3)) {
+            val r = row().apply { setPadding(0, dp(4), 0, 0) }
+            for (item in rowItems) {
+                val equipped = item in officer.equipment
+                val owned = item in officer.owned
+                val ok = GameContent.compatible(u.type, item)
+                val tile = column().apply {
+                    background = rounded(if (equipped) Color.rgb(20, 52, 44) else panel, if (equipped) mint else edge, 10)
+                    setPadding(dp(5), dp(5), dp(5), dp(5))
+                    alpha = if (ok) 1f else .45f
+                    contentDescription = item
+                    setOnClickListener { equipmentAction(u, index, item) }
+                }
+                tile.addView(image(EquipmentArt.equipmentImage(item), 56, true), LinearLayout.LayoutParams(-1, dp(56)))
+                tile.addView(text(item, 11f, ink, true).apply { maxLines = 1 })
+                val stock = game.state.depot[item] ?: 0
+                tile.addView(
+                    text(
+                        when {
+                            item == "P99" -> "serienmäßig"
+                            equipped -> "angelegt"
+                            owned -> "im Besitz"
+                            stock > 0 -> "Lager: $stock"
+                            else -> euro(GameContent.prices[item] ?: 0)
+                        } + " · %.1f kg".format(GameContent.weight[item] ?: 0.0),
+                        9f,
+                        if (equipped) mint else muted,
+                    )
+                )
+                r.addView(tile, LinearLayout.LayoutParams(0, -2, 1f).apply { marginEnd = dp(4) })
+            }
+            for (k in rowItems.size until 3) r.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
+            c.addView(r)
+        }
+        gap(c)
         c.addView(action("Zurück zum Profil") { showOfficer(u, index) })
-        showSheet("Inventar & Dienstmittel", c)
+        showSheet("Loadout", c)
+    }
+
+    private fun equipmentAction(u: UnitState, index: Int, item: String) {
+        val o = u.officers.getOrNull(index) ?: return
+        val equipped = item in o.equipment
+        val owned = item in o.owned
+        val unlocks = GameContent.unlocks(item)
+        val msg =
+            "Platz: ${GameContent.slotOf[item]} · Gewicht %.1f kg · Preis ${euro(GameContent.prices[item] ?: 0)} · Lager ${game.state.depot[item] ?: 0}\n\n".format(GameContent.weight[item] ?: 0.0) +
+                (if (!GameContent.compatible(u.type, item)) "Nicht kompatibel mit ${roleName(u.type)}.\n\n" else "") +
+                if (unlocks.isEmpty()) "Wirkt allgemein als kleiner Bonus auf die Erfolgschance."
+                else "Schaltet Entscheidungen frei:\n• " + unlocks.joinToString("\n• ")
+        val b = AlertDialog.Builder(this).setTitle(item).setMessage(msg)
+        fun done(ok: Boolean) {
+            if (ok) {
+                save()
+                showEquipment(u, index)
+            } else toast(game.lastError.ifBlank { "Nicht möglich (laufender Einsatz?)." })
+        }
+        if (item == "P99") b.setPositiveButton("OK", null)
+        else {
+            if (equipped) b.setPositiveButton("Ablegen") { _, _ -> done(game.unequipOfficer(u, index, item)) }
+            else b.setPositiveButton(if (owned) "Anlegen" else if ((game.state.depot[item] ?: 0) > 0) "Aus Lager anlegen" else "Kaufen & anlegen") { _, _ ->
+                game.lastError = ""
+                done(game.equipOfficer(u, index, item))
+            }
+            if (owned) b.setNeutralButton("Ins Lager") { _, _ -> done(game.returnToDepot(u, index, item)) }
+            else b.setNeutralButton("1× ins Lager kaufen") { _, _ -> done(game.buyStock(item)) }
+            b.setNegativeButton("Schließen", null)
+        }
+        b.show()
     }
 
     private fun trainUnit(u: UnitState) {
@@ -1167,6 +1247,21 @@ class MainActivity : Activity() {
                 muted,
             )
         )
+        if (s.mode == "CAREER") {
+            val k = card(list)
+            val now = game.careerLevels.first { it.level == s.careerLevel }
+            title(k, "Karriere · Stufe ${s.careerLevel}", now.name)
+            val next = game.careerLevels.firstOrNull { it.level == s.careerLevel + 1 }
+            if (next == null) k.addView(text("Höchste Stufe erreicht – alle 16 Länder freigeschaltet.", 13f, mint))
+            else {
+                k.addView(text("Nächste Stufe: ${next.name}", 15f, ink, true))
+                k.addView(text("${if (s.completedShifts >= next.shifts) "✓" else "○"} ${next.shifts} abgeschlossene Schichten (bisher ${s.completedShifts})", 13f, if (s.completedShifts >= next.shifts) mint else muted))
+                k.addView(text("${if (s.reputation >= next.reputation) "✓" else "○"} Ruf mindestens ${next.reputation} am Tagesende (jetzt ${s.reputation}; sinkt über Nacht Richtung 72)", 13f, if (s.reputation >= next.reputation) mint else muted))
+                k.addView(text("${if (s.budget > 0) "✓" else "○"} ausgeglichenes Budget", 13f, if (s.budget > 0) mint else muted))
+                k.addView(text("Schaltet frei: " + (if (next.regions.isEmpty()) "alle übrigen Länder" else next.regions.mapNotNull { code -> game.regions.find { it.code == code }?.name }.joinToString()), 13f, cyan))
+            }
+            k.addView(text("Freigeschaltet: " + s.unlockedRegions.mapNotNull { code -> game.regions.find { it.code == code }?.name }.sorted().joinToString(), 12f, muted))
+        }
         if (s.phase == "RUNNING") {
             val controls = card(list)
             title(controls, "Spieltempo")
@@ -1293,6 +1388,8 @@ class MainActivity : Activity() {
                 "Wartung" to euro(r.maintenance),
                 "Personalwechsel" to "${r.rotations}",
                 "SEK-/MEK-Aufträge" to "${r.specialDispatches}",
+                "Spezialkräfte-Kosten" to euro(r.specialCosts),
+                "Eigene Entscheidungen" to "${r.decisions}",
                 "Müdigkeit" to "${r.fatigue}%",
             )) {
             val line = row()
@@ -1301,6 +1398,39 @@ class MainActivity : Activity() {
             c.addView(line)
         }
         gap(c)
+        val closed =
+            game.state.incidents
+                .filter { it.region == r.region && it.closedAt in r.startAbsolute..r.endAbsolute }
+                .sortedBy { it.closedAt }
+        val arrivals = closed.mapNotNull { it.firstArrival.takeIf { a -> a >= 0 } }
+        if (arrivals.isNotEmpty()) {
+            val line = row()
+            line.addView(text("Ø Eintreffzeit", 14f, muted), LinearLayout.LayoutParams(0, dp(40), 1f))
+            line.addView(text("${arrivals.average().roundToInt()} Min", 16f, ink, true))
+            c.addView(line)
+            gap(c)
+        }
+        if (closed.isNotEmpty()) {
+            c.addView(text("Einsatzbilanz – warum es so ausging", 16f, cyan, true))
+            for (i in closed.takeLast(20)) {
+                c.addView(text("${if (i.status == "SOLVED") "✓" else "✗"} P${i.priority} ${i.title} · ${i.location}", 13f, if (i.status == "SOLVED") mint else red, true))
+                if (i.outcome.isNotBlank()) c.addView(text(i.outcome, 12f, muted))
+                gap(c, 6)
+            }
+            gap(c)
+        }
+        if (game.state.mode == "CAREER") {
+            val next = game.careerLevels.firstOrNull { it.level == game.state.careerLevel + 1 }
+            c.addView(
+                text(
+                    if (next == null) "Karriere: höchste Stufe erreicht."
+                    else "Karriere: Stufe ${game.state.careerLevel}. Für „${next.name}“: ${next.shifts} Schichten (${game.state.completedShifts}), Ruf ≥ ${next.reputation} (${game.state.reputation}).",
+                    13f,
+                    cyan,
+                )
+            )
+            gap(c)
+        }
         if (r.trainingDone.isNotEmpty()) {
             c.addView(text("Abgeschlossene Lehrgänge", 16f, mint, true))
             c.addView(text(r.trainingDone.joinToString("\n"), 13f, muted))
@@ -1371,16 +1501,51 @@ class MainActivity : Activity() {
         val c = card(list)
         title(c, "Eigene Inhalte", "Einsätze und Einheiten werden tatsächlich im Spiel verwendet.")
         gap(c)
-        c.addView(action("Einsatzvorlage erstellen", true) { editScenario() })
+        c.addView(action("Einsatz mit Ablauf erstellen", true) { ChainEditor(this, game, ui, null) { save(); refresh() }.show() })
         gap(c)
         c.addView(action("Neue Einheit erstellen") { editUnit() })
-        for (t in game.allTemplates()) {
+        gap(c)
+        val packs = row()
+        packs.addView(action("Einsatzpaket exportieren") {
+            if (game.state.customTemplates.isEmpty()) toast("Noch keine eigenen Einsätze.")
+            else startActivityForResult(
+                Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type = "application/json"
+                    putExtra(Intent.EXTRA_TITLE, "Einsatzleitstelle110-Einsaetze.json")
+                },
+                PACK_SAVE,
+            )
+        }, LinearLayout.LayoutParams(0, -2, 1f))
+        packs.addView(action("importieren") {
+            startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply { addCategory(Intent.CATEGORY_OPENABLE); type = "application/json" }, PACK_LOAD)
+        }, LinearLayout.LayoutParams(0, -2, 1f).apply { marginStart = dp(6) })
+        c.addView(packs)
+        for (t in game.allTemplates().sortedByDescending { it in game.state.customTemplates }) {
+            val custom = t in game.state.customTemplates
             val p = card(list)
-            p.addView(text(t.title, 16f, ink, true))
+            p.addView(text((if (custom) "✎ " else "") + t.title, 16f, ink, true))
             p.addView(
-                text("P${t.priority} · ${roleName(t.required)} · ${t.duration} Min", 13f, muted)
+                text(
+                    "P${t.priority} · ${t.requiredTypes.joinToString(" + ") { roleName(it) }} · ${t.duration} Min" +
+                        (if (t.chain.isNotEmpty()) " · ${t.chain.size} Stufen" else "") +
+                        (if (Scenarios.find(t.title) != null) " · mit Entscheidungen" else ""),
+                    13f,
+                    muted,
+                )
             )
             gap(p)
+            if (custom) {
+                val r = row()
+                r.addView(action("Bearbeiten") { ChainEditor(this, game, ui, t) { save(); refresh() }.show() }, LinearLayout.LayoutParams(0, -2, 1f))
+                r.addView(action("Löschen") {
+                    AlertDialog.Builder(this).setTitle("„${t.title}“ löschen?")
+                        .setPositiveButton("Löschen") { _, _ -> game.state.customTemplates.remove(t); save(); refresh() }
+                        .setNegativeButton("Abbrechen", null).show()
+                }, LinearLayout.LayoutParams(0, -2, 1f).apply { marginStart = dp(6) })
+                p.addView(r)
+                gap(p, 6)
+            }
             p.addView(
                 action("In dieser Schicht auslösen") {
                     if (game.state.phase == "RUNNING") {
@@ -1549,7 +1714,33 @@ class MainActivity : Activity() {
         title(c, "Einstellungen")
         gap(c)
         val s = game.state
+        c.addView(text("Schwierigkeit (Notrufaufkommen und Fristen)", 14f, muted))
+        val diff = choices(listOf("Leicht", "Normal", "Schwer"))
+        diff.setSelection(listOf("LEICHT", "NORMAL", "SCHWER").indexOf(s.difficulty).coerceAtLeast(0))
+        diff.onItemSelectedListener =
+            object : android.widget.AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(p: android.widget.AdapterView<*>?, v: View?, i: Int, id: Long) {
+                    s.difficulty = listOf("LEICHT", "NORMAL", "SCHWER")[i]
+                    save()
+                }
+
+                override fun onNothingSelected(p: android.widget.AdapterView<*>?) {}
+            }
+        c.addView(diff, LinearLayout.LayoutParams(-1, dp(52)))
+        gap(c)
         if (s.mode == "SANDBOX") {
+            c.addView(
+                CheckBox(this).apply {
+                    text = "Ausbildungspflicht für SEK/MEK"
+                    setTextColor(ink)
+                    isChecked = s.trainingRequired
+                    minHeight = dp(48)
+                    setOnCheckedChangeListener { _, v ->
+                        s.trainingRequired = v
+                        save()
+                    }
+                }
+            )
             val unlimited =
                 CheckBox(this).apply {
                     text = "Unbegrenztes Budget"
@@ -1729,7 +1920,16 @@ class MainActivity : Activity() {
             )
         )
         gap(c)
-        c.addView(action("Zuständigkeit wählen", true) { chooseArea() })
+        c.addView(
+            action("Tutorial: 3 geführte Einsätze in Hamburg", true) {
+                sheet?.dismiss()
+                game.startTutorial()
+                save()
+                showTab("MAP")
+            }
+        )
+        gap(c)
+        c.addView(action("Zuständigkeit wählen") { chooseArea() })
         gap(c)
         c.addView(action("Schicht planen") { showShiftDialog() })
         showSheet("Einsatzleitstelle 110", c)
@@ -1793,6 +1993,27 @@ class MainActivity : Activity() {
         if (resultCode != RESULT_OK) return
         val uri = data?.data ?: return
         try {
+            if (requestCode == PACK_SAVE) {
+                contentResolver.openOutputStream(uri)?.use {
+                    it.write(GameStore.exportTemplates(game.state.customTemplates).toString(2).toByteArray(Charsets.UTF_8))
+                }
+                toast("${game.state.customTemplates.size} Einsätze exportiert")
+                return
+            }
+            if (requestCode == PACK_LOAD) {
+                val list = GameStore.importTemplates(String(readLimited(uri, 2 * 1024 * 1024), Charsets.UTF_8))
+                var added = 0
+                val problems = mutableListOf<String>()
+                for (t in list) {
+                    val errs = game.validateTemplate(t)
+                    if (errs.isEmpty() && game.addTemplate(t)) added++ else problems.add("„${t.title}“: ${errs.firstOrNull() ?: "ungültig"}")
+                }
+                save()
+                refresh()
+                if (problems.isEmpty()) toast("$added Einsätze importiert")
+                else AlertDialog.Builder(this).setTitle("$added von ${list.size} importiert").setMessage(problems.take(10).joinToString("\n")).setPositiveButton("OK", null).show()
+                return
+            }
             if (requestCode == PORTRAIT) {
                 val officer = pendingOfficer ?: error("Profil erneut öffnen")
                 val bytes = readLimited(uri, 3 * 1024 * 1024)
@@ -1842,11 +2063,12 @@ class MainActivity : Activity() {
                 val restored = GameStore.fromJson(JSONObject(raw))
                 require(GeoData.all.any { it.code == restored.region }) { "Unbekanntes Bundesland" }
                 val next = GameController(restored, GeoData.all)
+                next.placeProvider = { MapData.places(this, it) }
                 next.seedUnitsIfNeeded()
                 map.close()
                 game = next
                 installNotifications()
-                map = TacticalMapView(this, game, { showIncident(it) }, { showUnit(it) })
+                createMap()
                 audio.muted = restored.mute
                 audio.setVolumes(
                     restored.masterVolume,
