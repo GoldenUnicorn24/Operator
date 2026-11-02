@@ -260,13 +260,19 @@ fun GameController.chiefDutyEligible(unit: UnitState): Boolean {
     }
 }
 fun GameController.syncChiefUnitRoster(unit: UnitState) {
-    if (chiefVehicle(unit) == null || !chiefUnitFree(unit)) return
+    if (chiefVehicle(unit) == null || unit.status !in listOf("FREE", "REST", "OFF_DUTY") || unit.incidentId.isNotBlank() || unit.trainingLeft > 0) return
+    val previousCrew = unit.officers.map { it.personnelId }
     val staff = state.chief.employees.filter { it.assignedUnitId == unit.id }
     staff.forEach { it.officer = chiefOfficer(it) }
     val legacy = unit.officers.filter { it.personnelId.isBlank() }
     unit.officers = (legacy + staff.filter { chiefScheduled(it) }.map { it.officer }).take(chiefMaxCrew(unit)).toMutableList()
     unit.crew = unit.officers.size
     unit.officer = unit.officers.firstOrNull() ?: Officer("Unbesetzt")
+    if (unit.officers.isNotEmpty() && previousCrew != unit.officers.map { it.personnelId }) {
+        // A fresh roster does not inherit the previous crew's personal recovery timer.
+        unit.restUntil = 0
+        unit.status = "FREE"
+    }
 }
 fun GameController.syncChiefRoster() {
     for (v in state.chief.vehicles) {

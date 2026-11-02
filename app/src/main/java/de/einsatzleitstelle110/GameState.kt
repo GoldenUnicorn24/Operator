@@ -1590,7 +1590,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                     rotate(u)
                 }
                 if (u.status in listOf("DRIVING", "RETURNING", "PATROLLING")) move(u)
-                if (u.status == "FREE") syncChiefUnitRoster(u)
+                if (u.status in listOf("FREE", "REST", "OFF_DUTY")) syncChiefUnitRoster(u)
                 if (u.status == "FREE" && u.patrolMode in listOf("PATROL", "FOCUS", "CHECKPOINT") && available(u)) {
                     if (!beginPatrol(u)) { u.patrolMode = "WATCH"; emit("Streife angehalten", "${u.callsign}: $lastError") }
                 }
