@@ -2,7 +2,7 @@ name: Build offline geo base (Natural Earth)
 on:
   push:
     branches: ['claude/**']
-    paths: ['tools/build_geo_base.py', '.github/workflows/geo-data.yml']
+    paths: ['tools/build_geo_base.py', 'tools/build_osm_roads.py', '.github/workflows/geo-data.yml']
   workflow_dispatch:
 permissions:
   contents: write
@@ -12,7 +12,7 @@ concurrency:
 jobs:
   geo:
     runs-on: ubuntu-22.04
-    timeout-minutes: 25
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
         with:
@@ -24,6 +24,8 @@ jobs:
         run: pip install 'shapely>=2.0' pyshp
       - name: Build Germany base map from public-domain Natural Earth
         run: python3 tools/build_geo_base.py
+      - name: One-off OSM main-road and town extract per state (ODbL, cached in repo)
+        run: python3 tools/build_osm_roads.py
       - name: Commit generated asset
         run: |
           git config user.name "geo-data-bot"
