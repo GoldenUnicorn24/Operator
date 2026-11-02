@@ -193,6 +193,20 @@ class NativeControlRoomTest {
             }
             waitForBaseMap(scenario)
             screenshot("native-hamburg-live.png")
+            scenario.onActivity { a ->
+                // Tutorial banner on the live map (then skipped again for the rest of the test).
+                val g = game(a)
+                g.state.tutorialStep = 1
+                invoke(a, "showTab", "MAP")
+                assertTrue(g.tutorialHint().isNotBlank())
+            }
+            instrument.waitForIdleSync()
+            Thread.sleep(400)
+            screenshot("native-tutorial.png")
+            scenario.onActivity { a ->
+                game(a).state.tutorialStep = 0
+                invoke(a, "showTab", "MAP")
+            }
             var callId = ""
             scenario.onActivity { a ->
                 val g = game(a)
