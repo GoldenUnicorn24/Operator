@@ -24,8 +24,8 @@ adb shell dumpsys activity lastanr > runtime/last-anr.txt || true
 python3 - <<'PY'
 from pathlib import Path
 text = Path('runtime/instrumentation.txt').read_text()
-assert 'OK (4 tests)' in text and 'FAILURES!!!' not in text, text
-for name in ['wandsbek','officer','equipment','24h-report','niedersachsen','bayern','hamburg-live','dispatch-panel','vehicle-route','hamburg-8h-report','career','editor','tutorial']:
+assert 'OK (' in text and 'FAILURES!!!' not in text, text
+for name in ['wandsbek-overview','wandsbek-street-names','wandsbek-oneway-drive','wandsbek','officer','equipment','24h-report','niedersachsen','bayern','hamburg-live','dispatch-panel','vehicle-route','hamburg-8h-report','career','editor','tutorial']:
     p = Path(f'runtime/screens/native-{name}.png')
     assert p.read_bytes().startswith(b'\x89PNG\r\n\x1a\n'), f'Missing actual screenshot: {p}'
 PY

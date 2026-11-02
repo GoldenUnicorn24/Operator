@@ -85,7 +85,7 @@ class MapRenderer(private val context: Context, private val density: Float, priv
         val farRoads: Path,
         val roads: Array<Path>,
         val detailTiles: List<DetailTile>,
-        val areas: Array<Path>,
+        val areas: Array<List<Path>>,
         val namedRoads: List<RoadLine>,
         val districts: List<Path>,
         val places: List<MapPlace>,
@@ -200,10 +200,9 @@ class MapRenderer(private val context: Context, private val density: Float, priv
             }
             DetailTile(RectF(minX - .01f, minY - .01f, maxX + .01f, maxY + .01f), paths)
         }
-        val areas = Array(3) { Path().apply { fillType = Path.FillType.EVEN_ODD } }
-        stateMap?.areas?.forEach { area ->
-            if (area.kind in 0..2) for (ring in area.rings) flatLine(areas[area.kind], ring, true)
-        }
+        val areas = Array(3) { kind -> stateMap?.areas.orEmpty().filter { it.kind == kind }.map { area ->
+            Path().apply { fillType = Path.FillType.EVEN_ODD; for (ring in area.rings) flatLine(this, ring, true) }
+        } }
         stateMap?.roads?.forEach { r -> if (r.cls in 0..2) flatLine(roads[r.cls], r.points) }
         val districts =
             OperationsAreas.districts(region.code).map { (_, rings) -> Path().apply { rings.forEach { ring(this, it) } } }
@@ -281,11 +280,11 @@ class MapRenderer(private val context: Context, private val density: Float, priv
             c.restore()
         }
         fill(if (pal.night) 0xff203e31.toInt() else 0xffd1e7be.toInt())
-        c.drawPath(l.areas[1], p)
+        for (path in l.areas[1]) c.drawPath(path, p)
         fill(if (pal.night) 0xff35404a.toInt() else 0xffd8d4d0.toInt())
-        c.drawPath(l.areas[2], p)
+        for (path in l.areas[2]) c.drawPath(path, p)
         fill(pal.water)
-        c.drawPath(l.areas[0], p)
+        for (path in l.areas[0]) c.drawPath(path, p)
         if (pxKm > 14) {
             val visible = RectF((-cam.bx / s - l.ox * l.k).toFloat(), (-cam.by / s - l.oy * l.k).toFloat(),
                 ((cam.w - cam.bx) / s - l.ox * l.k).toFloat(), ((cam.h - cam.by) / s - l.oy * l.k).toFloat())

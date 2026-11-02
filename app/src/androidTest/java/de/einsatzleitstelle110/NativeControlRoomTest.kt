@@ -175,6 +175,62 @@ class NativeControlRoomTest {
      * a full 8-hour day and the shift report.
      */
     @Test
+    fun wandsbekDetailStreetsMaskNamesAndOneWayDrive() {
+        reset()
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            instrument.waitForIdleSync()
+            var startNanos = 0L
+            scenario.onActivity { a ->
+                dismiss(a)
+                val g = game(a)
+                g.state.mode = "SANDBOX"
+                g.state.unlimitedBudget = true
+                g.state.autoCalls = false
+                assertTrue(g.setScope("WANDSBEK"))
+                val mapData = MapData.state(a, "DE-HH")!!
+                assertEquals(2, mapData.version)
+                assertTrue(mapData.roads.count { it.cls >= 3 } > 10000)
+                assertTrue(mapData.areas.any { it.kind == 0 })
+                assertTrue(mapData.areas.any { it.kind == 1 })
+                assertTrue(mapData.areas.any { it.kind == 2 })
+                g.startShift()
+                g.state.paused = true
+                invoke(a, "showTab", "MAP")
+                startNanos = System.nanoTime()
+            }
+            waitForBaseMap(scenario)
+            perf("P1 Wandsbek Übersicht bis Grundkarte: ${(System.nanoTime() - startNanos) / 1_000_000} ms")
+            screenshot("native-wandsbek-overview.png")
+            scenario.onActivity { a ->
+                val g = game(a)
+                val mapData = MapData.state(a, "DE-HH")!!
+                val road = mapData.roads.filter { r ->
+                    r.cls >= 3 && r.oneway != 0 && r.name.isNotBlank() &&
+                        (0 until r.size).all { OperationsAreas.contains("DE-HH", "WANDSBEK", GeoPoint(r.lon(it), r.lat(it))) }
+                }.maxByOrNull { r -> (0 until r.size - 1).sumOf { GeoData.km(GeoPoint(r.lon(it), r.lat(it)), GeoPoint(r.lon(it + 1), r.lat(it + 1))) }!!
+                val start = if (road.oneway == 1) 0 else road.size - 1
+                val end = if (road.oneway == 1) road.size - 1 else 0
+                val u = g.state.units.first { it.scope == "WANDSBEK" && it.type == "STREIFE" }
+                u.lon = road.lon(start); u.lat = road.lat(start)
+                val call = g.newIncident(IncidentTemplate("Wohnstraße prüfen", 1, "STREIFE", 20, "Fiktive Testlage"), GeoPoint(road.lon(end), road.lat(end)))
+                assertTrue(call.location.contains(road.name))
+                assertTrue(g.dispatch(call, u))
+                assertEquals("OSM_DETAIL_ROADS_APPROXIMATION", u.routeBasis)
+                assertTrue(u.routePoints.size >= 2)
+                val v = mapView(a)
+                v.focus((road.lon(start) + road.lon(end)) / 2, (road.lat(start) + road.lat(end)) / 2)
+                v.zoomBy(2f)
+                perf("P1 Einbahn-Wohnstraße: ${road.name}, Richtung ${road.oneway}, ${u.routePoints.size} Routenpunkte, ${u.travelTotal} min")
+                startNanos = System.nanoTime()
+            }
+            waitForBaseMap(scenario)
+            perf("P1 Straßenebene bis Grundkarte: ${(System.nanoTime() - startNanos) / 1_000_000} ms")
+            screenshot("native-wandsbek-street-names.png")
+            screenshot("native-wandsbek-oneway-drive.png")
+        }
+    }
+
+    @Test
     fun hamburgLiveMapDispatchAndEightHourShift() {
         reset()
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
