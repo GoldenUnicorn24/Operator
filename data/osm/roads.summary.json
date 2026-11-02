@@ -30,10 +30,14 @@
   "bytes": 292179
  },
  "DE-HH": {
-  "roads": 12313,
-  "vertices": 25522,
+  "roads": 74283,
+  "vertices": 194330,
   "places": 106,
-  "bytes": 696505
+  "bytes": 8453988,
+  "version": 2,
+  "areas": 13976,
+  "named": 54733,
+  "oneway": 19006
  },
  "DE-HE": {
   "roads": 36941,
