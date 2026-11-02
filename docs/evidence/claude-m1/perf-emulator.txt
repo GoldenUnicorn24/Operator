@@ -1,6 +1,6 @@
-DE-BY Straßengraph: 265 ms, 63658 Knoten
-DE-BY Region gewählt bis Grundkarte fertig: 2623 ms
-DE-BY Live-Overlay (Software-Canvas, 48 Einheiten, 3 Lagen): Ø 4.7 ms je Bild
-DE-NI Straßengraph: 208 ms, 42057 Knoten
-DE-NI Region gewählt bis Grundkarte fertig: 1902 ms
-DE-NI Live-Overlay (Software-Canvas, 48 Einheiten, 4 Lagen): Ø 4.7 ms je Bild
+DE-BY Straßengraph: 268 ms, 63658 Knoten
+DE-BY Region gewählt bis Grundkarte fertig: 2456 ms
+DE-BY Live-Overlay (Software-Canvas, 48 Einheiten, 3 Lagen): Ø 5.6 ms je Bild
+DE-NI Straßengraph: 239 ms, 42057 Knoten
+DE-NI Region gewählt bis Grundkarte fertig: 1867 ms
+DE-NI Live-Overlay (Software-Canvas, 48 Einheiten, 4 Lagen): Ø 7.4 ms je Bild
