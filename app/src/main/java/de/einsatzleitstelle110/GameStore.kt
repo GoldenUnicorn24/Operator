@@ -146,7 +146,7 @@ object GameStore {
             .put("lon", t.lon)
 
     fun toJson(s: GameState): JSONObject {
-        val o = JSONObject().put("schemaVersion", 6)
+        val o = JSONObject().put("schemaVersion", 7)
         o.put("region", s.region)
             .put("mode", s.mode)
             .put("day", s.day)
@@ -193,6 +193,7 @@ object GameStore {
             .put("unlockedRegions", strings(s.unlockedRegions))
             .put("logs", strings(s.logs))
             .put("chief", PoliceChiefCodec.write(s.chief))
+            .put("weather", s.weather)
             .put("shiftFuelCosts", s.shiftFuelCosts)
             .put("shiftSignalIncidents", s.shiftSignalIncidents)
         o.put(
@@ -297,6 +298,13 @@ object GameStore {
                     .put("flags", strings(i.flags))
                     .put("notes", strings(i.notes))
                     .put("waitSince", i.waitSince)
+                    .put("disconnected", i.disconnected)
+                    .put("duplicateCallers", i.duplicateCallers)
+                    .put("addressUncertain", i.addressUncertain)
+                    .put("callbackDone", i.callbackDone)
+                    .put("actualLat", i.actualLat)
+                    .put("actualLon", i.actualLon)
+                    .put("actualLocation", i.actualLocation)
             },
         )
         o.put("customTemplates", jsonArray(s.customTemplates) { template(it as IncidentTemplate) })
@@ -457,10 +465,10 @@ object GameStore {
 
     fun fromJson(input: JSONObject): GameState {
         require(input.toString().length <= 15 * 1024 * 1024) { "Datei größer als 15 MB" }
-        require(input.optInt("schemaVersion") <= 6) { "Spielstand einer neueren Version" }
-        val migrated = if (input.optInt("schemaVersion") in 5..6) input else NativeMigration.migrate(input)
-        val root = if (migrated.optInt("schemaVersion") == 5) JSONObject(migrated.toString()).put("schemaVersion", 6) else migrated
-        require(root.getInt("schemaVersion") == 6) { "Ungültiger Spielstand" }
+        require(input.optInt("schemaVersion") <= 7) { "Spielstand einer neueren Version" }
+        val migrated = if (input.optInt("schemaVersion") in 5..7) input else NativeMigration.migrate(input)
+        val root = if (migrated.optInt("schemaVersion") in 5..6) JSONObject(migrated.toString()).put("schemaVersion", 7) else migrated
+        require(root.getInt("schemaVersion") == 7) { "Ungültiger Spielstand" }
         val s =
             GameState(
                 region = root.optString("region", "DE-HH"),
@@ -507,9 +515,11 @@ object GameStore {
                 tutorialStep = root.optInt("tutorialStep", 0).coerceIn(0, 4),
                 logs = texts(array(root, "logs", 250)),
                 chief = PoliceChiefCodec.read(root.optJSONObject("chief")),
+                weather = root.optString("weather", "CLEAR"),
                 shiftFuelCosts = n(root, "shiftFuelCosts", 0),
                 shiftSignalIncidents = n(root, "shiftSignalIncidents", 0),
             )
+        require(s.weather in SimulationConditions.weatherOptions) { "Unbekanntes Wetter" }
         root.optJSONObject("depot")?.let { d ->
             for (k in d.keys()) if (k in GameContent.equipment && k != "P99") s.depot[k] = d.optInt(k, 0).coerceIn(0, 999)
         }
@@ -722,6 +732,13 @@ object GameStore {
             i.flags = texts(array(v, "flags", 40)).toMutableSet()
             i.notes = texts(array(v, "notes", 40))
             i.waitSince = v.optInt("waitSince", -1).coerceIn(-1, 1440)
+            i.disconnected = v.optBoolean("disconnected", false)
+            i.duplicateCallers = n(v, "duplicateCallers", 1, 1, 999)
+            i.addressUncertain = v.optBoolean("addressUncertain", false)
+            i.callbackDone = v.optBoolean("callbackDone", false)
+            i.actualLat = coordinate(v, "actualLat", i.lat)
+            i.actualLon = coordinate(v, "actualLon", i.lon)
+            i.actualLocation = v.optString("actualLocation", i.location).take(120)
             require(i.followUpType in GameController.TYPES)
             if (i.assignedUnits.isEmpty() && i.assignedUnit.isNotBlank())
                 i.assignedUnits.add(i.assignedUnit)

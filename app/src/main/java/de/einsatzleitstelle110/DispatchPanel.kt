@@ -117,6 +117,7 @@ class DispatchPanel(
     var call: IncidentState? = null
         private set
     private val selected = LinkedHashSet<String>()
+    private var specialRights = true
     private var showBound = false
     private var lastVersion = ""
 
@@ -136,6 +137,7 @@ class DispatchPanel(
 
     fun open(c: IncidentState) {
         if (call?.id != c.id) {
+            specialRights = c.priority == 1
             selected.clear()
             showBound = false
             // Pre-select the fastest unit for every open requirement (player can change it).
@@ -213,6 +215,12 @@ class DispatchPanel(
         body.addView(ui.text("${c.location} · ${c.id} · $status", 12f, ui.muted).apply { setPadding(0, ui.dp(4), 0, ui.dp(6)) })
         if (c.outcome.isNotBlank())
             body.addView(ui.text(c.outcome, 12f, if (c.status == "SOLVED") ui.mint else ui.red, true).apply { setPadding(0, 0, 0, ui.dp(6)) })
+        body.addView(ui.text("Anrufmeldungen: ${c.duplicateCallers}" + (if (c.disconnected) " · Verbindung abgebrochen" else "") +
+            (if (c.addressUncertain) " · Adresse unbestätigt" else ""), 12f, if (c.disconnected || c.addressUncertain) ui.amber else ui.muted))
+        if ((c.disconnected || c.addressUncertain) && !c.callbackDone && c.status in listOf("OPEN", "DRIVING", "WORKING"))
+            body.addView(ui.button("Rückruf · Adresse und Angaben klären") {
+                if (game.callback(c)) { onChanged(); render() } else toast(game.lastError)
+            })
         // Caller dialogue (scripted scenarios) or the original call description.
         val lines = Scenarios.find(c.scenario)?.caller ?: listOf("„${c.description}“")
         for (line in lines)
@@ -255,7 +263,7 @@ class DispatchPanel(
                         "WORKING" -> "arbeitet · noch ${u.workLeft} Min"
                         else -> u.status
                     }
-                r.addView(ui.text("${u.callsign}\n${ui.roleName(u.type)} · $state", 12f, ui.ink).apply {
+                r.addView(ui.text("${u.callsign} · FMS ${game.fms(u)}\n${ui.roleName(u.type)} · $state", 12f, ui.ink).apply {
                     setOnClickListener { onUnitDetails(u) }
                 }, LinearLayout.LayoutParams(0, -2, 1f))
                 if (game.state.phase == "RUNNING" && c.status in listOf("DRIVING", "WORKING"))
@@ -274,7 +282,12 @@ class DispatchPanel(
         if (canDispatch) {
             val title = if (stillOpen.isEmpty()) "Verstärkung (optional)" else "Kräfte auswählen"
             body.addView(ui.text(title, 13f, ui.cyan, true).apply { setPadding(0, ui.dp(10), 0, ui.dp(4)) })
-            val candidates = game.candidates(c)
+            body.addView(ui.button(if (specialRights) "☑ Mit Sonderrechten · Blaulicht/Martinshorn" else "☐ Ohne Sonderrechte") {
+                specialRights = !specialRights
+                render()
+            })
+            body.addView(ui.text(if (specialRights) "Schneller; kleines Unfall- und Lärmrisiko, mehr Verschleiß." else "Ruhige Anfahrt, geringerer Verschleiß; längere Fahrzeit.", 11f, ui.muted))
+            val candidates = game.candidates(c).map { it.first to game.eta(it.first, c, specialRights) }.sortedBy { it.second }
             selected.retainAll(candidates.map { it.first.id }.toSet() + bound(c).map { it.first.id }.toSet())
             if (candidates.isEmpty())
                 body.addView(ui.text("Keine freie Einheit in diesem Land. Kräfte zurückholen oder gebundene Einheiten umdisponieren.", 12f, ui.amber))
@@ -294,7 +307,7 @@ class DispatchPanel(
             }
             // Footer: one radio order for all ticked units.
             val chosen = selected.mapNotNull { id -> game.state.units.find { it.id == id } }
-            val slowest = chosen.maxOfOrNull { game.eta(it, c) }
+            val slowest = chosen.maxOfOrNull { game.eta(it, c, specialRights) }
             footer.addView(
                 ui.button(
                     if (chosen.isEmpty()) "Einheiten wählen" else "Entsenden (${chosen.size}) · ${slowest} Min",
@@ -367,7 +380,7 @@ class DispatchPanel(
             .filter { it.region == c.region && it.incidentId.isNotBlank() && it.incidentId != c.id && it.status in listOf("DRIVING", "ON_SCENE") }
             .mapNotNull { u ->
                 val from = game.state.incidents.find { it.id == u.incidentId } ?: return@mapNotNull null
-                if (from.priority < c.priority) null else Triple(u, game.eta(u, c), from)
+                if (from.priority < c.priority) null else Triple(u, game.eta(u, c, specialRights), from)
             }
             .sortedBy { it.second }
 
@@ -389,7 +402,7 @@ class DispatchPanel(
         }
         r.addView(ui.text(if (isSel) "☑" else "☐", 20f, if (isSel) ui.yellow else ui.muted, true), LinearLayout.LayoutParams(ui.dp(30), -2))
         val info = ui.column()
-        info.addView(ui.text(u.callsign, 13f, ui.ink, true))
+        info.addView(ui.text("${u.callsign} · FMS ${game.fms(u)}", 13f, ui.ink, true))
         val extra =
             when {
                 from != null -> " · bindet ${from.title}"
@@ -428,7 +441,7 @@ class DispatchPanel(
     private fun send(c: IncidentState, units: List<UnitState>) {
         var sent = 0
         for (u in units) {
-            val ok = if (u.incidentId.isNotBlank()) game.redirect(u, c) else game.dispatch(c, u)
+            val ok = if (u.incidentId.isNotBlank()) game.redirect(u, c, specialRights) else game.dispatch(c, u, specialRights)
             if (ok) sent++
         }
         selected.clear()

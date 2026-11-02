@@ -119,6 +119,13 @@ data class IncidentState(
     var notes: MutableList<String> = mutableListOf(),
     /** Age when the on-scene work finished but requested forces were still missing (-1 = no). */
     var waitSince: Int = -1,
+    var disconnected: Boolean = false,
+    var duplicateCallers: Int = 1,
+    var addressUncertain: Boolean = false,
+    var callbackDone: Boolean = false,
+    var actualLat: Double = lat,
+    var actualLon: Double = lon,
+    var actualLocation: String = location,
 )
 
 data class ChainStage(
@@ -238,6 +245,7 @@ data class GameState(
     var shiftFuelCosts: Int = 0,
     var shiftSignalIncidents: Int = 0,
     var chief: PoliceChiefState = PoliceChiefState(),
+    var weather: String = "CLEAR",
 )
 
 object GameContent {
@@ -429,6 +437,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
     fun available(u: UnitState): Boolean =
         u.status in listOf("FREE", "PATROLLING", "CHECKPOINT") &&
             u.officers.size >= chiefMinCrew(u) &&
+            chiefDutyEligible(u) &&
             u.onDuty &&
             u.vehicleCondition >= 20 &&
             state.absoluteMinute >= u.restUntil &&
@@ -560,6 +569,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         available(u) ||
             (u.status == "RETURNING" &&
                 u.officers.size >= chiefMinCrew(u) &&
+                chiefDutyEligible(u) &&
                 u.incidentId.isBlank() &&
                 state.absoluteMinute >= u.restUntil &&
                 u.onDuty &&
@@ -579,8 +589,17 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
     /** Total minutes until a unit could be on scene: readiness plus routed travel time. */
     fun signalSpeed(specialRights: Boolean) = if (specialRights) 1.25 else 1.0
 
+    fun setWeather(weather: String): Boolean {
+        if (state.phase != "PLANNING" || weather !in SimulationConditions.weatherOptions) return false
+        state.weather = weather; return true
+    }
+
+    /** Departure-time approximation: the same factor is used by preview, dispatch and return. */
+    fun travelMinutes(base: Int, specialRights: Boolean = false): Int =
+        ceil(base * SimulationConditions.travelFactor(hour(), state.weather) / signalSpeed(specialRights)).toInt().coerceAtLeast(1)
+
     fun eta(u: UnitState, call: IncidentState, specialRights: Boolean = call.priority == 1): Int =
-        readiness(u) + ceil(NativeRouting.eta(u, GeoPoint(call.lon, call.lat)) / signalSpeed(specialRights)).toInt().coerceAtLeast(1)
+        readiness(u) + travelMinutes(NativeRouting.eta(u, GeoPoint(call.lon, call.lat)), specialRights)
 
     fun fms(u: UnitState): Int = if (u.fmsStatus in listOf(1, 2) && !dispatchable(u)) 6 else u.fmsStatus
 
@@ -597,12 +616,17 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         if (!region().contains(focus) || !OperationsAreas.contains(u.region, scope, focus)) {
             lastError = "Der Streifenpunkt muss im zugewiesenen Gebiet liegen."; return false
         }
-        val previous = u.patrolMode
+        val previous = u.copy()
         u.patrolMode = mode; u.patrolScope = scope; u.focusLon = focus.lon; u.focusLat = focus.lat
         u.specialSignal = false
         if (state.phase == "RUNNING") {
             if (mode == "WATCH") sendHome(u)
-            else if (!beginPatrol(u)) { u.patrolMode = previous; return false }
+            else if (!beginPatrol(u)) {
+                u.patrolMode = previous.patrolMode; u.patrolScope = previous.patrolScope
+                u.focusLon = previous.focusLon; u.focusLat = previous.focusLat
+                u.specialSignal = previous.specialSignal
+                return false
+            }
         }
         emit("Streifenauftrag", "${u.callsign}: $mode · Präsenz senkt Einbruch/Sachbeschädigung bis 30 %, verbraucht Treibstoff und Kraft.")
         return true
@@ -627,7 +651,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         u.startLon = u.lon; u.startLat = u.lat
         u.destLon = route.points.last().lon; u.destLat = route.points.last().lat
         u.routePoints = route.points.toMutableList(); u.routeBasis = route.basis
-        u.travelTotal = route.durationMinutes; u.travelLeft = u.travelTotal; u.readinessLeft = 0
+        u.travelTotal = travelMinutes(route.durationMinutes); u.travelLeft = u.travelTotal; u.readinessLeft = 0
         u.specialSignal = false; u.status = "PATROLLING"
         radioStatus(u)
         return true
@@ -915,6 +939,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
             w *= if (h in 9..19) 1.8 else .25
         if (t.priority == 1) w *= .55
         if (title.contains("einbruch") || title.contains("sachbeschädigung")) w *= 1 - patrolPresence()
+        if (title.contains("unfall")) w *= SimulationConditions.accidentWeight(state.weather)
         return w
     }
 
@@ -1027,6 +1052,72 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         return call
     }
 
+    /** Merge additional callers about the same active situation; counts refer to distinct calls. */
+    fun reportCaller(template: IncidentTemplate, position: GeoPoint, disconnected: Boolean = false, addressUncertain: Boolean = false): IncidentState {
+        require(region().contains(position) && inScope(position)) { "Anrufort außerhalb des Zuständigkeitsgebiets" }
+        val snapped = if (template.lat != null && template.lon != null) position
+            else NativeRouting.loadedGraph(state.region)?.takeIf { it.map.version >= 2 }
+                ?.namedStreetPoint(position) { region().contains(it) && inScope(it) }?.first ?: position
+        val title = template.chain.firstOrNull()?.title ?: template.title
+        val existing = state.incidents.firstOrNull {
+            it.region == state.region && it.title == title && it.status in listOf("OPEN", "DRIVING", "WORKING") &&
+                GeoData.km(GeoPoint(it.actualLon, it.actualLat), snapped) <= .2
+        }
+        if (existing != null) {
+            existing.duplicateCallers = (existing.duplicateCallers + 1).coerceAtMost(999)
+            if (!disconnected) existing.disconnected = false
+            existing.notes.add("Weitere Anrufer zur selben Lage: ${existing.duplicateCallers}; Meldungen zusammengeführt.")
+            while (existing.notes.size > 40) existing.notes.removeAt(0)
+            emit("Mehrfachanruf", "${existing.title}: ${existing.duplicateCallers} Anrufer, eine Einsatzakte.")
+            return existing
+        }
+        val call = newIncident(template, snapped)
+        call.disconnected = disconnected
+        call.addressUncertain = addressUncertain
+        if (disconnected) call.notes.add("Anrufer hat aufgelegt; Angaben können per Rückruf ergänzt werden.")
+        if (addressUncertain) {
+            val graph = NativeRouting.graph(call.region)
+            val actual = GeoPoint(call.actualLon, call.actualLat)
+            val reported = (0 until 8).map { k ->
+                GeoPoint(actual.lon + .003 * cos(k * PI / 4), actual.lat + .0018 * sin(k * PI / 4))
+            }.mapNotNull { p -> graph?.namedStreetPoint(p) { region().contains(it) && inScope(it) } }
+                .firstOrNull { GeoData.km(actual, it.first) in .08.. .45 }
+            if (reported != null) {
+                call.lon = reported.first.lon; call.lat = reported.first.lat
+                call.location = "${reported.second} · ungefähre Angabe".take(120)
+            } else call.location = "Adresse unklar · ${call.location}".take(120)
+            call.notes.add("Anrufer ist bei der Adresse unsicher. Rückruf klärt den tatsächlichen Straßenpunkt.")
+        }
+        return call
+    }
+
+    /** Concrete caller follow-up: clarify information, correct the address and reroute if needed. */
+    fun callback(call: IncidentState): Boolean {
+        if (state.phase != "RUNNING" || call.callbackDone || call.status !in listOf("OPEN", "DRIVING", "WORKING") ||
+            (!call.disconnected && !call.addressUncertain)) return false
+        val moved = GeoData.km(GeoPoint(call.lon, call.lat), GeoPoint(call.actualLon, call.actualLat)) > .005
+        call.callbackDone = true; call.disconnected = false; call.addressUncertain = false
+        call.lon = call.actualLon; call.lat = call.actualLat; call.location = call.actualLocation
+        val extension = (1440 - call.deadline).coerceIn(0, 10)
+        call.deadline += extension
+        call.notes.add("Rückruf erfolgreich: Straßenangabe bestätigt, Angaben ergänzt; Frist +$extension Spielminuten.")
+        if (moved && call.assignedUnits.isNotEmpty()) {
+            for (id in call.assignedUnits) {
+                val u = state.units.find { it.id == id && it.incidentId == call.id } ?: continue
+                val route = NativeRouting.routeFor(u, GeoPoint(call.lon, call.lat))
+                u.startLon = u.lon; u.startLat = u.lat; u.destLon = call.lon; u.destLat = call.lat
+                u.routePoints = route.points.toMutableList(); u.routeBasis = route.basis
+                u.travelTotal = travelMinutes(route.durationMinutes, u.specialSignal); u.travelLeft = u.travelTotal
+                u.readinessLeft = 0; u.status = "DRIVING"; radioStatus(u)
+            }
+            call.firstArrival = -1; call.status = "DRIVING"
+            call.notes.add("Kräfte zur korrigierten Adresse umdisponiert, keine erneute Einsatzpauschale.")
+        }
+        while (call.notes.size > 40) call.notes.removeAt(0)
+        emit("Rückruf", "${call.title}: ${call.location}; Angaben bestätigt.")
+        return true
+    }
+
     fun remainingTypes(call: IncidentState): List<String> {
         val left = call.requiredTypes.toMutableList()
         for (id in call.assignedUnits) {
@@ -1070,7 +1161,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         state.shiftSpecialCost += fee
         val readiness = readiness(u)
         val route = NativeRouting.routeFor(u, GeoPoint(call.lon, call.lat))
-        val eta = ceil(route.durationMinutes / signalSpeed(specialRights)).toInt().coerceAtLeast(1)
+        val eta = travelMinutes(route.durationMinutes, specialRights)
         u.specialSignal = specialRights
         u.routePoints = route.points.toMutableList()
         u.routeBasis = route.basis
@@ -1142,7 +1233,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         val route = NativeRouting.routeFor(u, GeoPoint(u.homeLon, u.homeLat))
         u.routePoints = route.points.toMutableList()
         u.routeBasis = route.basis
-        u.travelTotal = route.durationMinutes
+        u.travelTotal = travelMinutes(route.durationMinutes)
         u.travelLeft = u.travelTotal
         u.status = if (u.travelTotal <= 0 || GeoData.km(GeoPoint(u.lon, u.lat), GeoPoint(u.homeLon, u.homeLat)) < .05) "FREE" else "RETURNING"
         radioStatus(u)
@@ -1465,6 +1556,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
             if (state.phase != "RUNNING") break
             state.elapsed++
             state.absoluteMinute++
+            syncChiefRoster()
             for (u in state.units.filter { it.region == state.region }) {
                 val previousFms = fms(u)
                 if (
@@ -1498,6 +1590,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                     rotate(u)
                 }
                 if (u.status in listOf("DRIVING", "RETURNING", "PATROLLING")) move(u)
+                if (u.status == "FREE") syncChiefUnitRoster(u)
                 if (u.status == "FREE" && u.patrolMode in listOf("PATROL", "FOCUS", "CHECKPOINT") && available(u)) {
                     if (!beginPatrol(u)) { u.patrolMode = "WATCH"; emit("Streife angehalten", "${u.callsign}: $lastError") }
                 }
@@ -1622,8 +1715,11 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                     openIncidents() < 30 &&
                     state.elapsed < state.duration - 25 &&
                     rnd() < hourFactor() * difficultyRate() / state.callInterval.coerceIn(10, 240)
-            )
-                newIncident()
+            ) {
+                val template = pickTemplate()
+                val position = if (template.lat != null && template.lon != null) GeoPoint(template.lon, template.lat) else samplePosition()
+                reportCaller(template, position, disconnected = rnd() < .08, addressUncertain = rnd() < .08)
+            }
             if (state.elapsed >= state.duration) finishShift()
         }
     }

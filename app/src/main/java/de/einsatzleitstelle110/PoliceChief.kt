@@ -234,7 +234,7 @@ fun GameController.assignChiefOfficer(employeeId: String, unitId: String?): Bool
 }
 
 private fun GameController.chiefScheduled(employee: ChiefEmployee): Boolean {
-    val hour = state.startMinute / 60
+    val hour = if (state.phase == "RUNNING") hour() else state.startMinute / 60
     return employee.group == state.chief.activeGroup && (hour - employee.startHour + 24) % 24 < employee.dutyHours
 }
 fun GameController.setChiefSchedule(employeeId: String, group: String, startHour: Int, hours: Int): Boolean {
@@ -252,14 +252,26 @@ fun GameController.setChiefDutyGroup(group: String): Boolean {
     if (state.chief.vehicles.any { v -> state.units.find { it.id == v.unitId }?.let { !chiefUnitFree(it) } == true }) return chiefReject("Dienstgruppenwechsel erst nach Rückkehr aller eigenen Fahrzeuge.")
     state.chief.activeGroup = group; syncChiefRoster(); return true
 }
+/** Scheduled staff may replace a crew only after its current movement/incident has finished. */
+fun GameController.chiefDutyEligible(unit: UnitState): Boolean {
+    if (chiefVehicle(unit) == null) return true
+    return unit.officers.all { officer ->
+        officer.personnelId.isBlank() || state.chief.employees.find { it.id == officer.personnelId }?.let { chiefScheduled(it) } == true
+    }
+}
+fun GameController.syncChiefUnitRoster(unit: UnitState) {
+    if (chiefVehicle(unit) == null || !chiefUnitFree(unit)) return
+    val staff = state.chief.employees.filter { it.assignedUnitId == unit.id }
+    staff.forEach { it.officer = chiefOfficer(it) }
+    val legacy = unit.officers.filter { it.personnelId.isBlank() }
+    unit.officers = (legacy + staff.filter { chiefScheduled(it) }.map { it.officer }).take(chiefMaxCrew(unit)).toMutableList()
+    unit.crew = unit.officers.size
+    unit.officer = unit.officers.firstOrNull() ?: Officer("Unbesetzt")
+}
 fun GameController.syncChiefRoster() {
-    state.chief.employees.forEach { it.officer = chiefOfficer(it) }
     for (v in state.chief.vehicles) {
-        val u = state.units.find { it.id == v.unitId } ?: continue
-        if (!chiefUnitFree(u)) continue
-        val legacy = u.officers.filter { it.personnelId.isBlank() }
-        u.officers = (legacy + state.chief.employees.filter { it.assignedUnitId == u.id && chiefScheduled(it) }.map { it.officer }).take(chiefMaxCrew(u)).toMutableList()
-        u.crew = u.officers.size; u.officer = u.officers.firstOrNull() ?: Officer("Unbesetzt")
+        val unit = state.units.find { it.id == v.unitId } ?: continue
+        syncChiefUnitRoster(unit)
     }
 }
 fun GameController.promoteChiefOfficer(employeeId: String): Boolean {

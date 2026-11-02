@@ -26,6 +26,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Test, build and lint native app
         run: ./gradlew --no-daemon :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest :app:lintDebug
+      - name: Verify offline geo pipeline contracts
+        run: python3 -m unittest discover -s tools/tests -v
       - name: Audit real APK contents
         run: |
           mkdir -p release
@@ -123,7 +125,7 @@ jobs:
           NOTES=docs/NATIVE_PREVIEW_RELEASE.md
           TITLE="Native Leitstelle: neue Grafik, Bezirke und persönliche Ausstattung"
           case "${GITHUB_REF_NAME}" in
-            codex/operator-v1-polizeichef) TAG=operator-polizeichef-preview; NOTES=docs/RELEASE_POLIZEICHEF.md; TITLE="Einsatzleitstelle 110 – Polizeichef Entwicklungsstand";;
+            codex/operator-v1-polizeichef) TAG=operator-polizeichef-${GITHUB_SHA::7}; NOTES=docs/RELEASE_POLIZEICHEF.md; TITLE="Einsatzleitstelle 110 – Polizeichef Entwicklungsstand";;
             claude/*) TAG=operator-claude-v1-preview; NOTES=docs/RELEASE_CLAUDE_V1.md; TITLE="Einsatzleitstelle 110 – V1-Entwicklungsstand (Claude)";;
           esac
           if gh release view "$TAG" >/dev/null 2>&1; then

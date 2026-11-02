@@ -4,6 +4,10 @@
 
 [Native Android-APK herunterladen](https://github.com/GoldenUnicorn24/Operator/releases/download/operator-native-v2-preview/Einsatzleitstelle110-Native-Leitstelle.apk) · [Android-Screenshots](docs/evidence/native-v2/)
 
+## Polizeichef-Entwicklungsstand (0.11.0)
+
+Arbeitsbranch `codex/operator-v1-polizeichef`: Hamburger Bezirksdetailkarte, Streifen/FMS/Sonderrechte, eigene Dienststellen mit Fahrzeug- und Personalverwaltung sowie Wetter, Rückrufe, fünf Speicherplätze und Querformat-Einsatzakte. Native Offline-App, weiterhin ohne Internetberechtigung. [Abnahmestand](docs/ACCEPTANCE_POLIZEICHEF.md) · [Release-Notizen](docs/RELEASE_POLIZEICHEF.md). Kein v1.0; Tests und Gerätebelege werden auf den jeweils tatsächlich geprüften Commit bezogen.
+
 ## V1-Entwicklungsstand (Branch `claude/operator-v1-gameplay`)
 
 Meilensteine **M1–M4** umgesetzt (Version 0.10.0-v1-kandidat): topografische Offline-Live-Karte aller 16 Länder mit Straßenrouting, Disposition direkt auf der Karte, 34 Einsatzabläufe mit Entscheidungen, SEK/MEK-Differenzierung, Karriere mit Freischaltungen, Loadout, visueller Ketteneditor, Tutorial. Abnahmestand: [docs/ACCEPTANCE_CLAUDE_V1.md](docs/ACCEPTANCE_CLAUDE_V1.md). [Preview-APK](https://github.com/GoldenUnicorn24/Operator/releases/tag/operator-claude-v1-preview) · [Gerätescreenshots](docs/evidence/claude-m1/) · [Release-Notes](docs/RELEASE_CLAUDE_V1.md). Noch kein v1.0: menschlicher Spieltest und Messung auf echtem Gerät stehen aus.

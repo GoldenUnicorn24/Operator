@@ -1,3 +1,15 @@
+# Polizeichef-Entwicklungsstand · 0.11.0 · 02.11.2026
+
+P1: Hamburg mit Wohnstraßen, Einbahnrichtungen, getrennten Straßen-/Referenznamen und lokalen Wasser-/Grün-/Bahnflächen. Rückwärtslesbares Kartenformat R2, helle isolierte Bezirkskarte, geklemmte Kamera, Straßenbeschriftung und Straßenpunkte für neue Notrufe. Gerichtete Teilstrecken und ETA stimmen überein.
+
+P2: Streifenrunden, Schwerpunkt/Kontrollstelle, Präsenzwirkung, Eigenfeststellungen, Sonderrechte mit Kosten/Risiko, FMS und individuelle Fahrzeugzeichen bei jeder Zoomstufe.
+
+P3: Fiktive Dienststellen und Ausbau, Fahrzeugkatalog, getrennte Bewerber/Personal/Besatzungen, Dienstgruppen, eigene Einheitentypen, tägliche Kosten und Insolvenz-Warnung.
+
+P4: Verkehr/Wetter als Spielwerte, Mehrfachanrufer/Rückruf mit Adresskorrektur, fünf atomare Speicherplätze, Querformat-Einsatzakte und ausgelagerte Bildschirmmodule. Save-Schema 7 migriert bestehende native und bereits unterstützte ältere Spielstände.
+
+Nachweise und Grenzen: [docs/ACCEPTANCE_POLIZEICHEF.md](docs/ACCEPTANCE_POLIZEICHEF.md). Kein v1.0; finale Geräte-/CI-Nachweise werden mit geprüfter Commit-ID ergänzt.
+
 # V1-Entwicklungsstand (Claude) – Meilenstein M4 · 02.11.2026 · Version 0.10.0-v1-kandidat
 
 **Tutorial:** drei geführte Hamburger Einsätze (Disponieren, Entscheidung bei der Anrufannahme, Mehrfachauswahl) mit Hinweisbanner auf der Karte, danach freie Schicht; jederzeit überspringbar.

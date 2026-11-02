@@ -40,7 +40,7 @@ class RoadGraph(val code: String, val map: StateMap, everyVertex: Boolean = map.
         val cells = HashMap<Long, MutableList<Long>>()
         for ((ri, line) in map.roads.withIndex()) {
             val a = roadStart[ri]; val b = roadEnd[ri]
-            if (a < 0 || b < 0 || a == b || !main[a] || !main[b]) continue
+            if (!usableRoad(a, b)) continue
             for (i in 0 until line.size - 1) {
                 val x0 = floor(min(line.lon(i), line.lon(i + 1)) / CELL).toLong()
                 val x1 = floor(max(line.lon(i), line.lon(i + 1)) / CELL).toLong()
@@ -66,6 +66,7 @@ class RoadGraph(val code: String, val map: StateMap, everyVertex: Boolean = map.
     val bounds: DoubleArray
     val basis = when {
         map.source == "LGV" -> "HAMBURG_MAIN_ROADS_APPROXIMATION"
+        map.source == "OSM_MAIN" -> "OSM_MAIN_ROADS_APPROXIMATION"
         map.version >= 2 -> "OSM_DETAIL_ROADS_APPROXIMATION"
         else -> "OSM_MAIN_ROADS_APPROXIMATION"
     }
@@ -171,6 +172,8 @@ class RoadGraph(val code: String, val map: StateMap, everyVertex: Boolean = map.
             if (n == 0) doubleArrayOf(0.0, 0.0, 0.0, 0.0)
             else doubleArrayOf(lon.min(), lat.min(), lon.max(), lat.max())
     }
+
+    private fun usableRoad(a: Int, b: Int): Boolean = a >= 0 && b >= 0 && a != b && main[a] && main[b]
 
     private fun cell(x: Double, y: Double): Long =
         (floor(x / CELL).toLong() shl 32) xor (floor(y / CELL).toLong() and 0xffffffffL)
@@ -493,7 +496,9 @@ object NativeRouting {
     @Synchronized
     fun graph(code: String): RoadGraph? {
         graphs[code]?.let { return it }
-        val map = MapData.loaded(code) ?: appContext?.let { MapData.state(it, code) } ?: return null
+        val stateCode = code.removeSuffix(":MAIN")
+        val full = MapData.loaded(stateCode) ?: appContext?.let { MapData.state(it, stateCode) } ?: return null
+        val map = if (code.endsWith(":MAIN")) StateMap(stateCode, full.roads.filter { it.cls in 0..2 }, full.places, "OSM_MAIN", version = full.version) else full
         if (map.roads.isEmpty()) return null
         val g = RoadGraph(code, map)
         graphs[code] = g
@@ -509,6 +514,7 @@ object NativeRouting {
         val map = MapData.parseLegacyHamburg(raw)
         MapData.install(map)
         graphs["DE-HH"] = RoadGraph("DE-HH", map)
+        graphs.remove("DE-HH:MAIN")
         fields.clear()
     }
 
@@ -516,6 +522,7 @@ object NativeRouting {
     fun install(map: StateMap) {
         MapData.install(map)
         graphs[map.code] = RoadGraph(map.code, map)
+        graphs.remove("${map.code}:MAIN")
         fields.clear()
     }
 
@@ -527,7 +534,7 @@ object NativeRouting {
 
     private fun pickGraph(start: GeoPoint, end: GeoPoint, region: String?): RoadGraph? {
         if (region != null) return graph(region)?.takeIf { it.covers(start) && it.covers(end) }
-        return synchronized(this) { graphs.values.firstOrNull { it.covers(start) && it.covers(end) } }
+        return synchronized(this) { graphs.values.firstOrNull { !it.code.endsWith(":MAIN") && it.covers(start) && it.covers(end) } }
     }
 
     fun approximation(start: GeoPoint, end: GeoPoint, speedKmh: Double): NativeRoute {
@@ -586,10 +593,13 @@ object NativeRouting {
         )
     }
 
-    /** Route for a specific unit: helicopters fly, everybody else drives. */
+    private fun unitGraphCode(u: UnitState): String =
+        if (u.region == "DE-HH" && u.scope == "STATE" && (graph(u.region)?.map?.version ?: 1) >= 2) "${u.region}:MAIN" else u.region
+
+    /** District vehicles use detail streets; statewide units retain the arterial network. */
     fun routeFor(u: UnitState, end: GeoPoint): NativeRoute {
         val start = GeoPoint(u.lon, u.lat)
-        return if (u.type == "HELI") air(start, end, u.vehicleSpeed) else route(start, end, u.vehicleSpeed, u.region)
+        return if (u.type == "HELI") air(start, end, u.vehicleSpeed) else route(start, end, u.vehicleSpeed, unitGraphCode(u))
     }
 
     /**
@@ -599,7 +609,7 @@ object NativeRouting {
     fun eta(u: UnitState, target: GeoPoint): Int {
         val start = GeoPoint(u.lon, u.lat)
         if (u.type == "HELI") return air(start, target, u.vehicleSpeed).durationMinutes
-        val g = graph(u.region)
+        val g = graph(unitGraphCode(u))
         if (g == null || !g.covers(start) || !g.covers(target) || (g.map.version < 2 && GeoData.km(start, target) < .15))
             return approximation(start, target, u.vehicleSpeed).durationMinutes
         if (g.map.version >= 2) return g.detailEta(start, target, u.vehicleSpeed)

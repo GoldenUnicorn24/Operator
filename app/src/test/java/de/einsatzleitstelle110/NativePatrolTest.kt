@@ -39,6 +39,17 @@ class NativePatrolTest {
         assertNull(PatrolRouting.circuit(tree, a, 62.0, 1L, region()::contains))
     }
 
+    @Test fun rejectedPatrolOrderPreservesCurrentRouteAndAllOrderFields() {
+        val g = game(); val u = g.state.units.first()
+        assertTrue(g.setPatrolMode(u, "PATROL"))
+        g.advance(1)
+        val before = GameStore.toJson(g.state).toString()
+        val tree = StateMap("DE-TEST", listOf(road(a, b, 0), road(b, c, 0)), emptyList(), "OSM", version = 2)
+        NativeRouting.install(tree)
+        assertFalse(g.setPatrolMode(u, "FOCUS", b))
+        assertEquals("a rejected order must not change a moving patrol", before, GameStore.toJson(g.state).toString())
+    }
+
     @Test fun movingPatrolCanBeDispatchedFromItsCurrentPositionWithoutReadiness() {
         val g = game(); val u = g.state.units.first()
         assertEquals(2, g.fms(u))
@@ -100,11 +111,11 @@ class NativePatrolTest {
         assertEquals(0, u.readinessLeft)
     }
 
-    @Test fun schemaSixRoundtripPreservesPatrolAndLegacyFiveGetsDefaults() {
+    @Test fun schemaSevenRoundtripPreservesPatrolAndLegacyFiveGetsDefaults() {
         val g = game(); val u = g.state.units.first()
         assertTrue(g.setPatrolMode(u, "PATROL")); g.advance(1)
         val json = GameStore.toJson(g.state)
-        assertEquals(6, json.getInt("schemaVersion"))
+        assertEquals(7, json.getInt("schemaVersion"))
         val restored = GameStore.fromJson(JSONObject(json.toString()))
         val v = restored.units.first()
         assertEquals("PATROLLING", v.status); assertEquals("PATROL", v.patrolMode)
@@ -118,6 +129,6 @@ class NativePatrolTest {
         assertEquals("WATCH", migrated.units.first().patrolMode)
         assertFalse(migrated.units.first().specialSignal)
         assertTrue(migrated.chief.vehicles.isEmpty())
-        assertEquals(6, GameStore.toJson(migrated).getInt("schemaVersion"))
+        assertEquals(7, GameStore.toJson(migrated).getInt("schemaVersion"))
     }
 }

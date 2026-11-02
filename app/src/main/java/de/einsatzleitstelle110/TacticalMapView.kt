@@ -40,6 +40,7 @@ class TacticalMapView(
 
     /** Screen pixels at the bottom covered by a panel (dispatch file); focus keeps clear of it. */
     var obstructedBottom = 0f
+    var obstructedRight = 0f
     // Compatibility with the previous settings screen; all geography stays offline.
     var useOnlineStreets = false
 
@@ -48,6 +49,7 @@ class TacticalMapView(
     /** Units ticked in the dispatch panel: their prospective routes are drawn. */
     var previewUnits: Set<String> = emptySet()
     var onEmptyTap: (() -> Unit)? = null
+    var onLongPressPoint: ((GeoPoint) -> Unit)? = null
 
     private var panX = 0f
     private var panY = 0f
@@ -95,6 +97,14 @@ class TacticalMapView(
         GestureDetector(
             context,
             object : GestureDetector.SimpleOnGestureListener() {
+                override fun onLongPress(e: MotionEvent) {
+                    moved = true
+                    val cam = makeTransform(zoom, panX, panY).camera()
+                    val wx = (e.x - cam.bx) / cam.a
+                    val wy = (e.y - cam.by) / cam.a
+                    val point = GeoPoint(wx * 360 - 180, Math.toDegrees(atan(sinh(PI * (1 - 2 * wy)))))
+                    onLongPressPoint?.invoke(point)
+                }
                 override fun onDoubleTap(e: MotionEvent): Boolean {
                     zoomAround(2f, e.x, e.y)
                     return true
@@ -203,7 +213,7 @@ class TacticalMapView(
         val t = makeTransform(zoom, 0f, 0f)
         val a = t.point(lon, lat)
         val bottom = if (obstructedBottom > 0) height - obstructedBottom else height - bottomInset * density
-        panX = width / 2f - a.x
+        panX = t.w / 2f - a.x
         panY = (topInset * density + bottom) / 2 - a.y
         invalidate()
     }
@@ -214,8 +224,8 @@ class TacticalMapView(
         val a = t.point(lon, lat)
         val top = t.top + 30 * density
         val bottom = (visibleBottom - 30 * density).coerceAtLeast(top + 40 * density)
-        if (a.x in 30 * density..width - 30 * density && a.y in top..bottom) return
-        panX += width / 2f - a.x
+        if (a.x in 30 * density..t.w - 30 * density && a.y in top..bottom) return
+        panX += t.w / 2f - a.x
         panY += (top + bottom) / 2 - a.y
         invalidate()
     }
@@ -243,7 +253,7 @@ class TacticalMapView(
         val maxX = Transform.worldX(bounds[2])
         val minY = Transform.worldY(bounds[3])
         val maxY = Transform.worldY(bounds[1])
-        val w = max(1f, width.toFloat())
+        val w = max(1f, width.toFloat() - obstructedRight)
         val h = max(1f, height.toFloat())
         val top = min(topInset * density, h * .3f)
         val bottom = min(bottomInset * density, h * .35f)
@@ -308,7 +318,7 @@ class TacticalMapView(
         u.routePoints.ifEmpty { listOf(GeoPoint(u.startLon, u.startLat), GeoPoint(u.destLon, u.destLat)) }
 
     private fun anim(u: UnitState, now: Long, paused: Boolean): Pair<GeoPoint, Float>? {
-        if (u.status !in listOf("DRIVING", "RETURNING")) {
+        if (u.status !in listOf("DRIVING", "RETURNING", "PATROLLING")) {
             anims.remove(u.id)
             return null
         }
@@ -318,7 +328,7 @@ class TacticalMapView(
         val target =
             if (u.readinessLeft > 0 || u.travelTotal <= 0) 0.0 else 1.0 - u.travelLeft.toDouble() / u.travelTotal
         var a = anims[u.id]
-        if (a == null || a.key != key) {
+        if (a == null || a.key != key || target < a.to) {
             val cum = DoubleArray(pts.size)
             for (i in 1 until pts.size) cum[i] = cum[i - 1] + GeoData.km(pts[i - 1], pts[i])
             a = Anim(key, pts, cum, target, target, now, target)
@@ -399,7 +409,7 @@ class TacticalMapView(
         // Routes of moving units.
         if (showRoutes)
             for (u in units) {
-                if (u.status !in listOf("DRIVING", "RETURNING") || !visible(u)) continue
+                if (u.status !in listOf("DRIVING", "RETURNING", "PATROLLING") || !visible(u)) continue
                 val a = anims[u.id] ?: continue
                 drawRoute(c, t, a.points, a.cum, a.shown, if (u.status == "RETURNING") 0xff6f8fa3.toInt() else routeColor(u), u.routeBasis == "DISTANCE_APPROXIMATION")
             }
@@ -429,12 +439,18 @@ class TacticalMapView(
                 val h = group.first()
                 if (game.state.scope != "STATE" && !overviewWholeState && !inScope(GeoPoint(h.homeLon, h.homeLat))) continue
                 val q = t.point(h.homeLon, h.homeLat)
-                all.add(MapClustering.Marker(q.x, q.y, Station(h.homeLon, h.homeLat, group)))
+                val own = game.state.chief.stations.find { it.region == h.region && it.lon == h.homeLon && it.lat == h.homeLat }
+                all.add(MapClustering.Marker(q.x, q.y, Station(h.homeLon, h.homeLat, group, own?.name ?: "Spielwache")))
             }
+        if (filter == "ALLE" || filter == "WACHEN") for (station in game.state.chief.stations) {
+            if (station.region != game.state.region || (!overviewWholeState && !inScope(GeoPoint(station.lon, station.lat)))) continue
+            if (units.any { it.homeLon == station.lon && it.homeLat == station.lat }) continue
+            val q = t.point(station.lon, station.lat)
+            all.add(MapClustering.Marker(q.x, q.y, Station(station.lon, station.lat, emptyList(), station.name)))
+        }
         for (u in units) {
             if (!visible(u)) continue
             val (geo, _) = positions.getValue(u.id)
-            if (u.status == "FREE" && u.lat == u.homeLat && u.lon == u.homeLon && filter != "FREI" && !detailed) continue
             if (!inScope(geo) && game.state.scope != "STATE" && !overviewWholeState && u.incidentId.isBlank()) continue
             val q = t.point(geo.lon, geo.lat)
             all.add(MapClustering.Marker(q.x, q.y, u))
@@ -459,20 +475,25 @@ class TacticalMapView(
             }
         // Calls never disappear into a cluster with vehicles: cluster them separately.
         val callHits = MapClustering.cluster(inside.filter { it.value is IncidentState }, (if (detailed) 26 else 30) * density)
-        // Moving vehicles are never merged into a cluster: the player must see them drive.
-        fun movingUnit(v: Any) = v is UnitState && v.status in listOf("DRIVING", "RETURNING")
-        val otherHits = MapClustering.cluster(inside.filter { it.value !is IncidentState && !movingUnit(it.value) }, (if (detailed) 30 else 34) * density)
-        val movingHits = inside.filter { movingUnit(it.value) }.map { MapClustering.Cluster(it.x, it.y, listOf(it)) }
-        screenHits = callHits + movingHits + otherHits
+        // Vehicle symbols stay individually visible at every zoom. Small offsets separate overlaps.
+        val otherHits = MapClustering.cluster(inside.filter { it.value is Station }, 28 * density)
+        val occupied = HashMap<Pair<Int, Int>, Int>()
+        val unitHits = inside.filter { it.value is UnitState }.map { marker ->
+            val bucket = (marker.x / (22 * density)).toInt() to (marker.y / (22 * density)).toInt()
+            val index = occupied.getOrDefault(bucket, 0)
+            occupied[bucket] = index + 1
+            val angle = index * 2.4
+            val radius = if (index == 0) 0.0 else (8 + 4 * sqrt(index.toDouble())) * density
+            val x = marker.x + (cos(angle) * radius).toFloat()
+            val y = marker.y + (sin(angle) * radius).toFloat()
+            MapClustering.Cluster(x, y, listOf(marker))
+        }
+        screenHits = callHits + unitHits + otherHits
         for (cluster in otherHits) {
             if (cluster.members.size > 1) drawCluster(c, cluster)
-            else
-                when (val v = cluster.members[0].value) {
-                    is UnitState -> drawUnit(c, cluster.x, cluster.y, v, positions.getValue(v.id).second, detailed, pal)
-                    is Station -> drawStation(c, cluster.x, cluster.y, v)
-                }
+            else drawStation(c, cluster.x, cluster.y, cluster.members[0].value as Station)
         }
-        for (cluster in movingHits) {
+        for (cluster in unitHits) {
             val v = cluster.members[0].value as UnitState
             drawUnit(c, cluster.x, cluster.y, v, positions.getValue(v.id).second, detailed, pal)
         }
@@ -499,8 +520,8 @@ class TacticalMapView(
         if (!paused || sel != null) postInvalidateDelayed(if (paused) 60 else 33)
     }
 
-    private fun routeColor(u: UnitState) =
-        when (u.type) {
+    private fun routeColor(u: UnitState): Int =
+        game.chiefVehicle(u)?.let { v -> game.state.chief.unitTypes.find { it.id == v.customTypeId }?.color } ?: when (u.type) {
             "SEK" -> 0xffbd9cff.toInt()
             "MEK" -> 0xff78e0bc.toInt()
             "HELI" -> 0xff8adcf2.toInt()
@@ -566,7 +587,7 @@ class TacticalMapView(
         }
     }
 
-    private class Station(val lon: Double, val lat: Double, val units: List<UnitState>)
+    private class Station(val lon: Double, val lat: Double, val units: List<UnitState>, val name: String = "Spielwache")
 
     private fun drawStation(c: Canvas, x: Float, y: Float, s: Station) {
         val free = s.units.count { game.available(it) }
@@ -610,33 +631,29 @@ class TacticalMapView(
         }
 
     private fun drawUnit(c: Canvas, x: Float, y: Float, u: UnitState, heading: Float, detailed: Boolean, pal: MapPalette) {
-        val moving = u.status in listOf("DRIVING", "RETURNING")
+        val moving = u.status in listOf("DRIVING", "RETURNING", "PATROLLING")
         val highlighted = u.id in previewUnits
         if (highlighted) {
             paint(0x66f5e663, 0f)
             c.drawCircle(x, y, 22 * density, p)
         }
-        if (!detailed && !moving && !highlighted) {
-            // Compact status chip for the state overview.
-            val w = 15 * density
-            paint(0xff0d1d29.toInt())
-            c.drawRoundRect(RectF(x - w, y - 7 * density, x + w, y + 7 * density), 4 * density, 4 * density, p)
-            paint(statusColor(u), 1.4f, Paint.Style.STROKE)
-            c.drawRoundRect(RectF(x - w, y - 7 * density, x + w, y + 7 * density), 4 * density, 4 * density, p)
-            text(c, typeGlyph(u.type).take(5), x, y + 3 * density, 7.5f, routeColor(u), true, true)
-            return
+        if (u.status == "DRIVING" && u.specialSignal) {
+            val on = (SystemClock.uptimeMillis() / 220) % 2 == 0L
+            paint(if (on) 0x9950bfff.toInt() else 0x334faaff)
+            c.drawCircle(x, y, 19 * density, p)
         }
         if (u.type == "HELI") drawHelicopter(c, x, y, heading, moving) else drawVehicle(c, x, y, u, heading, moving)
         paint(statusColor(u))
-        c.drawCircle(x + 11 * density, y - 11 * density, 3.6f * density, p)
+        c.drawCircle(x + 11 * density, y - 11 * density, 6.5f * density, p)
         paint(0xff081520.toInt(), 1f, Paint.Style.STROKE)
-        c.drawCircle(x + 11 * density, y - 11 * density, 3.6f * density, p)
+        c.drawCircle(x + 11 * density, y - 11 * density, 6.5f * density, p)
+        text(c, game.fms(u).toString(), x + 11 * density, y - 8 * density, 8f, 0xff081520.toInt(), true, true)
         if (moving) pill(c, "${u.travelLeft + u.readinessLeft}′", x, y - 21 * density, 8f, 0xffffd58b.toInt(), 0xe00b1a26.toInt())
         if (detailed || highlighted) pill(c, u.callsign.take(14), x, y + 27 * density, 7.5f, routeColor(u), 0xe00b1a26.toInt())
     }
 
     private fun drawVehicle(c: Canvas, x: Float, y: Float, u: UnitState, heading: Float, moving: Boolean) {
-        val tint = routeColor(u)
+        val tint = if (game.chiefVehicle(u)?.livery == "GREEN_WHITE") 0xff27854c.toInt() else routeColor(u)
         val armored = u.type == "SEK"
         val van = armored || u.type in listOf("BEREITSCHAFT", "FEUERWEHR", "RETTUNG", "HUND")
         val civil = u.type in listOf("MEK", "KRIPO")
@@ -656,7 +673,7 @@ class TacticalMapView(
                 civil -> 0xff8a949c.toInt()
                 u.type == "RETTUNG" -> 0xfff7f3e6.toInt()
                 u.type == "FEUERWEHR" -> 0xffd8463c.toInt()
-                else -> 0xffe6edf0.toInt()
+                else -> if (game.chiefVehicle(u)?.livery == "GREEN_WHITE") 0xfff3f0df.toInt() else 0xffe6edf0.toInt()
             }
         c.drawRoundRect(RectF(-halfW, -halfH, halfW, halfH), 4f, 4f, p)
         p.color = if (armored) 0xff788391.toInt() else 0xff17354a.toInt()
@@ -666,7 +683,7 @@ class TacticalMapView(
             c.drawRect(-halfW, -3f, halfW, 4f, p)
         }
         // Blue lights flash while on an emergency drive.
-        if (!civil && u.status == "DRIVING") {
+        if (u.status == "DRIVING" && u.specialSignal) {
             val on = (SystemClock.uptimeMillis() / 220) % 2 == 0L
             p.color = if (on) 0xff4fc3ff.toInt() else 0xff1d4f7a.toInt()
             c.drawRoundRect(RectF(-6f, -6f, 0f, -2f), 1f, 1f, p)
@@ -837,7 +854,7 @@ class TacticalMapView(
                 Triple(0xfff5e05a.toInt(), "●", "P3 · normal"),
                 Triple(0xffe9f4f8.toInt(), "◔", "Ring: Restzeit bis Fristablauf"),
                 Triple(0xff6ee7b7.toInt(), "■", "Einheit frei"),
-                Triple(0xffffc66d.toInt(), "■", "Anfahrt (Blaulicht)"),
+                Triple(0xffffc66d.toInt(), "■", "Anfahrt · Sonderrechte wählbar"),
                 Triple(0xffff7a8c.toInt(), "■", "am Einsatzort"),
                 Triple(0xff7dbbff.toInt(), "■", "Rückfahrt · erneut alarmierbar"),
                 Triple(0xffbca2f5.toInt(), "■", "Lehrgang / Ruhe"),
@@ -865,10 +882,10 @@ class TacticalMapView(
     private fun describe(it: Any): String =
         when (it) {
             is UnitState ->
-                "${it.callsign} · ${it.type} · ${it.status}" +
-                    (if (it.status in listOf("DRIVING", "RETURNING")) " · ${it.travelLeft + it.readinessLeft} Min" else "")
+                "${it.callsign} · FMS ${game.fms(it)} · ${it.type} · ${it.status}" +
+                    (if (it.status in listOf("DRIVING", "RETURNING", "PATROLLING")) " · ${it.travelLeft + it.readinessLeft} Min" else "")
             is IncidentState -> "P${it.priority} · ${it.title} · ${it.location}"
-            is Station -> "Spielwache · ${it.units.size} Einheiten"
+            is Station -> "${it.name} (fiktiv) · ${it.units.size} Einheiten"
             else -> "Objekt"
         }
 
@@ -901,7 +918,7 @@ class TacticalMapView(
             is IncidentState -> onCall(value)
             is Station ->
                 AlertDialog.Builder(context)
-                    .setTitle("Spielwache · fiktiv")
+                    .setTitle("${value.name} · fiktiv")
                     .setItems(value.units.map { describe(it) }.toTypedArray()) { _, i -> onUnit(value.units[i]) }
                     .setPositiveButton("Heranzoomen") { _, _ -> focus(value.lon, value.lat) }
                     .setNegativeButton("Schließen", null)

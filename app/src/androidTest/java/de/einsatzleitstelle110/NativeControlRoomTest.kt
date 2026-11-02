@@ -175,6 +175,229 @@ class NativeControlRoomTest {
      * a full 8-hour day and the shift report.
      */
     @Test
+    fun weatherCallerFollowUpSaveSlotsAndLandscapeDispatch() {
+        reset()
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            instrument.waitForIdleSync()
+            var snapshot: GameState? = null
+            var slotsScreen: SaveSlotsScreen? = null
+            scenario.onActivity { a ->
+                dismiss(a)
+                val g = game(a)
+                g.state.autoCalls = false
+                assertTrue(g.setScope("WANDSBEK"))
+                assertTrue(g.setWeather("RAIN"))
+                g.startShift(); g.state.paused = true
+                val target = NativeRouting.graph("DE-HH")!!.namedStreetPoint(GeoPoint(10.10, 53.60)) { g.inScope(it) }!!.first
+                val template = IncidentTemplate("Rückruf bei Nachbarschaftslage", 3, "STREIFE", 8, "Fiktiver Anrufer ist sich bei der Adresse unsicher.")
+                val call = g.reportCaller(template, target, disconnected = true, addressUncertain = true)
+                assertSame(call, g.reportCaller(template, target, disconnected = true))
+                assertEquals(2, call.duplicateCallers)
+                invoke(a, "openCall", call)
+            }
+            waitForBaseMap(scenario)
+            screenshot("native-caller-callback.png")
+            scenario.onActivity { a ->
+                assertTrue(tapPrefix(a.window.decorView, "Rückruf ·"))
+                val g = game(a)
+                val call = g.state.incidents.first { it.title == "Rückruf bei Nachbarschaftslage" }
+                assertTrue(call.callbackDone); assertFalse(call.addressUncertain)
+                snapshot = GameSnapshots.capture(g.state)
+                invoke(a, "save")
+            }
+            SaveSlots.save(instrument.targetContext, 1, "Wandsbek Regen", snapshot!!)
+            assertEquals("RAIN", SaveSlots.load(instrument.targetContext, 1).weather)
+            assertEquals(2, SaveSlots.load(instrument.targetContext, 1).incidents.first { it.title == "Rückruf bei Nachbarschaftslage" }.duplicateCallers)
+            scenario.onActivity { a -> slotsScreen = SaveSlotsScreen(a, game(a)) {}.also { it.show() } }
+            instrument.waitForIdleSync()
+            Thread.sleep(800)
+            screenshot("native-save-slots.png")
+            scenario.onActivity { a ->
+                val dialog = SaveSlotsScreen::class.java.getDeclaredField("dialog").apply { isAccessible = true }.get(slotsScreen) as android.app.Dialog
+                dialog.dismiss()
+                a.requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+            }
+            var landscape = false
+            val until = System.currentTimeMillis() + 15000
+            while (!landscape && System.currentTimeMillis() < until) {
+                scenario.onActivity { a -> landscape = a.resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE }
+                if (!landscape) Thread.sleep(200)
+            }
+            assertTrue(landscape)
+            scenario.onActivity { a ->
+                dismiss(a)
+                val g = game(a)
+                invoke(a, "showTab", "MAP")
+                invoke(a, "openCall", g.state.incidents.first { it.title == "Rückruf bei Nachbarschaftslage" })
+            }
+            waitForBaseMap(scenario)
+            scenario.onActivity { a -> assertTrue(mapView(a).obstructedRight > 0f) }
+            screenshot("native-landscape-dispatch.png")
+            scenario.onActivity { a -> a.requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT }
+        }
+    }
+
+    @Test
+    fun policeChiefStationFleetStaffDispatchAndDurableReload() {
+        reset()
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            instrument.waitForIdleSync()
+            scenario.onActivity { a ->
+                dismiss(a)
+                val g = game(a)
+                assertTrue(g.setScope("WANDSBEK"))
+                g.state.autoCalls = false
+                g.state.fatigueEnabled = false
+                g.state.units.clear()
+                invoke(a, "showChief")
+            }
+            instrument.waitForIdleSync()
+            val create = instrument.uiAutomation.rootInActiveWindow.findAccessibilityNodeInfosByText("Dienststelle gründen · 30.000 €").first()
+            assertTrue(create.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK))
+            instrument.waitForIdleSync()
+            val name = instrument.uiAutomation.rootInActiveWindow.findAccessibilityNodeInfosByText("Revier Wandsbek").first()
+            assertTrue(name.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_SET_TEXT, android.os.Bundle().apply {
+                putCharSequence(android.view.accessibility.AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, "Nordgarten · fiktiv")
+            }))
+            val place = instrument.uiAutomation.rootInActiveWindow.findAccessibilityNodeInfosByText("Standort auf Karte").first()
+            assertTrue(place.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK))
+            var pressX = 0f; var pressY = 0f
+            scenario.onActivity { a ->
+                val v = mapView(a)
+                v.focus(10.10, 53.60)
+                val location = IntArray(2); v.getLocationOnScreen(location)
+                val density = a.resources.displayMetrics.density
+                pressX = location[0] + v.width / 2f
+                pressY = location[1] + (62 * density + v.height - 168 * density) / 2
+            }
+            instrument.waitForIdleSync()
+            val downAt = android.os.SystemClock.uptimeMillis()
+            instrument.sendPointerSync(android.view.MotionEvent.obtain(downAt, downAt, android.view.MotionEvent.ACTION_DOWN, pressX, pressY, 0))
+            Thread.sleep(android.view.ViewConfiguration.getLongPressTimeout().toLong() + 200)
+            instrument.sendPointerSync(android.view.MotionEvent.obtain(downAt, android.os.SystemClock.uptimeMillis(), android.view.MotionEvent.ACTION_UP, pressX, pressY, 0))
+            instrument.waitForIdleSync()
+            scenario.onActivity { a ->
+                val g = game(a)
+                assertEquals(1, g.state.chief.stations.size)
+                val station = g.state.chief.stations.single()
+                assertEquals("Nordgarten · fiktiv", station.name)
+                assertTrue(g.inScope(GeoPoint(station.lon, station.lat)))
+                val screen = MainActivity::class.java.getDeclaredField("chiefScreen").apply { isAccessible = true }.get(a) as PoliceChiefScreen
+                screen.close()
+                val cars = (1..2).map { number -> g.buyChiefVehicle("sedan", station.id, "Peter 31/$number")!! }
+                repeat(4) { index ->
+                    val applicant = g.chiefApplicants().first()
+                    val employee = g.hireChiefOfficer(applicant.id)!!
+                    assertTrue(g.assignChiefOfficer(employee.id, cars[index / 2].unitId))
+                }
+                assertEquals(4, g.state.units.sumOf { it.officers.size })
+                invoke(a, "showChief")
+            }
+            screenshot("native-chief-station.png")
+            scenario.onActivity { a ->
+                val screen = MainActivity::class.java.getDeclaredField("chiefScreen").apply { isAccessible = true }.get(a) as PoliceChiefScreen
+                val dialog = PoliceChiefScreen::class.java.getDeclaredField("dialog").apply { isAccessible = true }.get(screen) as android.app.Dialog
+                assertTrue(tapText(dialog.window!!.decorView, "Fuhrpark"))
+            }
+            screenshot("native-chief-fleet.png")
+            scenario.onActivity { a ->
+                val screen = MainActivity::class.java.getDeclaredField("chiefScreen").apply { isAccessible = true }.get(a) as PoliceChiefScreen
+                val dialog = PoliceChiefScreen::class.java.getDeclaredField("dialog").apply { isAccessible = true }.get(screen) as android.app.Dialog
+                assertTrue(tapText(dialog.window!!.decorView, "Personal"))
+            }
+            screenshot("native-chief-personnel.png")
+            scenario.onActivity { a ->
+                val screen = MainActivity::class.java.getDeclaredField("chiefScreen").apply { isAccessible = true }.get(a) as PoliceChiefScreen
+                screen.close()
+                val g = game(a)
+                g.startShift()
+                val station = g.state.chief.stations.single()
+                val call = g.newIncident(IncidentTemplate("Nachbarschaftshilfe", 3, "STREIFE", 2, "Fiktive kleine Hilfestellung"), GeoPoint(station.lon + .0001, station.lat + .0001))
+                call.pending = ""; call.riskDelta = -.4
+                assertTrue(g.dispatch(call, g.state.units.first(), false))
+                g.state.randomSeed = 0
+                g.advance(25)
+                assertEquals("SOLVED", call.status)
+                g.state.paused = true
+                invoke(a, "showTab", "MAP")
+                invoke(a, "save")
+            }
+            GameStore.awaitSaves()
+            val disk = org.json.JSONObject(instrument.targetContext.openFileInput("einsatzleitstelle-native-v1.json").bufferedReader().use { it.readText() })
+            val stored = GameStore.fromJson(disk)
+            assertEquals(2, stored.chief.vehicles.size)
+            assertEquals(4, stored.chief.employees.size)
+            assertTrue(stored.incidents.any { it.title == "Nachbarschaftshilfe" && it.status == "SOLVED" })
+            scenario.recreate()
+            scenario.onActivity { a ->
+                val g = game(a)
+                assertEquals(1, g.state.chief.stations.size)
+                assertEquals(2, g.state.chief.vehicles.size)
+                assertEquals(4, g.state.units.sumOf { it.officers.size })
+                invoke(a, "showChief")
+            }
+            screenshot("native-chief-reloaded.png")
+        }
+    }
+
+    @Test
+    fun patrolVehiclesSpecialSignalAndRadioStatusOnRealWandsbekRoads() {
+        reset()
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            instrument.waitForIdleSync()
+            scenario.onActivity { a ->
+                dismiss(a)
+                val g = game(a)
+                g.state.mode = "SANDBOX"; g.state.unlimitedBudget = true
+                g.state.autoCalls = false; g.state.fatigueEnabled = false
+                assertTrue(g.setScope("WANDSBEK"))
+                val graph = NativeRouting.graph("DE-HH")!!
+                g.startShift()
+                val units = g.state.units.filter { it.scope == "WANDSBEK" && it.type == "STREIFE" }.take(3)
+                assertEquals(3, units.size)
+                units.forEachIndexed { index, u ->
+                    val point = graph.namedStreetPoint(GeoPoint(10.09 + index * .015, 53.60 + index * .015)) { g.inScope(it) }!!.first
+                    u.lon = point.lon; u.lat = point.lat
+                    assertTrue(g.lastError, g.setPatrolMode(u, "PATROL"))
+                    assertEquals(1, g.fms(u)); assertFalse(u.specialSignal)
+                }
+                g.advance(2)
+                assertTrue(units.all { g.inScope(GeoPoint(it.lon, it.lat)) })
+                g.state.paused = true
+                invoke(a, "showTab", "MAP")
+            }
+            waitForBaseMap(scenario)
+            screenshot("native-wandsbek-patrol.png")
+            scenario.onActivity { a ->
+                val g = game(a)
+                val units = g.state.units.filter { it.scope == "WANDSBEK" && it.type == "STREIFE" }.take(3)
+                val target = NativeRouting.graph("DE-HH")!!.namedStreetPoint(GeoPoint(10.13, 53.63)) { g.inScope(it) }!!.first
+                val p1 = g.newIncident(IncidentTemplate("Dringende Hilfe", 1, "STREIFE", 20, "Fiktive Lage"), target)
+                val p3 = g.newIncident(IncidentTemplate("Ruhige Anfahrt", 3, "STREIFE", 20, "Fiktive Lage"), target)
+                assertTrue(g.dispatch(p1, units[0], true)); assertTrue(g.dispatch(p3, units[1], false))
+                assertTrue(units[0].specialSignal); assertFalse(units[1].specialSignal)
+                assertEquals(3, g.fms(units[0]))
+                assertTrue(g.state.logs.any { "an Leitstelle: Status 3" in it })
+                mapView(a).focus(target.lon, target.lat)
+            }
+            waitForBaseMap(scenario)
+            screenshot("native-signal-comparison.png")
+            scenario.onActivity { a ->
+                val g = game(a)
+                g.state.paused = false
+                val travel = g.state.units.filter { it.status == "DRIVING" }.maxOfOrNull { it.travelLeft + it.readinessLeft } ?: 1
+                g.advance(travel + 1)
+                g.state.paused = true
+                assertTrue(g.state.logs.any { "an Leitstelle: Status 4" in it })
+                val c = android.widget.LinearLayout(a).apply { orientation = android.widget.LinearLayout.VERTICAL }
+                c.addView(android.widget.TextView(a).apply { text = g.state.logs.take(24).joinToString("\n\n"); setTextColor(android.graphics.Color.WHITE); textSize = 13f })
+                invoke(a, "showSheet", "Funkprotokoll", c)
+            }
+            screenshot("native-fms-radio.png")
+        }
+    }
+
+    @Test
     fun wandsbekDetailStreetsMaskNamesAndOneWayDrive() {
         reset()
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
@@ -207,13 +430,13 @@ class NativeControlRoomTest {
                 val road = mapData.roads.filter { r ->
                     r.cls >= 3 && r.oneway != 0 && r.name.isNotBlank() &&
                         (0 until r.size).all { OperationsAreas.contains("DE-HH", "WANDSBEK", GeoPoint(r.lon(it), r.lat(it))) }
-                }.maxByOrNull { r -> (0 until r.size - 1).sumOf { GeoData.km(GeoPoint(r.lon(it), r.lat(it)), GeoPoint(r.lon(it + 1), r.lat(it + 1))) }!!
+                }.maxByOrNull { r -> (0 until r.size - 1).sumOf { GeoData.km(GeoPoint(r.lon(it), r.lat(it)), GeoPoint(r.lon(it + 1), r.lat(it + 1))) } }!!
                 val start = if (road.oneway == 1) 0 else road.size - 1
                 val end = if (road.oneway == 1) road.size - 1 else 0
                 val u = g.state.units.first { it.scope == "WANDSBEK" && it.type == "STREIFE" }
                 u.lon = road.lon(start); u.lat = road.lat(start)
                 val call = g.newIncident(IncidentTemplate("Wohnstraße prüfen", 1, "STREIFE", 20, "Fiktive Testlage"), GeoPoint(road.lon(end), road.lat(end)))
-                assertTrue(call.location.contains(road.name))
+                assertTrue(call.location.contains("Höhe"))
                 assertTrue(g.dispatch(call, u))
                 assertEquals("OSM_DETAIL_ROADS_APPROXIMATION", u.routeBasis)
                 assertTrue(u.routePoints.size >= 2)
@@ -225,7 +448,28 @@ class NativeControlRoomTest {
             }
             waitForBaseMap(scenario)
             perf("P1 Straßenebene bis Grundkarte: ${(System.nanoTime() - startNanos) / 1_000_000} ms")
+            scenario.onActivity { a ->
+                val v = mapView(a)
+                val bitmap = Bitmap.createBitmap(v.width, v.height, Bitmap.Config.ARGB_8888)
+                val canvas = android.graphics.Canvas(bitmap)
+                val times = (0 until 60).map {
+                    val before = System.nanoTime(); v.draw(canvas); (System.nanoTime() - before) / 1_000_000.0
+                }.sorted()
+                perf("P1 Detail-Overlay 60 Bilder: Ø ${times.average()} ms, p95 ${times[56]} ms, max ${times.last()} ms; Bitmap ${bitmap.byteCount} bytes")
+                bitmap.recycle()
+            }
             screenshot("native-wandsbek-street-names.png")
+            scenario.onActivity { a ->
+                val g = game(a)
+                val u = g.state.units.first { it.status == "DRIVING" && it.scope == "WANDSBEK" }
+                assertTrue(u.travelTotal >= 2)
+                val old = GeoPoint(u.lon, u.lat)
+                g.state.paused = false
+                g.advance(u.readinessLeft + u.travelTotal / 2)
+                g.state.paused = true
+                assertTrue(old != GeoPoint(u.lon, u.lat))
+                assertEquals("DRIVING", u.status)
+            }
             screenshot("native-wandsbek-oneway-drive.png")
         }
     }

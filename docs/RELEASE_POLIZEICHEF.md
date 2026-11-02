@@ -9,3 +9,5 @@ Das APK wird erst nach erfolgreichem Build, JVM-Tests, Lint, Paketprüfung und A
 Grenzen: Fahrzeiten sind Spielwerte; keine Abbiegeverbote oder Echtzeitdaten. Fehlende Verbindungen bleiben ausdrücklich markierte Distanznäherungen. Keine Gebäudeumrisse. P2–P4 werden separat dokumentiert; bis dahin keine Vollabnahme des Gesamtauftrags. Physische Geräte und menschliches Balancing nicht geprüft.
 
 Daten: © OpenStreetMap-Mitwirkende, ODbL, offene Kopie `data/osm/`; weitere Quellen siehe THIRD_PARTY_NOTICES.md. Keine Internetberechtigung oder Kartenserver.
+
+P2 ergänzt gespeicherte Streifenaufträge, Präsenz-/Kostenwirkung, Sonderrechte und FMS-Funkmeldungen. P3 ergänzt fiktive Dienststellen mit Ausbau, neun Fahrzeugmodelle, getrenntes Personal mit Dienstgruppen, eigene Einheitentypen und laufende Kosten. P4 ergänzt Verkehrs-/Wetterspielwerte, Mehrfachanrufer und Rückrufe, fünf Save-Slots, Querformat-Akte und getrennte UI-Module. Das Spielstandschema 7 liest die bisherigen Schemas und Migrationen weiter. Der klassische frei konfigurierbare Einheiteneditor bleibt in der Sandbox verfügbar; Karrierebeschaffung erfolgt über den Polizeichef.
