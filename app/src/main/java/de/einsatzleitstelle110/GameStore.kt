@@ -185,6 +185,7 @@ object GameStore {
             .put("careerLevel", s.careerLevel)
             .put("difficulty", s.difficulty)
             .put("trainingRequired", s.trainingRequired)
+            .put("tutorialStep", s.tutorialStep)
             .put("depot", JSONObject().also { d -> s.depot.forEach { (k, v) -> d.put(k, v) } })
             .put("unlockedRegions", strings(s.unlockedRegions))
             .put("logs", strings(s.logs))
@@ -482,6 +483,7 @@ object GameStore {
                 careerLevel = root.optInt("careerLevel", 4).coerceIn(1, 4),
                 difficulty = root.optString("difficulty", "NORMAL").takeIf { it in listOf("LEICHT", "NORMAL", "SCHWER") } ?: "NORMAL",
                 trainingRequired = root.optBoolean("trainingRequired", false),
+                tutorialStep = root.optInt("tutorialStep", 0).coerceIn(0, 4),
                 logs = texts(array(root, "logs", 250)),
             )
         root.optJSONObject("depot")?.let { d ->
@@ -543,7 +545,7 @@ object GameStore {
             val teams = array(v, "reliefTeams", 2)
             for (k in 0 until teams.length()) {
                 val a = teams.getJSONArray(k)
-                require(a.length() == officers.size)
+                require(a.length() in 1..8)
                 relief.add(
                     (0 until a.length()).map { readOfficer(a.getJSONObject(it)) }.toMutableList()
                 )

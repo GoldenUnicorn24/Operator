@@ -321,6 +321,10 @@ class MainActivity : Activity() {
     private fun installNotifications() {
         game.notify = { name, message ->
             when {
+                name == "Tutorial abgeschlossen" -> {
+                    audio.cue("SUCCESS")
+                    toast("Tutorial geschafft! $message")
+                }
                 name == "Beförderung" -> {
                     audio.cue("SUCCESS")
                     toast("Beförderung! $message")
@@ -434,6 +438,7 @@ class MainActivity : Activity() {
                 .firstOrNull { it.region == game.state.region && it.status == "OPEN" }
                 ?.let { "P${it.priority}  ${it.title} · ${it.location}" } ?: "Keine offenen Notrufe"
         if (tab == "MAP") {
+            if (game.state.tutorialStep != lastTutorialStep && !(::dispatch.isInitialized && dispatch.isOpen)) rebuildMapChrome()
             map.invalidate()
             if (::dispatch.isInitialized && dispatch.isOpen) dispatch.refresh() else updateQueue()
             speedView?.text = speedLabel()
@@ -488,6 +493,7 @@ class MainActivity : Activity() {
     }
 
     private var mapChrome: FrameLayout? = null
+    private var lastTutorialStep = 0
 
     private fun showMap() {
         (map.parent as? ViewGroup)?.removeView(map)
@@ -529,6 +535,25 @@ class MainActivity : Activity() {
             rebuildMapChrome()
         }
         chrome.addView(top, FrameLayout.LayoutParams(-1, -2, Gravity.TOP))
+        lastTutorialStep = game.state.tutorialStep
+        if (game.state.tutorialStep in 1..3 && game.state.phase == "RUNNING") {
+            val tip = column().apply {
+                setPadding(dp(12), dp(8), dp(12), dp(8))
+                background = ui.bg(Color.rgb(48, 38, 14), ui.amber, 12)
+                isClickable = true
+            }
+            tip.addView(text(game.tutorialHint(), 13f, ink, true))
+            tip.addView(text("Tutorial überspringen", 12f, ui.amber, true).apply {
+                setPadding(0, dp(6), 0, 0)
+                setOnClickListener {
+                    game.state.tutorialStep = 4
+                    game.state.autoCalls = true
+                    save()
+                    rebuildMapChrome()
+                }
+            })
+            chrome.addView(tip, FrameLayout.LayoutParams(-1, -2, Gravity.TOP).apply { setMargins(dp(8), dp(58), dp(8), 0) })
+        }
         val zoom = column().apply { setPadding(0, 0, dp(8), 0) }
         zoom.addView(ui.button("+") { map.zoomBy(1.6f) }.apply { textSize = 20f; contentDescription = "Hineinzoomen" }, LinearLayout.LayoutParams(dp(46), dp(46)))
         zoom.addView(View(this), LinearLayout.LayoutParams(1, dp(6)))
@@ -1000,6 +1025,21 @@ class MainActivity : Activity() {
                 )
             }
         )
+        gap(c)
+        c.addView(action("Versetzen in anderes Fahrzeug") {
+            val targets = game.state.units.filter { it.region == u.region && it.id != u.id && it.type !in listOf("RETTUNG", "FEUERWEHR") }
+            AlertDialog.Builder(this)
+                .setTitle("${o.name} versetzen")
+                .setItems(targets.map { "${it.callsign} · ${roleName(it.type)} · ${it.officers.size}/${game.maxCrew(it.type)}" + if (game.understaffed(it)) " · unterbesetzt" else "" }.toTypedArray()) { _, i ->
+                    if (game.transferOfficer(u, index, targets[i])) {
+                        save()
+                        toast("${o.name} fährt jetzt auf ${targets[i].callsign}." + if (game.understaffed(u)) " ${u.callsign} ist unterbesetzt!" else "")
+                        showUnit(targets[i])
+                    } else toast(game.lastError.ifBlank { "Versetzung nicht möglich." })
+                }
+                .setNegativeButton("Abbrechen", null)
+                .show()
+        })
         gap(c)
         c.addView(action("Zur Einheit") { showUnit(u) })
         showSheet("Beamtenprofil", c)
@@ -1880,7 +1920,16 @@ class MainActivity : Activity() {
             )
         )
         gap(c)
-        c.addView(action("Zuständigkeit wählen", true) { chooseArea() })
+        c.addView(
+            action("Tutorial: 3 geführte Einsätze in Hamburg", true) {
+                sheet?.dismiss()
+                game.startTutorial()
+                save()
+                showTab("MAP")
+            }
+        )
+        gap(c)
+        c.addView(action("Zuständigkeit wählen") { chooseArea() })
         gap(c)
         c.addView(action("Schicht planen") { showShiftDialog() })
         showSheet("Einsatzleitstelle 110", c)

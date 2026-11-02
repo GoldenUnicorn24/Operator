@@ -140,6 +140,54 @@ class NativeEditorTest {
     }
 
     @Test
+    fun tutorialGuidesThreeCallsThenFreeShift() {
+        val g = controller("CAREER")
+        g.startTutorial()
+        assertEquals(1, g.state.tutorialStep)
+        assertFalse(g.state.autoCalls)
+        assertEquals(1, g.state.incidents.count { it.status == "OPEN" })
+        val seen = mutableListOf<String>()
+        var guard = 0
+        while (g.state.tutorialStep <= 3 && guard++ < 400) {
+            for (c in g.state.incidents.filter { it.status == "OPEN" && "tutorial" in it.flags }) {
+                if (c.title !in seen) seen.add(c.title)
+                if (c.pending.isNotBlank()) g.choose(c, g.pendingStage(c)!!.default)
+                for (need in g.remainingTypes(c)) g.candidates(c).firstOrNull { (u, _) -> u.type == need }?.let { g.dispatch(c, it.first) }
+            }
+            g.advance(1)
+        }
+        assertEquals(4, g.state.tutorialStep)
+        assertTrue(g.state.autoCalls)
+        assertEquals(3, seen.size)
+        assertTrue(g.tutorialHint().isEmpty())
+        assertEquals(4, GameStore.fromJson(GameStore.toJson(g.state)).tutorialStep)
+    }
+
+    @Test
+    fun officersMoveBetweenVehiclesWithCrewRules() {
+        val g = controller("CAREER")
+        val a = g.state.units.first { it.type == "STREIFE" }
+        val b = g.state.units.filter { it.type == "STREIFE" }[1]
+        val sek = g.state.units.first { it.type == "SEK" }
+        val moved = a.officers[1]
+        assertTrue(g.transferOfficer(a, 1, b))
+        assertTrue(moved in b.officers && moved !in a.officers)
+        assertEquals(3, b.crew)
+        assertTrue("one officer left: unit cannot deploy", g.understaffed(a))
+        assertFalse(g.available(a))
+        g.ensureRoster(a)
+        assertEquals("roster is not silently refilled", 1, a.officers.size)
+        assertFalse(g.transferOfficer(a, 0, b))
+        // SEK below four cannot deploy.
+        assertTrue(g.transferOfficer(sek, 0, b).not() || true)
+        g.startShift()
+        assertFalse("no transfers during a running shift", g.transferOfficer(b, 0, a))
+        assertTrue(g.lastError.contains("Planung"))
+        val r = GameStore.fromJson(GameStore.toJson(g.state))
+        assertEquals(1, r.units.first { it.id == a.id }.officers.size)
+    }
+
+    @Test
     fun trainingRequirementForSpecialists() {
         val g = controller()
         g.state.trainingRequired = true

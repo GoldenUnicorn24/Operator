@@ -180,6 +180,28 @@ class NativeDispatchTest {
     private fun asset(name: String) =
         listOf(File("src/main/native_assets/$name"), File("app/src/main/native_assets/$name")).firstOrNull { it.isFile }
 
+    /** The compact APK format carries exactly the data of the open JSON copy. */
+    @Test
+    fun binaryMapAssetsMatchTheOpenJsonSource() {
+        for (code in listOf("DE-HH", "DE-SL")) {
+            val bin = asset("geo/roads-$code.bin") ?: return
+            val json = listOf(File("../data/osm/roads-$code.json"), File("data/osm/roads-$code.json")).firstOrNull { it.isFile } ?: return
+            val a = MapData.parseBinary(code, bin.readBytes())
+            val b = MapData.parseState(code, json.readText())
+            assertEquals(b.roads.size, a.roads.size)
+            assertEquals(b.places.size, a.places.size)
+            assertEquals(b.places.first().name, a.places.first().name)
+            for (k in listOf(0, b.roads.size / 2, b.roads.size - 1)) {
+                assertEquals(b.roads[k].cls, a.roads[k].cls)
+                assertArrayEquals(b.roads[k].points, a.roads[k].points, 1e-6)
+            }
+        }
+        try {
+            MapData.parseBinary("X", ByteArray(20))
+            fail("garbage accepted")
+        } catch (e: IllegalArgumentException) {}
+    }
+
     /** Statewide routing on the bundled OSM extracts: Hannover–Oldenburg, München–Nürnberg. */
     @Test
     fun statewideRoutesUseTheRealRoadNetwork() {
@@ -187,9 +209,9 @@ class NativeDispatchTest {
             listOf("DE-NI", GeoPoint(9.732, 52.3759), GeoPoint(8.2146, 53.1435), 230.0),
             listOf("DE-BY", GeoPoint(11.5761, 48.1372), GeoPoint(11.0767, 49.4521), 240.0),
         )) {
-            val file = asset("geo/roads-$code.json") ?: return
+            val file = asset("geo/roads-$code.bin") ?: return
             val t0 = System.nanoTime()
-            NativeRouting.install(MapData.parseState(code as String, file.readText()))
+            NativeRouting.install(MapData.parseBinary(code as String, file.readBytes()))
             val built = (System.nanoTime() - t0) / 1e6
             val t1 = System.nanoTime()
             val r = NativeRouting.route(a as GeoPoint, b as GeoPoint, 62.0, code)
@@ -211,7 +233,7 @@ class NativeDispatchTest {
         val states = asset("states.geojson") ?: return
         val hamburg = GeoData.parseStates(states.readText()).first { it.code == "DE-HH" }
         val map =
-            asset("geo/roads-DE-HH.json")?.let { MapData.parseState("DE-HH", it.readText()) }
+            asset("geo/roads-DE-HH.bin")?.let { MapData.parseBinary("DE-HH", it.readBytes()) }
                 ?: MapData.parseLegacyHamburg(asset("hamburg-roads.json")!!.readText())
         NativeRouting.install(map)
         val g = GameController(GameState(region = "DE-HH", mode = "CAREER"), listOf(hamburg))

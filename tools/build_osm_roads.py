@@ -23,7 +23,7 @@ import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "app/src/main/native_assets/geo"
+OUT = ROOT / "data/osm"  # open ODbL copy; tools/pack_geo.py writes the APK assets
 CACHE = ROOT / "build/osm-cache"
 ENDPOINTS = [
     "https://overpass-api.de/api/interpreter",

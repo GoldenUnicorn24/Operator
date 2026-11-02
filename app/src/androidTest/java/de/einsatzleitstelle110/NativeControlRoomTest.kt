@@ -108,6 +108,12 @@ class NativeControlRoomTest {
         if (view is ViewGroup) for (i in 0 until view.childCount) assertNative(view.getChildAt(i))
     }
 
+    /** Measured on the emulator (not a physical device): written next to the screenshots. */
+    private fun perf(line: String) {
+        android.util.Log.i("NativePerf", line)
+        File(instrument.targetContext.getExternalFilesDir(null), "perf.txt").appendText(line + "\n")
+    }
+
     private fun overview(
         region: String,
         names: List<String>,
@@ -115,6 +121,7 @@ class NativeControlRoomTest {
         file: String,
     ) {
         reset()
+        var t0 = 0L
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             instrument.waitForIdleSync()
             scenario.onActivity { a ->
@@ -123,7 +130,11 @@ class NativeControlRoomTest {
                 g.state.mode = "SANDBOX"
                 g.state.unlimitedBudget = true
                 g.state.autoCalls = false
+                t0 = System.nanoTime()
                 g.setRegion(region)
+                val tg = System.nanoTime()
+                val graph = NativeRouting.graph(region)
+                perf("$region Straßengraph: ${(System.nanoTime() - tg) / 1_000_000} ms, ${graph?.nodeCount} Knoten")
                 g.startShift()
                 for (i in names.indices) g.newIncident(
                     IncidentTemplate(
@@ -139,6 +150,21 @@ class NativeControlRoomTest {
                 invoke(a, "showTab", "MAP")
             }
             waitForBaseMap(scenario)
+            perf("$region Region gewählt bis Grundkarte fertig: ${(System.nanoTime() - t0) / 1_000_000} ms")
+            scenario.onActivity { a ->
+                val g = game(a)
+                g.state.paused = false
+                val v = mapView(a)
+                val bmp = android.graphics.Bitmap.createBitmap(v.width, v.height, android.graphics.Bitmap.Config.ARGB_8888)
+                val canvas = android.graphics.Canvas(bmp)
+                v.draw(canvas)
+                val n = 30
+                val ts = System.nanoTime()
+                repeat(n) { v.draw(canvas) }
+                perf("$region Live-Overlay (Software-Canvas, ${g.state.units.count { it.region == region }} Einheiten, ${g.state.incidents.size} Lagen): Ø ${(System.nanoTime() - ts) / n / 100_000 / 10.0} ms je Bild")
+                bmp.recycle()
+                g.state.paused = true
+            }
             screenshot(file)
         }
     }

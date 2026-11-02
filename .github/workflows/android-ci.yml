@@ -104,6 +104,7 @@ jobs:
           mkdir -p docs/evidence/claude-m1
           cp runtime/screens/*.png docs/evidence/claude-m1/ || true
           cp runtime/instrumentation.txt docs/evidence/claude-m1/instrumentation.txt || true
+          cp runtime/screens/perf.txt docs/evidence/claude-m1/perf-emulator.txt || true
           echo "Commit ${GITHUB_SHA} · Lauf ${GITHUB_RUN_ID} · Android 35 Emulator (pixel_6)" > docs/evidence/claude-m1/SOURCE.txt
           git config user.name "evidence-bot"
           git config user.email "evidence-bot@users.noreply.github.com"

@@ -44,6 +44,24 @@ data class GeoRegion(
         doubleArrayOf(keep.minOf { it[0] }, keep.minOf { it[1] }, keep.maxOf { it[2] }, keep.maxOf { it[3] })
     }
 
+    /** Approximate area in km² (even-odd rings, equirectangular per ring). */
+    val areaKm2: Double by lazy {
+        var total = 0.0
+        for (ring in rings) {
+            if (ring.size < 3) continue
+            val lat0 = Math.toRadians(ring.sumOf { it.lat } / ring.size)
+            var a = 0.0
+            for (i in ring.indices) {
+                val p = ring[i]
+                val q = ring[(i + 1) % ring.size]
+                a += p.lon * q.lat - q.lon * p.lat
+            }
+            total += abs(a) / 2 * 111.32 * 111.32 * cos(lat0)
+        }
+        // Holes are counted as rings too; for German states they are negligible (Bremen/Berlin enclaves).
+        total
+    }
+
     fun contains(p: GeoPoint): Boolean {
         // Multipolygons and holes: even-odd winding.
         var inside = false

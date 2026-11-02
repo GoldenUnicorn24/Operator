@@ -36,7 +36,7 @@ class NativeCareerTest {
         val states = asset("states.geojson")!!
         val regions = GeoData.parseStates(states.readText())
         val hamburg = regions.first { it.code == "DE-HH" }
-        val map = MapData.parseState("DE-HH", asset("geo/roads-DE-HH.json")!!.readText())
+        val map = MapData.parseBinary("DE-HH", asset("geo/roads-DE-HH.bin")!!.readBytes())
         NativeRouting.install(map)
         val g = GameController(GameState(region = "DE-HH", mode = "CAREER"), regions)
         g.placeProvider = { r -> if (r.code == "DE-HH") map.places.filter { hamburg.contains(GeoPoint(it.lon, it.lat)) } else r.cities.map { MapPlace(it.name, "city", 80000, it.lon, it.lat) } }
@@ -63,7 +63,7 @@ class NativeCareerTest {
 
     @Test
     fun tenCareerDaysAreSustainableButNotAMoneyRain() {
-        if (asset("geo/roads-DE-HH.json") == null) return
+        if (asset("geo/roads-DE-HH.bin") == null) return
         val (g, log) = career(decide = true)
         log.forEach(::println)
         assertEquals(11, g.state.day)
@@ -78,7 +78,7 @@ class NativeCareerTest {
 
     @Test
     fun engagedPlayBeatsPassivePlay() {
-        if (asset("geo/roads-DE-HH.json") == null) return
+        if (asset("geo/roads-DE-HH.bin") == null) return
         val (active, _) = career(decide = true, days = 4)
         NativeRouting.clear()
         val (passive, _) = career(decide = false, days = 4)

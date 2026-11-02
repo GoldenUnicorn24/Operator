@@ -2,7 +2,7 @@ name: Build offline geo base (Natural Earth)
 on:
   push:
     branches: ['claude/**']
-    paths: ['tools/build_geo_base.py', 'tools/build_osm_roads.py', '.github/workflows/geo-data.yml']
+    paths: ['tools/build_geo_base.py', 'tools/build_osm_roads.py', 'tools/pack_geo.py', '.github/workflows/geo-data.yml']
   workflow_dispatch:
 permissions:
   contents: write
@@ -26,14 +26,16 @@ jobs:
         run: |
           if [ -f app/src/main/native_assets/geo/germany-base.json ]; then echo "base map present"; else python3 tools/build_geo_base.py; fi
       - name: One-off OSM main-road and town extract per state (ODbL, cached in repo)
-        run: python3 tools/build_osm_roads.py
+        run: |
+          python3 tools/build_osm_roads.py
+          python3 tools/pack_geo.py
       - name: Commit generated asset
         if: always()
         run: |
           git config user.name "geo-data-bot"
           git config user.email "geo-data-bot@users.noreply.github.com"
-          git add app/src/main/native_assets/geo/
+          git add app/src/main/native_assets/geo/ data/osm/
           if git diff --cached --quiet; then echo "unchanged"; exit 0; fi
-          git commit -m "geo: offline base map and OSM road extracts $(ls app/src/main/native_assets/geo/roads-*.json 2>/dev/null | wc -l)/16 [skip ci]"
+          git commit -m "geo: offline base map and OSM road extracts $(ls data/osm/roads-*.json 2>/dev/null | wc -l)/16 [skip ci]"
           git pull --rebase origin "${GITHUB_REF_NAME}"
           git push origin "HEAD:${GITHUB_REF_NAME}"

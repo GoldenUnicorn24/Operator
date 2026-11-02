@@ -63,6 +63,10 @@ object MapData {
         if (context == null) return null
         val parsed =
             try {
+                parseBinary(code, context.assets.open("geo/roads-$code.bin").use { it.readBytes() })
+            } catch (_: Exception) {
+                null
+            } ?: try {
                 parseState(
                     code,
                     context.assets.open("geo/roads-$code.json").bufferedReader().use { it.readText() },
@@ -115,6 +119,60 @@ object MapData {
                 val row = p.getJSONArray(it)
                 MapPlace(row.getString(0), row.getString(1), row.getInt(2), row.getDouble(3), row.getDouble(4))
             }
+        return StateMap(code, roads, places, "OSM")
+    }
+
+    /** Compact asset format written by tools/pack_geo.py (varints, delta-coded coordinates). */
+    fun parseBinary(code: String, b: ByteArray): StateMap {
+        val magic = "EL110R1".toByteArray()
+        require(b.size > 8 && (0 until 7).all { b[it] == magic[it] }) { "Unbekanntes Kartenformat" }
+        var i = 8
+        fun varint(): Long {
+            var shift = 0
+            var r = 0L
+            while (true) {
+                val x = b[i++].toInt() and 0xff
+                r = r or ((x and 0x7f).toLong() shl shift)
+                if (x < 0x80) return r
+                shift += 7
+                require(shift < 64) { "Beschädigte Kartendaten" }
+            }
+        }
+        fun signed(): Long {
+            val z = varint()
+            return (z ushr 1) xor -(z and 1)
+        }
+        fun text(): String {
+            val n = varint().toInt()
+            require(n in 0..1000 && i + n <= b.size)
+            return String(b, i, n, Charsets.UTF_8).also { i += n }
+        }
+        val kinds = listOf("city", "town", "suburb", "other")
+        val places = ArrayList<MapPlace>()
+        repeat(varint().toInt()) {
+            val name = text()
+            val kind = kinds.getOrElse(b[i++].toInt()) { "other" }
+            val pop = varint().toInt()
+            places.add(MapPlace(name, kind, pop, signed() / 1e5, signed() / 1e5))
+        }
+        val count = varint().toInt()
+        val roads = ArrayList<RoadLine>(count)
+        repeat(count) {
+            val cls = b[i++].toInt()
+            val ref = text()
+            val n = varint().toInt()
+            require(n in 2..100000)
+            val pts = DoubleArray(n * 2)
+            var x = 0L
+            var y = 0L
+            for (k in 0 until n) {
+                x += signed()
+                y += signed()
+                pts[2 * k] = x / 1e5
+                pts[2 * k + 1] = y / 1e5
+            }
+            roads.add(RoadLine(cls, ref, pts))
+        }
         return StateMap(code, roads, places, "OSM")
     }
 
