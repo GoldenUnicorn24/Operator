@@ -442,8 +442,11 @@ class TacticalMapView(
             }
         // Calls never disappear into a cluster with vehicles: cluster them separately.
         val callHits = MapClustering.cluster(inside.filter { it.value is IncidentState }, (if (detailed) 26 else 30) * density)
-        val otherHits = MapClustering.cluster(inside.filter { it.value !is IncidentState }, (if (detailed) 30 else 34) * density)
-        screenHits = callHits + otherHits
+        // Moving vehicles are never merged into a cluster: the player must see them drive.
+        fun movingUnit(v: Any) = v is UnitState && v.status in listOf("DRIVING", "RETURNING")
+        val otherHits = MapClustering.cluster(inside.filter { it.value !is IncidentState && !movingUnit(it.value) }, (if (detailed) 30 else 34) * density)
+        val movingHits = inside.filter { movingUnit(it.value) }.map { MapClustering.Cluster(it.x, it.y, listOf(it)) }
+        screenHits = callHits + movingHits + otherHits
         for (cluster in otherHits) {
             if (cluster.members.size > 1) drawCluster(c, cluster)
             else
@@ -451,6 +454,10 @@ class TacticalMapView(
                     is UnitState -> drawUnit(c, cluster.x, cluster.y, v, positions.getValue(v.id).second, detailed, pal)
                     is Station -> drawStation(c, cluster.x, cluster.y, v)
                 }
+        }
+        for (cluster in movingHits) {
+            val v = cluster.members[0].value as UnitState
+            drawUnit(c, cluster.x, cluster.y, v, positions.getValue(v.id).second, detailed, pal)
         }
         for (cluster in callHits) {
             if (cluster.members.size > 1) drawCallCluster(c, cluster)

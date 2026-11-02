@@ -186,11 +186,24 @@ class NativeControlRoomTest {
                 val u = g.state.units.first { it.id == call.assignedUnits.first() }
                 assertNotEquals("DISTANCE_APPROXIMATION", u.routeBasis)
                 assertTrue(u.routePoints.size > 4)
+                // A second call across the city: a patrol drives a long road route.
+                val far =
+                    g.newIncident(
+                        IncidentTemplate("Verkehrsunfall", 2, "STREIFE", 22, "Zusammenstoß auf einer Hauptstraße", deadline = 90),
+                        GeoPoint(9.985, 53.462),
+                    )
+                val driver =
+                    g.candidates(far).filter { (c, eta) -> c.type == "STREIFE" && c.status == "FREE" && eta >= 10 }.minByOrNull { it.second }?.first
+                        ?: g.candidates(far).first { (c, _) -> c.type == "STREIFE" }.first
+                assertTrue(g.dispatch(far, driver))
+                assertNotEquals("DISTANCE_APPROXIMATION", driver.routeBasis)
                 g.state.paused = false
-                g.advance(u.readinessLeft + (u.travelTotal / 2).coerceAtLeast(1))
+                g.advance(driver.readinessLeft + (driver.travelTotal / 2).coerceAtLeast(1))
                 g.state.paused = true
-                assertEquals("DRIVING", u.status)
-                mapView(a).focus(u.lon, u.lat)
+                assertEquals("DRIVING", driver.status)
+                invoke(a, "openCall", far)
+                mapView(a).zoom = 1f
+                mapView(a).focus(driver.lon, driver.lat)
             }
             waitForBaseMap(scenario)
             screenshot("native-vehicle-route.png")

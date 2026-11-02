@@ -67,3 +67,24 @@ Weitere Gerätebelege: echte Wandsbek-Karte, persönliche P99-/MP5-Ansicht, Beam
 Native Android-35-Abnahme in Lauf 41362143918: OK (3 tests), alle 16 Bounds, Wandsbek/P99/Spezialkräfte, 24h/Rotation/Übergabe, tatsächliche Datei und Wiederöffnung, Niedersachsen/Bayern. Produktionsbuild, 27 Kotlin-Tests, Lint und Paketprüfung erfolgreich. Nachgelagerter Diagnosebefehl dumpsys lastanr liefert ohne ANR Exit2; als optionale Diagnose korrigiert. Die reguläre Veröffentlichungs-Pipeline hält erfolgreiche Builds und echte Android-Tests als Voraussetzung für den APK-Upload bei.
 
 Wiederholung 41362853131 bestätigt erneut OK (3 tests), einschließlich aller sechs PNGs. Die Emulator-Action interpretiert jedoch jede `script`-Zeile separat; eine mehrzeilige Screenshot-Schleife war daher im Nachbereitungsschritt ungültig. Den vollständigen Geräteablauf in `.github/scripts/native-device-check.sh` verlagert, Syntax mit `bash -n` geprüft und auf die bereits erfolgreich heruntergeladenen sechs Screenshots vereinheitlicht. Keine Spieltests entfernt oder abgeschwächt.
+
+
+## V1-Auftrag (Claude) – Audit und Meilenstein M1 · 2026-11-02
+Arbeitsbranch `claude/operator-v1-gameplay` von `codex/operator-v1` (Stand 536dfe0, 0.9.0-native-preview, PR #3 offen; dessen Änderungen bleiben erhalten).
+
+**Audit – wichtigste echte Spielflussprobleme vor M1:**
+1. Straßen nur für Hamburg; die übrigen 15 Länder zeigten gestrichelte Stadt-zu-Stadt-Linien und fuhren Luftlinie.
+2. Fahrzeuge wurden zwischen Ticks linear interpoliert und schnitten bei hoher Geschwindigkeit quer durch Blöcke; Pinch-Zoom nicht fingerzentriert; Hamburg wegen Neuwerk winzig.
+3. Disposition nur Einheit für Einheit über einen kartenverdeckenden Dialog; kein Abziehen, Umdisponieren oder Nachalarmieren auf Rückfahrt; Verstärkung nicht möglich.
+4. Jede Schicht begann mit demselben Verkehrsunfall; Notrufe in festem 30-Minuten-Takt; zwei „Entscheidungen“ mit identischer Risikowirkung; Erfolg ≈ Würfelwurf (~65 %) ohne Begründung.
+5. 24 von 32 Einheiten pro Land hatten zufällige Heimatpunkte statt Wachen.
+
+**Architekturentscheidungen:** Karte bleibt nativer Canvas (keine WebView, keine Internetberechtigung). MapLibre Native wurde bewusst nicht eingebunden: ohne Tile-Server bräuchte es mehrere hundert MB Offline-Pakete oder eine Online-Pflicht; stattdessen gebündelte Vektordaten (OSM-Auszug einmalig in CI, ODbL; Natural Earth gemeinfrei) mit Hintergrund-Rendering in Bitmaps (`MapRenderer`) und einem Live-Overlay (`TacticalMapView`). Routing als eigener Graph pro Land (`RoadGraph`, CSR, Hauptkomponente, Raster-Index); ETA-Listen über eine Dijkstra-Distanzkarte je Einsatzort statt A* je Kandidat. UI-Panel (`DispatchPanel`/`UiKit`) getrennt von `MainActivity`; Engine-Erweiterungen bleiben rein (JVM-testbar).
+
+**Werkzeugkette:** lokal kein Android-SDK erreichbar (Google-/Maven-Server gesperrt). Engine und JVM-Tests lokal mit dem Kotlin-2.0.21-Compiler aus der Gradle-Distribution und JUnit 4.13.2 geprüft; APK, Lint und Emulator ausschließlich in GitHub Actions. Gerätescreenshots werden von der CI nach `docs/evidence/claude-m1/` committet.
+
+**Geodaten:** erster OSM-Lauf scheiterte an 504-Timeouts der Overpass-Server (Berlin) und verwarf alles; Pipeline seither länderweise, fortsetzbar, mit Teil-Commits und Zeitbudget.
+
+**Ergebnis M1 (siehe CHANGELOG, Release-Notes `docs/RELEASE_CLAUDE_V1.md`):** CI-Lauf 41369424543 und Folgeläufe: Build, 35 Unit-Tests, Lint, Paketprüfung grün; Android-35-Emulator `OK (4 tests)` inklusive neuer Hamburger Live-Karten-/Dispositions-/8h-Schicht-Prüfung. Lokale JVM-Simulation einer Hamburger 14–22-Uhr-Schicht mit automatischer Disposition: 17 Notrufe, 16 gelöst, 24 von 24 Fahrten auf dem Straßennetz (Werte variieren mit Seed/Daten).
+
+**Offen (M2–M4):** mehrstufige Einsatzabläufe mit eigenen Dialogen und ≥30 ausgearbeiteten Typen, SEK/MEK-Spezifik, Personal/Fahrzeug getrennt, Loadout-Bildschirm, visueller Ketteneditor, 10-Tage-Karriere, Mixer/Onboarding, Leistungsmessung auf physischem Gerät.
