@@ -1,3 +1,11 @@
+# V1-Entwicklungsstand (Claude) – Meilenstein M2 · 02.11.2026
+
+**Mehrstufiges Gameplay:** 34 ausgearbeitete Einsatzabläufe auf den bestehenden Vorlagen (alle 48 bleiben erhalten) mit Anruferdialog und Entscheidungsphasen *Anrufannahme → Lage vor Ort → Lageänderung*. Jede Option hat eigene, vor dem Tippen sichtbare Folgen (Risiko, Zeit vor Ort, Frist, Nachforderung, Priorität, Kosten, Ruf, Folgeermittlung); Optionen können an zugewiesene Kräfte, Ausrüstung (z. B. Drohne, Bodycam) oder Lehrgänge (z. B. Deeskalation, Einsatzführung) gebunden sein und zeigen gesperrt den Grund. Die übrigen 14 Vorlagen haben eine generische Anrufannahme mit drei unterschiedlichen Strategien.
+**Konsequenzen:** unbeantwortete Entscheidungen nach 12 Spielminuten automatisch mit Standard und Risikoaufschlag; Nachforderungen öffnen den Einsatz wieder (Abschluss nach 45 Min Wartezeit mit erhöhtem Risiko); Folgeeinsätze nach Erfolg, Fehlschlag oder getroffener Entscheidung (z. B. Observation → Auswertung/Durchsuchung). Uhr läuft bei offener Entscheidung höchstens ×4.
+**SEK/MEK/Hubschrauber:** Einsatzpauschalen (4.200/2.100/1.500 €), Erholung nach dem Einsatz (150/90/60 Min, auch auf der Rückfahrt nicht alarmierbar), begrenzte Anzahl, eigene Optionen (SEK-Lösung vs. Verhandlung, MEK-Beobachtung mit Folgeermittlung); Zweckentfremdung für Routinelagen wird vermerkt und kostet Ruf; Budgetablehnung wird erklärt.
+**Balancing:** Rufverlust nach Priorität (P1 −5, P2 −3, P3 −1), P1-Erfolg +2; Begründung des Ausgangs nennt Entscheidungen; Tagesbericht mit Spezialkräfte-Kosten und eigenen Entscheidungen.
+**Nachweise:** 47 JVM-Tests (11 neu, u. a. Katalogprüfung: keine zwei Optionen mit gleicher Wirkung), Android 35 `OK (4 tests)` in Lauf 41385064751.
+
 # V1-Entwicklungsstand (Claude) – Meilenstein M1 · 02.11.2026
 
 Branch `claude/operator-v1-gameplay`, Basis `codex/operator-v1` (0.9.0-native-preview). **Kein v1.0.**
