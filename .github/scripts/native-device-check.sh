@@ -7,6 +7,10 @@ adb shell svc data disable
 # system error dialogs so they do not cover evidence screenshots. App crashes still fail the tests.
 adb shell settings put global hide_error_dialogs 1 || true
 adb shell settings put global anr_show_background 0 || true
+# Android 35 still shows the launcher's ANR dialog; the tests start the app directly, so the
+# emulator launcher is simply disabled for this run (never part of the app or its checks).
+adb shell pm disable-user --user 0 com.android.launcher3 || true
+adb shell am force-stop com.android.launcher3 || true
 adb install -r release/Einsatzleitstelle110-Native-Leitstelle.apk
 adb install -r release/instrumentation.apk
 adb shell am instrument -w -r de.einsatzleitstelle110.test/androidx.test.runner.AndroidJUnitRunner | tee runtime/instrumentation.txt
