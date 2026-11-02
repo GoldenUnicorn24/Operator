@@ -229,6 +229,39 @@ class NativeControlRoomTest {
                 invoke(a, "showDebrief")
             }
             screenshot("native-hamburg-8h-report.png")
+            scenario.onActivity { a ->
+                dismiss(a)
+                val g = game(a)
+                g.nextDay()
+                invoke(a, "showTab", "MANAGE")
+            }
+            instrument.waitForIdleSync()
+            Thread.sleep(400)
+            screenshot("native-career.png")
+            scenario.onActivity { a ->
+                val g = game(a)
+                val t =
+                    IncidentTemplate(
+                        "Einbruch mit Folgeermittlung",
+                        2,
+                        "STREIFE",
+                        15,
+                        "Nachbar hört Glas splittern",
+                        chain =
+                            listOf(
+                                ChainStage("s1", "Einbruch gemeldet", "STREIFE", 15, 2, "s2", "s3", listOf("STREIFE")),
+                                ChainStage("s2", "Spurensicherung", "KRIPO", 25, 3, "s4", "", listOf("KRIPO"), "Kripo übernimmt", 180),
+                                ChainStage("s3", "Fahndung", "STREIFE", 20, 2, "", "", listOf("STREIFE", "HUND"), "Täter flüchtig", 60),
+                                ChainStage("s4", "Observation der Hehler", "MEK", 40, 2, "", "", listOf("MEK"), "Hinweis auf Hehler", 240),
+                            ),
+                    )
+                assertEquals(emptyList<String>(), g.validateTemplate(t))
+                assertTrue(g.addTemplate(t))
+                ChainEditor(a, g, UiKit(a), t) {}.show()
+            }
+            instrument.waitForIdleSync()
+            Thread.sleep(600)
+            screenshot("native-editor.png")
         }
     }
 

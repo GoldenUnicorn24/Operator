@@ -54,5 +54,7 @@ object GameSnapshots {
             reports =
                 s.reports.map { it.copy(trainingDone = it.trainingDone.toList()) }.toMutableList(),
             logs = s.logs.toMutableList(),
+            unlockedRegions = s.unlockedRegions.toMutableSet(),
+            depot = s.depot.toMutableMap(),
         )
 }

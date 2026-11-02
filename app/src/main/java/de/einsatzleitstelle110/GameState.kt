@@ -113,6 +113,10 @@ data class ChainStage(
     val onSuccess: String = "",
     val onFailure: String = "",
     val requiredTypes: List<String> = listOf(required),
+    /** Radio/caller text shown when the stage starts (editor). */
+    val radio: String = "",
+    /** Timer: deadline of this stage in minutes (0 = 120). */
+    val deadline: Int = 0,
 )
 
 data class IncidentTemplate(
@@ -199,6 +203,15 @@ data class GameState(
     var ambientVolume: Float = 0f,
     var randomSeed: Long = 982341L,
     var legacySource: String = "",
+    /** Career progression: level 1–4 and the states the control room may operate. */
+    var careerLevel: Int = 1,
+    /** LEICHT / NORMAL / SCHWER: call volume and deadlines. */
+    var difficulty: String = "NORMAL",
+    /** Sandbox rule: SEK/MEK may only deploy with their specialist course. */
+    var trainingRequired: Boolean = false,
+    /** Station depot: purchased equipment not yet issued to an officer. */
+    val depot: MutableMap<String, Int> = mutableMapOf(),
+    val unlockedRegions: MutableSet<String> = mutableSetOf("DE-HH"),
     val logs: MutableList<String> = mutableListOf(),
 )
 
@@ -257,6 +270,40 @@ object GameContent {
             "Einsatzgürtel" -> 1
             else -> 2
         }
+
+    /** Loadout slots: category and how many items of it one officer can carry. */
+    val slotOf =
+        mapOf(
+            "P99" to "Dienstwaffe", "MP5" to "Zusatzwaffe", "G36" to "Zusatzwaffe", "Elektroimpulsgerät" to "Zusatzwaffe",
+            "Schutzweste" to "Schutz", "Schutzhelm" to "Schutz", "Schutzschild" to "Schutz",
+            "Funkgerät" to "Kommunikation", "Bodycam" to "Kommunikation", "Funk-Repeater" to "Kommunikation",
+            "Erste-Hilfe" to "Hilfsmittel", "Taschenlampe" to "Hilfsmittel", "Einsatzgürtel" to "Hilfsmittel", "Schutzhandschuhe" to "Hilfsmittel",
+            "Drohne" to "Technik", "Fahrzeugkamera" to "Technik",
+        )
+    val slotLimits = linkedMapOf("Dienstwaffe" to 1, "Zusatzwaffe" to 1, "Schutz" to 2, "Kommunikation" to 2, "Hilfsmittel" to 3, "Technik" to 1)
+
+    /** Carried weight in kg (abstract game values). */
+    val weight =
+        mapOf(
+            "P99" to 1.0, "MP5" to 3.0, "G36" to 4.0, "Elektroimpulsgerät" to .5, "Schutzweste" to 3.5, "Schutzhelm" to 1.5,
+            "Schutzschild" to 6.0, "Funkgerät" to .5, "Bodycam" to .2, "Funk-Repeater" to 1.5, "Erste-Hilfe" to 1.0,
+            "Taschenlampe" to .3, "Einsatzgürtel" to 1.0, "Schutzhandschuhe" to .2, "Drohne" to 2.5, "Fahrzeugkamera" to 1.0,
+        )
+    const val MAX_WEIGHT = 12.0
+
+    /** Long guns only for specialist and riot units. */
+    fun compatible(type: String, item: String) =
+        when (item) {
+            "G36" -> type in listOf("SEK", "MEK", "BEREITSCHAFT")
+            "Schutzschild" -> type in listOf("SEK", "BEREITSCHAFT", "STREIFE")
+            else -> true
+        }
+
+    fun loadWeight(items: Collection<String>) = items.sumOf { weight[it] ?: 0.0 }
+
+    /** Which written decisions an item unlocks (derived from the scenario catalog). */
+    fun unlocks(item: String): List<String> =
+        Scenarios.all.flatMap { sc -> sc.stages.flatMap { st -> st.options.filter { it.needs == "GEAR:$item" }.map { "${sc.id}: ${it.label}" } } }
 
     val courses =
         linkedMapOf(
@@ -660,6 +707,8 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                     else -> "Dienstwagen"
                 }
             u.vehicleSpeed = if (t == "HELI") 180.0 else if (t == "SEK") 58.0 else 62.0
+            val course = if (t == "SEK") "SEK-Fortbildung" else if (t == "MEK") "MEK-Observation" else ""
+            if (course.isNotBlank()) (u.officers + u.reliefTeams.flatten()).forEach { it.qualifications.add(course) }
             ensureRoster(u)
             state.units.add(u)
         }
@@ -674,11 +723,16 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         return GeoPoint(r.cities.first().lon, r.cities.first().lat)
     }
 
-    fun setRegion(code: String) {
-        if (state.phase == "RUNNING" || regions.none { it.code == code }) return
+    fun setRegion(code: String): Boolean {
+        if (state.phase == "RUNNING" || regions.none { it.code == code }) return false
+        if (state.mode == "CAREER" && code !in state.unlockedRegions) {
+            lastError = "In der Karriere noch nicht freigeschaltet (Stufe ${state.careerLevel})."
+            return false
+        }
         state.region = code
         state.scope = "STATE"
         seedUnitsIfNeeded()
+        return true
     }
 
     fun setScope(code: String): Boolean {
@@ -772,7 +826,8 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                             it.requiredTypes[0] == "STREIFE" &&
                             it.chain.isEmpty())
                 }
-                .ifEmpty { allTemplates() }
+                .filter { it.lat == null || it.lon == null || (region().contains(GeoPoint(it.lon, it.lat)) && inScope(GeoPoint(it.lon, it.lat))) }
+                .ifEmpty { allTemplates().filter { it.lat == null } }
         val weights = all.map { templateWeight(it, h) }
         var x = rnd() * weights.sum()
         for (i in all.indices) {
@@ -848,7 +903,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                 requiredTypes =
                     (if (first != null) first.requiredTypes else template.requiredTypes)
                         .toMutableList(),
-                deadline = template.deadline,
+                deadline = (template.deadline * difficultyDeadline()).roundToInt().coerceIn(10, 1440),
                 followUp = template.followUp,
                 chain = template.chain.toMutableList(),
                 stageId = first?.id ?: "",
@@ -892,6 +947,13 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
             return false
         ensureRoster(u)
         if (state.fatigueEnabled && u.officers.any { it.energy < 15 }) return false
+        if (state.trainingRequired && u.type in listOf("SEK", "MEK")) {
+            val course = if (u.type == "SEK") "SEK-Fortbildung" else "MEK-Observation"
+            if (u.officers.none { course in it.qualifications }) {
+                lastError = "Ausbildungspflicht: ${u.callsign} braucht den Lehrgang $course."
+                return false
+            }
+        }
         val fee = deploymentCost(u.type)
         if (fee > 0 && !spend(fee)) {
             lastError = "Budget reicht nicht für den ${u.type}-Einsatz (${fee} €)."
@@ -1053,8 +1115,9 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                     next.priority,
                     next.required,
                     next.duration,
-                    "Folgeereignis von ${call.title}",
+                    next.radio.ifBlank { "Folgeereignis von ${call.title}" },
                     requiredTypes = next.requiredTypes,
+                    deadline = if (next.deadline > 0) next.deadline else 120,
                     chain = emptyList(),
                 )
             val follow = newIncident(t, GeoPoint(call.lon, call.lat))
@@ -1162,6 +1225,30 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         if (misusedSpecialists(call, units)) reasons.add("Spezialkräfte für Routinelage gebunden")
         return p.coerceIn(.3, .97) to reasons
     }
+
+    /** Gains shrink near 100, late arrival costs trust even when the call is solved. */
+    fun reputationGain(call: IncidentState): Int {
+        // Routine (P3) work is expected service; trust grows with urgent calls handled well.
+        val base = when (call.priority) { 1 -> 2.0; 2 -> 1.0; else -> 0.0 }
+        val room = (100 - state.reputation) / 30.0
+        val late = call.firstArrival >= 0 && call.firstArrival > call.deadline * .75
+        val gain = if (late) -1 else ceil(base * room.coerceAtMost(1.0)).toInt()
+        return if (rnd() < .5 && state.reputation > 90 && !late) 0 else gain
+    }
+
+    fun difficultyRate() =
+        when (state.difficulty) {
+            "LEICHT" -> .7
+            "SCHWER" -> 1.35
+            else -> 1.0
+        }
+
+    fun difficultyDeadline() =
+        when (state.difficulty) {
+            "LEICHT" -> 1.25
+            "SCHWER" -> .85
+            else -> 1.0
+        }
 
     fun failurePenalty(call: IncidentState) =
         when (call.priority) {
@@ -1292,7 +1379,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                         call.closedAt = state.absoluteMinute
                         if (success) {
                             state.shiftSolved++
-                            state.reputation = (state.reputation + if (call.priority == 1) 2 else 1).coerceAtMost(100)
+                            state.reputation = (state.reputation + reputationGain(call)).coerceAtMost(100)
                             val reward = call.reward
                             state.shiftIncome += reward
                             if (limited()) state.budget += reward
@@ -1322,7 +1409,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                 state.autoCalls &&
                     openIncidents() < 30 &&
                     state.elapsed < state.duration - 25 &&
-                    rnd() < hourFactor() / state.callInterval.coerceIn(10, 240)
+                    rnd() < hourFactor() * difficultyRate() / state.callInterval.coerceIn(10, 240)
             )
                 newIncident()
             if (state.elapsed >= state.duration) finishShift()
@@ -1350,7 +1437,10 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
             }
         val wages = (duty.sumOf { it.crew } * 22.5 * state.elapsed / 60.0).roundToInt()
         val maintenance = duty.sumOf { (100 - it.vehicleCondition) * 2 }
-        val funding = if (state.mode == "CAREER") (9000 * state.elapsed / 480.0).roundToInt() else 0
+        val funding =
+            if (state.mode == "CAREER")
+                (9000 * state.elapsed / 480.0 * (1 + .1 * (state.careerLevel - 1)) * (.7 + state.reputation / 100.0 * .4)).roundToInt()
+            else 0
         if (limited()) state.budget += funding - wages - maintenance
         val done = mutableListOf<String>()
         for (u in state.units.filter { it.region == state.region }) if (u.trainingLeft > 0) {
@@ -1403,8 +1493,33 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         emit("Schichtende", "Tag ${state.day} abgeschlossen")
     }
 
+    /** Career levels: requirements and newly opened states. */
+    data class CareerLevel(val level: Int, val name: String, val shifts: Int, val reputation: Int, val regions: List<String>)
+
+    val careerLevels =
+        listOf(
+            CareerLevel(1, "Leitstelle Hamburg", 0, 0, listOf("DE-HH")),
+            CareerLevel(2, "Regionalleitstelle Nord", 2, 78, listOf("DE-NI", "DE-SH")),
+            CareerLevel(3, "Überregionale Leitstelle", 5, 82, listOf("DE-BY", "DE-HB", "DE-MV", "DE-BE")),
+            CareerLevel(4, "Lagezentrum Deutschland", 8, 86, emptyList()),
+        )
+
+    /** Promotion check after a completed day; returns the new level's name or null. */
+    fun evaluateCareer(): String? {
+        if (state.mode != "CAREER") return null
+        val next = careerLevels.firstOrNull { it.level == state.careerLevel + 1 } ?: return null
+        if (state.completedShifts < next.shifts || state.reputation < next.reputation || state.budget <= 0) return null
+        state.careerLevel = next.level
+        state.unlockedRegions.addAll(if (next.level == 4) regions.map { it.code } else next.regions)
+        emit("Beförderung", "${next.name}: neue Zuständigkeiten freigeschaltet")
+        return next.name
+    }
+
     fun nextDay() {
         if (state.phase != "DEBRIEF") return
+        evaluateCareer()
+        // Public trust has to be earned again every day: overnight it drifts back towards 72.
+        if (state.mode == "CAREER") state.reputation = (state.reputation - (state.reputation - 72) * .2).roundToInt().coerceIn(0, 100)
         state.day++
         state.phase = "PLANNING"
         state.paused = true
@@ -1456,9 +1571,25 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
             o.equipment.add(item)
             return true
         }
-        if (o.equipment.count { it != "P99" } >= 6) return false
+        if (!GameContent.compatible(u.type, item)) {
+            lastError = "$item passt nicht zu ${u.type}."
+            return false
+        }
+        val slot = GameContent.slotOf[item] ?: return false
+        if (o.equipment.count { GameContent.slotOf[it] == slot } >= (GameContent.slotLimits[slot] ?: 0)) {
+            lastError = "Platz „$slot“ ist belegt – zuerst etwas ablegen."
+            return false
+        }
+        if (GameContent.loadWeight(o.equipment + item) > GameContent.MAX_WEIGHT) {
+            lastError = "Zu schwer: höchstens ${GameContent.MAX_WEIGHT.toInt()} kg pro Person."
+            return false
+        }
         if (item !in o.owned) {
-            if (!spend(GameContent.prices[item] ?: return false)) return false
+            if ((state.depot[item] ?: 0) > 0) state.depot[item] = state.depot.getValue(item) - 1
+            else if (!spend(GameContent.prices[item] ?: return false)) {
+                lastError = "Budget reicht nicht."
+                return false
+            }
             o.owned.add(item)
         }
         o.equipment.add(item)
@@ -1474,6 +1605,27 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
     }
 
     fun buyEquipment(u: UnitState, item: String) = equipOfficer(u, 0, item)
+
+    /** Buy one item into the station depot. */
+    fun buyStock(item: String): Boolean {
+        if (item == "P99" || item !in GameContent.equipment) return false
+        if (!spend(GameContent.prices[item] ?: return false)) {
+            lastError = "Budget reicht nicht."
+            return false
+        }
+        state.depot[item] = (state.depot[item] ?: 0) + 1
+        return true
+    }
+
+    /** Hand an owned item back to the depot so a colleague can use it. */
+    fun returnToDepot(u: UnitState, index: Int, item: String): Boolean {
+        val o = u.officers.getOrNull(index) ?: return false
+        if (item == "P99" || item !in o.owned || u.incidentId.isNotBlank()) return false
+        o.equipment.remove(item)
+        o.owned.remove(item)
+        state.depot[item] = (state.depot[item] ?: 0) + 1
+        return true
+    }
 
     fun maintain(u: UnitState): Boolean {
         if (state.phase != "PLANNING" || u.incidentId.isNotBlank() || u.status == "RETURNING")
@@ -1509,7 +1661,65 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         return true
     }
 
+    /** Human-readable validation for the scenario editor (empty = valid). */
+    fun validateTemplate(t: IncidentTemplate, replacing: String = ""): List<String> {
+        val errors = mutableListOf<String>()
+        if (t.title.isBlank()) errors.add("Der Einsatz braucht einen Namen.")
+        if (t.title.length > 90) errors.add("Name höchstens 90 Zeichen.")
+        if ((state.customTemplates.any { it.title.equals(t.title, true) && it.title != replacing }) ||
+            (replacing.isBlank() && NativeCatalog.events.any { it.title.equals(t.title, true) }))
+            errors.add("Es gibt bereits einen Einsatz „${t.title}“ – bitte anderen Namen wählen.")
+        if (t.duration !in 1..360) errors.add("Bearbeitungsdauer muss zwischen 1 und 360 Minuten liegen.")
+        if (t.deadline !in 10..1440) errors.add("Frist muss zwischen 10 und 1440 Minuten liegen.")
+        if (t.requiredTypes.isEmpty()) errors.add("Mindestens eine benötigte Einheit wählen.")
+        if (t.chain.size > 20) errors.add("Höchstens 20 Stufen.")
+        val ids = t.chain.map { it.id }
+        if (ids.toSet().size != ids.size) errors.add("Stufen-IDs sind doppelt.")
+        for (st in t.chain) {
+            if (st.title.isBlank()) errors.add("Eine Stufe hat keinen Titel.")
+            if (st.requiredTypes.isEmpty()) errors.add("Stufe „${st.title}“ braucht mindestens eine Einheit.")
+            if (st.duration !in 1..360) errors.add("Stufe „${st.title}“: Dauer 1–360 Minuten.")
+            if (st.onSuccess.isNotBlank() && st.onSuccess !in ids) errors.add("Stufe „${st.title}“ verweist bei Erfolg auf eine fehlende Stufe.")
+            if (st.onFailure.isNotBlank() && st.onFailure !in ids) errors.add("Stufe „${st.title}“ verweist bei Fehlschlag auf eine fehlende Stufe.")
+        }
+        // Cycle detection with a readable path.
+        val byId = t.chain.associateBy { it.id }
+        fun cycle(id: String, path: List<String>): List<String>? {
+            if (id in path) return path.dropWhile { it != id } + id
+            val n = byId[id] ?: return null
+            for (next in listOf(n.onSuccess, n.onFailure).filter { it.isNotBlank() }) cycle(next, path + id)?.let { return it }
+            return null
+        }
+        t.chain.firstNotNullOfOrNull { cycle(it.id, emptyList()) }?.let { path ->
+            errors.add("Schleife: " + path.joinToString(" → ") { byId[it]?.title ?: it } + " – Ketten müssen enden.")
+        }
+        if (t.chain.isNotEmpty()) {
+            val reach = mutableSetOf<String>()
+            fun walk(id: String) {
+                if (!reach.add(id)) return
+                byId[id]?.let { n -> listOf(n.onSuccess, n.onFailure).filter { it.isNotBlank() }.forEach(::walk) }
+            }
+            walk(t.chain.first().id)
+            t.chain.filter { it.id !in reach }.forEach { errors.add("Stufe „${it.title}“ ist von der ersten Stufe aus nicht erreichbar.") }
+        }
+        if (t.lat != null && t.lon != null && t.region.isNotBlank()) {
+            val r = regions.firstOrNull { it.code == t.region || it.code == "DE-${t.region}" }
+            if (r != null && !r.contains(GeoPoint(t.lon, t.lat))) errors.add("Der gewählte Ort liegt nicht im Bundesland.")
+        }
+        return errors
+    }
+
+    /** Replace an existing custom template (editor save of an edited scenario). */
+    fun replaceTemplate(old: String, t: IncidentTemplate): Boolean {
+        if (validateTemplate(t, old).isNotEmpty()) return false
+        val i = state.customTemplates.indexOfFirst { it.title == old }
+        if (i < 0) return false
+        state.customTemplates[i] = t
+        return true
+    }
+
     fun addTemplate(t: IncidentTemplate): Boolean {
+        if (validateTemplate(t).isNotEmpty()) return false
         if (
             t.title.isBlank() ||
                 t.duration !in 1..360 ||
