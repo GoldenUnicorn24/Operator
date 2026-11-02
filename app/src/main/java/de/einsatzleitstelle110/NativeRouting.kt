@@ -88,7 +88,12 @@ class RoadGraph(val code: String, val map: StateMap, everyVertex: Boolean = map.
         for ((ri, r) in map.roads.withIndex()) {
             if (r.size < 2) continue
             val speed = classSpeed(r.cls)
-            val stops = if (everyVertex) (0 until r.size).toList() else listOf(0, r.size - 1)
+            val closed = r.size > 3 && r.lon(0) == r.lon(r.size - 1) && r.lat(0) == r.lat(r.size - 1)
+            val stops = when {
+                everyVertex -> (0 until r.size).toList()
+                closed -> listOf(0, r.size / 2, r.size - 1)
+                else -> listOf(0, r.size - 1)
+            }
             for (s in 0 until stops.size - 1) {
                 val va = stops[s]
                 val vb = stops[s + 1]
@@ -173,7 +178,7 @@ class RoadGraph(val code: String, val map: StateMap, everyVertex: Boolean = map.
             else doubleArrayOf(lon.min(), lat.min(), lon.max(), lat.max())
     }
 
-    private fun usableRoad(a: Int, b: Int): Boolean = a >= 0 && b >= 0 && a != b && main[a] && main[b]
+    private fun usableRoad(a: Int, b: Int): Boolean = a >= 0 && b >= 0 && main[a] && main[b]
 
     private fun cell(x: Double, y: Double): Long =
         (floor(x / CELL).toLong() shl 32) xor (floor(y / CELL).toLong() and 0xffffffffL)
@@ -227,7 +232,7 @@ class RoadGraph(val code: String, val map: StateMap, everyVertex: Boolean = map.
         dist[source] = 0f
         open.add(source.toLong())
         while (open.isNotEmpty()) {
-            val packed = open.poll()
+            val packed = open.poll() ?: continue
             val v = (packed and 0xffffffffL).toInt()
             val d = Float.fromBits((packed ushr 32).toInt())
             if (d > dist[v]) continue

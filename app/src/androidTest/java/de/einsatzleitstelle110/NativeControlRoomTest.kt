@@ -378,7 +378,7 @@ class NativeControlRoomTest {
                 assertTrue(units[0].specialSignal); assertFalse(units[1].specialSignal)
                 assertEquals(3, g.fms(units[0]))
                 assertTrue(g.state.logs.any { "an Leitstelle: Status 3" in it })
-                mapView(a).focus(target.lon, target.lat)
+                mapView(a).focus((units[0].lon + units[1].lon) / 2, (units[0].lat + units[1].lat) / 2)
             }
             waitForBaseMap(scenario)
             screenshot("native-signal-comparison.png")
@@ -428,16 +428,22 @@ class NativeControlRoomTest {
                 val g = game(a)
                 val mapData = MapData.state(a, "DE-HH")!!
                 val road = mapData.roads.filter { r ->
-                    r.cls >= 3 && r.oneway != 0 && r.name.isNotBlank() &&
+                    r.size >= 3 && r.cls >= 3 && r.oneway != 0 && r.name.isNotBlank() &&
+                        (r.lon(0) != r.lon(r.size - 1) || r.lat(0) != r.lat(r.size - 1)) &&
                         (0 until r.size).all { OperationsAreas.contains("DE-HH", "WANDSBEK", GeoPoint(r.lon(it), r.lat(it))) }
-                }.maxByOrNull { r -> (0 until r.size - 1).sumOf { GeoData.km(GeoPoint(r.lon(it), r.lat(it)), GeoPoint(r.lon(it + 1), r.lat(it + 1))) } }!!
+                }.sortedByDescending { r -> (0 until r.size - 1).sumOf { GeoData.km(GeoPoint(r.lon(it), r.lat(it)), GeoPoint(r.lon(it + 1), r.lat(it + 1))) } }.first { r ->
+                    val from = if (r.oneway == 1) 0 else r.size - 1
+                    val to = if (r.oneway == 1) r.size - 1 else 0
+                    val route = NativeRouting.route(GeoPoint(r.lon(from), r.lat(from)), GeoPoint(r.lon(to), r.lat(to)), 62.0, "DE-HH")
+                    route.durationMinutes >= 2 && route.points.contains(GeoPoint(r.lon(r.size / 2), r.lat(r.size / 2)))
+                }
                 val start = if (road.oneway == 1) 0 else road.size - 1
                 val end = if (road.oneway == 1) road.size - 1 else 0
                 val u = g.state.units.first { it.scope == "WANDSBEK" && it.type == "STREIFE" }
                 u.lon = road.lon(start); u.lat = road.lat(start)
                 val call = g.newIncident(IncidentTemplate("Wohnstraße prüfen", 1, "STREIFE", 20, "Fiktive Testlage"), GeoPoint(road.lon(end), road.lat(end)))
                 assertTrue(call.location.contains("Höhe"))
-                assertTrue(g.dispatch(call, u))
+                assertTrue(g.dispatch(call, u, false))
                 assertEquals("OSM_DETAIL_ROADS_APPROXIMATION", u.routeBasis)
                 assertTrue(u.routePoints.size >= 2)
                 val v = mapView(a)

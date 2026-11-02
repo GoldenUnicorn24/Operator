@@ -169,7 +169,7 @@ class PoliceChiefScreen(
             addText(c, "${unit.callsign} · ${model.name}", false, true)
             val station = game.state.chief.stations.find { it.id == vehicle.stationId }
             val type = game.state.chief.unitTypes.find { it.id == vehicle.customTypeId }
-            addText(c, "${station?.name ?: "Dienststelle fehlt"} · ${type?.name ?: ui.roleName(unit.type)}\nBesatzung ${unit.officers.size}/${model.seats}, mindestens ${game.chiefMinCrew(unit)} · FMS ${game.fms(unit)}\nZustand ${unit.vehicleCondition}% · %.1f km".format(Locale.GERMANY, vehicle.odometerKm))
+            addText(c, "${station?.name ?: "Dienststelle fehlt"} · ${type?.name ?: ui.roleName(unit.type)}\nBesatzung ${unit.officers.size}/${model.seats}, mindestens ${game.chiefMinCrew(unit)} · FMS ${game.fms(unit)}\nZustand ${unit.vehicleCondition}% · ${"%.1f".format(Locale.GERMANY, vehicle.odometerKm)} km")
             button(c, "Rufname, Lackierung und Einheitentyp") { configureVehicle(vehicle, unit) }
             button(c, "Anderer Dienststelle zuweisen") {
                 val available = game.state.chief.stations.filter { it.region == unit.region && it.scope == game.state.scope }
@@ -248,7 +248,7 @@ class PoliceChiefScreen(
             addText(info, ChiefCatalog.ranks[employee.rank.coerceIn(0, ChiefCatalog.ranks.lastIndex)])
             head.addView(info, LinearLayout.LayoutParams(0, -2, 1f)); c.addView(head)
             val assigned = game.state.units.find { it.id == employee.assignedUnitId }
-            addText(c, "${euro(employee.salary)}/Tag · Fähigkeit ${o.skill} · Erfahrung ${o.experience} · Kraft ${o.energy}%\nGruppe ${employee.group} · %02d:00 / ${employee.dutyHours}h\n${assigned?.callsign ?: "Personalreserve"}".format(Locale.GERMANY, employee.startHour))
+            addText(c, "${euro(employee.salary)}/Tag · Fähigkeit ${o.skill} · Erfahrung ${o.experience} · Kraft ${o.energy}%\nGruppe ${employee.group} · ${"%02d".format(Locale.GERMANY, employee.startHour)}:00 / ${employee.dutyHours}h\n${assigned?.callsign ?: "Personalreserve"}")
             button(c, "Fahrzeug zuweisen / Personalreserve") { assign(employee) }
             button(c, "Dienstgruppe und Dienstplan") { schedule(employee) }
             button(c, "Befördern · 1.800 €") { changed(game.promoteChiefOfficer(employee.id)) }
