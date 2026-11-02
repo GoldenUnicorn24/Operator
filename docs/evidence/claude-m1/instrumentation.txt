@@ -57,7 +57,7 @@ INSTRUMENTATION_STATUS: test=niedersachsenWholeStateHasThreeSimultaneousCities
 INSTRUMENTATION_STATUS_CODE: 0
 INSTRUMENTATION_RESULT: stream=
 
-Time: 71.046
+Time: 52.966
 
 OK (4 tests)
 
