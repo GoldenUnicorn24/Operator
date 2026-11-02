@@ -83,7 +83,9 @@ Arbeitsbranch `claude/operator-v1-gameplay` von `codex/operator-v1` (Stand 536df
 
 **Werkzeugkette:** lokal kein Android-SDK erreichbar (Google-/Maven-Server gesperrt). Engine und JVM-Tests lokal mit dem Kotlin-2.0.21-Compiler aus der Gradle-Distribution und JUnit 4.13.2 geprüft; APK, Lint und Emulator ausschließlich in GitHub Actions. Gerätescreenshots werden von der CI nach `docs/evidence/claude-m1/` committet.
 
-**Geodaten:** erster OSM-Lauf scheiterte an 504-Timeouts der Overpass-Server (Berlin) und verwarf alles; Pipeline seither länderweise, fortsetzbar, mit Teil-Commits und Zeitbudget.
+**Geodaten:** erster OSM-Lauf scheiterte an 504-Timeouts der Overpass-Server (Berlin) und verwarf alles; Pipeline seither länderweise, fortsetzbar, mit Teil-Commits und Zeitbudget. Zweiter Lauf 41370046831: alle 16 Länder, 478.471 Straßenabschnitte, ~1,0 Mio. Stützpunkte, 2.546 Orte, 23 MB JSON. Lokal gemessen (JVM, kein Gerätewert): Niedersachsen Laden+Graph 360 ms / 42.057 Knoten, Hannover–Oldenburg 154 km A* 25 ms; Bayern 63.658 Knoten, München–Nürnberg 169 km A* 4 ms. Hamburger 14–22-Uhr-Testschicht auf OSM-Netz: 18 Notrufe, 16 gelöst, 25/25 Fahrten auf Straßen.
+
+**Gerätelauf mit allen Landesnetzen:** 41373766228 – Build, 36 JVM-Tests, Lint, APK-Prüfung (verlangt jetzt alle 16 Straßennetze), Android 35 `OK (4 tests)`, Screenshots in `docs/evidence/claude-m1/`.
 
 **Ergebnis M1 (siehe CHANGELOG, Release-Notes `docs/RELEASE_CLAUDE_V1.md`):** CI-Lauf 41369424543 und Folgeläufe: Build, 35 Unit-Tests, Lint, Paketprüfung grün; Android-35-Emulator `OK (4 tests)` inklusive neuer Hamburger Live-Karten-/Dispositions-/8h-Schicht-Prüfung. Lokale JVM-Simulation einer Hamburger 14–22-Uhr-Schicht mit automatischer Disposition: 17 Notrufe, 16 gelöst, 24 von 24 Fahrten auf dem Straßennetz (Werte variieren mit Seed/Daten).
 
