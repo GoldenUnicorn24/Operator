@@ -892,19 +892,25 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         position: GeoPoint? = null,
     ): IncidentState {
         val r = region()
-        val p =
+        val proposed =
             position
                 ?: if (template.lat != null && template.lon != null)
                     GeoPoint(template.lon, template.lat)
                 else samplePosition(r)
+        val graph = NativeRouting.loadedGraph(r.code)?.takeIf { it.map.version >= 2 }
+        val street = graph?.namedStreetPoint(proposed) { r.contains(it) && inScope(it) }
+        // Explicit editor positions remain exact. Generated calls snap to a real named street.
+        val p = if (position == null && template.lat == null) street?.first ?: proposed else proposed
         require(r.contains(p) && inScope(p)) { "Einsatzort außerhalb des Zuständigkeitsgebiets" }
         val cityName = locationName(r, p)
+        val address = if (street != null && GeoData.km(street.first, p) < .06)
+            "${street.second}, Höhe $cityName (ungefähr)" else cityName
         val first = template.chain.firstOrNull()
         val call =
             IncidentState(
                 "E-${state.nextId++}",
                 first?.title ?: template.title,
-                cityName,
+                address,
                 r.code,
                 p.lat,
                 p.lon,

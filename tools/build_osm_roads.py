@@ -10,6 +10,9 @@ THIRD_PARTY_NOTICES.md).
 Output per state: data/osm/roads-<CODE>.json
   {"roads": [[class, ref, [lon,lat, ...]], ...],   class 0 motorway, 1 trunk/primary, 2 secondary/tertiary
    "places": [[name, kind, population, lon, lat], ...]}
+Hamburg version 2 extends roads to [class, ref, flat, name, oneway], with
+oneway -1/0/1; local classes 3 residential/unclassified, 4 service, 5 living_street.
+Its areas are [kind, [flatRing,...]]: 0 water, 1 green, 2 railway.
 Polylines are split at junctions; junction coordinates are written identically (5 decimals) so
 the app can build the routing topology by exact coordinate match.
 """
@@ -161,7 +164,7 @@ def area_rings(element: dict) -> list:
         segments = [element.get("geometry", [])]
     else:
         segments = [m.get("geometry", []) for m in element.get("members", []) if m.get("type") == "way"]
-    segments = [[(round(p["lon"], 5), round(p["lat"], 5)) for p in g if p is not None] for g in segments]
+    segments = [[(round(p["lon"], 5), round(p["lat"], 5)) for p in g] for g in segments if all(p is not None for p in g)]
     segments = [g for g in segments if len(g) >= 2]
     rings = []
     while segments:
@@ -189,7 +192,7 @@ def build(code: str, data: dict | None = None) -> dict:
     for w in ways:
         for n in w["nodes"]:
             use[n] = use.get(n, 0) + 1
-    tol = .00002 if code == "DE-HH" else 0.00012 if code in CITY_STATES else 0.0004  # ~10 m / ~35 m
+    tol = .00002 if code == "DE-HH" else 0.00012 if code in CITY_STATES else 0.0004  # ~2 m Hamburg / ~10 m other city states / ~35 m elsewhere
     roads = []
     for w in ways:
         tags = w.get("tags", {})

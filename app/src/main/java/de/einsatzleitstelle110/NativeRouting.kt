@@ -15,13 +15,18 @@ data class NativeRoute(
  * Routing graph of one state's main road network. Nodes are junctions (exact coordinate match of
  * polyline end points) or, for the legacy Hamburg file, every vertex. Edge weights are travel
  * minutes for a reference vehicle (62 km/h average) using class speeds; the game scales them by
- * the actual vehicle speed. Always a game approximation: no one-way streets, turns or traffic.
+ * the actual vehicle speed. Detail maps honor one-way direction; turn restrictions and traffic
+ * remain game approximations.
  */
 class RoadGraph(val code: String, val map: StateMap, everyVertex: Boolean = map.source == "LGV") {
     val lon: DoubleArray
     val lat: DoubleArray
     private val first: IntArray
     private val target: IntArray
+    private val origin: IntArray
+    private val incomingFirst: IntArray
+    private val incomingEdge: IntArray
+    private val streetNames: Array<String?>
     private val minutes: FloatArray
     private val km: FloatArray
     private val road: IntArray
@@ -30,7 +35,11 @@ class RoadGraph(val code: String, val map: StateMap, everyVertex: Boolean = map.
     private val main: BooleanArray
     private val grid = HashMap<Long, IntArray>()
     val bounds: DoubleArray
-    val basis = if (map.source == "LGV") "HAMBURG_MAIN_ROADS_APPROXIMATION" else "OSM_MAIN_ROADS_APPROXIMATION"
+    val basis = when {
+        map.source == "LGV" -> "HAMBURG_MAIN_ROADS_APPROXIMATION"
+        map.version >= 2 -> "OSM_DETAIL_ROADS_APPROXIMATION"
+        else -> "OSM_MAIN_ROADS_APPROXIMATION"
+    }
     val nodeCount: Int
         get() = lon.size
 
@@ -59,8 +68,8 @@ class RoadGraph(val code: String, val map: StateMap, everyVertex: Boolean = map.
                 val b = node(r.lon(vb), r.lat(vb))
                 if (a == b) continue
                 val m = (length / speed * 60).toFloat()
-                list.add(E(a, b, m, length.toFloat(), ri, va, vb))
-                list.add(E(b, a, m, length.toFloat(), ri, vb, va))
+                if (r.oneway >= 0) list.add(E(a, b, m, length.toFloat(), ri, va, vb))
+                if (r.oneway <= 0) list.add(E(b, a, m, length.toFloat(), ri, vb, va))
             }
         }
         lon = lo.toDoubleArray()
@@ -72,6 +81,8 @@ class RoadGraph(val code: String, val map: StateMap, everyVertex: Boolean = map.
         first = count.copyOf()
         val fill = count.copyOf()
         target = IntArray(list.size)
+        origin = IntArray(list.size)
+        streetNames = arrayOfNulls(n)
         minutes = FloatArray(list.size)
         km = FloatArray(list.size)
         road = IntArray(list.size)
@@ -80,39 +91,48 @@ class RoadGraph(val code: String, val map: StateMap, everyVertex: Boolean = map.
         for (e in list) {
             val k = fill[e.a]++
             target[k] = e.b
+            origin[k] = e.a
+            val line = map.roads[e.road]
+            if (line.cls != 0 && line.name.isNotBlank()) {
+                if (streetNames[e.a] == null) streetNames[e.a] = line.name
+                if (streetNames[e.b] == null) streetNames[e.b] = line.name
+            }
             minutes[k] = e.min
             km[k] = e.km
             road[k] = e.road
             fromVertex[k] = e.va
             toVertex[k] = e.vb
         }
-        // Largest connected component: snapping only there avoids routes into isolated fragments.
-        val comp = IntArray(n) { -1 }
-        var best = -1
-        var bestSize = 0
-        var c = 0
-        val stack = IntArray(n)
-        for (s in 0 until n) {
-            if (comp[s] >= 0) continue
-            var top = 0
-            stack[top++] = s
-            comp[s] = c
-            var size = 0
-            while (top > 0) {
-                val v = stack[--top]
-                size++
-                for (k in first[v] until first[v + 1]) if (comp[target[k]] < 0) {
-                    comp[target[k]] = c
-                    stack[top++] = target[k]
-                }
+        // Reverse CSR: a field queried at the destination must traverse incoming edges.
+        incomingFirst = IntArray(n + 1)
+        for (v in target) incomingFirst[v + 1]++
+        for (i in 0 until n) incomingFirst[i + 1] += incomingFirst[i]
+        val incomingFill = incomingFirst.copyOf()
+        incomingEdge = IntArray(list.size)
+        for (e in target.indices) incomingEdge[incomingFill[target[e]]++] = e
+
+        // Largest weak component: connectivity must not depend on one-way traversal order.
+        // It excludes isolated fragments without discarding valid one-way entrances or exits.
+        val parent = IntArray(n) { it }
+        val sizes = IntArray(n) { 1 }
+        fun root(node: Int): Int {
+            var v = node
+            while (parent[v] != v) {
+                parent[v] = parent[parent[v]]
+                v = parent[v]
             }
-            if (size > bestSize) {
-                bestSize = size
-                best = c
-            }
-            c++
+            return v
         }
-        main = BooleanArray(n) { comp[it] == best }
+        for (e in list) {
+            var a = root(e.a)
+            var b = root(e.b)
+            if (a == b) continue
+            if (sizes[a] < sizes[b]) { val t = a; a = b; b = t }
+            parent[b] = a
+            sizes[a] += sizes[b]
+        }
+        val best = (0 until n).maxByOrNull { sizes[root(it)] }?.let { root(it) }
+        main = BooleanArray(n) { root(it) == best }
         val cells = HashMap<Long, MutableList<Int>>()
         for (i in 0 until n) if (main[i]) cells.getOrPut(cell(lon[i], lat[i])) { mutableListOf() }.add(i)
         for ((k, v) in cells) grid[k] = v.toIntArray()
@@ -130,7 +150,15 @@ class RoadGraph(val code: String, val map: StateMap, everyVertex: Boolean = map.
             p.lat in bounds[1] - margin..bounds[3] + margin
 
     /** Nearest node of the main network, searched in growing grid rings. */
-    fun nearest(p: GeoPoint): Int {
+    fun nearest(p: GeoPoint): Int = nearestMatching(p) { true }
+
+    /** A named road junction inside the caller's jurisdiction, never a synthetic address. */
+    fun namedStreetPoint(p: GeoPoint, predicate: (GeoPoint) -> Boolean): Pair<GeoPoint, String>? {
+        val node = nearestMatching(p) { streetNames[it] != null && predicate(point(it)) }
+        return if (node < 0) null else point(node) to streetNames[node]!!
+    }
+
+    private fun nearestMatching(p: GeoPoint, accept: (Int) -> Boolean): Int {
         if (nodeCount == 0) return -1
         val cx = floor(p.lon / CELL).toLong()
         val cy = floor(p.lat / CELL).toLong()
@@ -141,6 +169,7 @@ class RoadGraph(val code: String, val map: StateMap, everyVertex: Boolean = map.
                 if (max(abs(dx), abs(dy)) != ring) continue
                 val ids = grid[((cx + dx) shl 32) xor ((cy + dy) and 0xffffffffL)] ?: continue
                 for (i in ids) {
+                    if (!accept(i)) continue
                     val d = GeoData.km(p, GeoPoint(lon[i], lat[i]))
                     if (d < bestKm) {
                         bestKm = d
@@ -156,10 +185,10 @@ class RoadGraph(val code: String, val map: StateMap, everyVertex: Boolean = map.
 
     fun point(i: Int) = GeoPoint(lon[i], lat[i])
 
-    /** Reference minutes from every node to [source] (undirected network). */
+    /** Reference minutes from every node to [source], using the reversed directed graph. */
     fun field(source: Int): FloatArray {
         val dist = FloatArray(nodeCount) { Float.POSITIVE_INFINITY }
-        if (source < 0) return dist
+        if (source !in 0 until nodeCount) return dist
         val open = PriorityQueue<Long>()
         dist[source] = 0f
         open.add(source.toLong())
@@ -168,9 +197,10 @@ class RoadGraph(val code: String, val map: StateMap, everyVertex: Boolean = map.
             val v = (packed and 0xffffffffL).toInt()
             val d = Float.fromBits((packed ushr 32).toInt())
             if (d > dist[v]) continue
-            for (k in first[v] until first[v + 1]) {
+            for (j in incomingFirst[v] until incomingFirst[v + 1]) {
+                val k = incomingEdge[j]
                 val nd = d + minutes[k]
-                val t = target[k]
+                val t = origin[k]
                 if (nd < dist[t]) {
                     dist[t] = nd
                     open.add((nd.toRawBits().toLong() shl 32) or t.toLong())
@@ -182,7 +212,7 @@ class RoadGraph(val code: String, val map: StateMap, everyVertex: Boolean = map.
 
     /** A* in reference minutes. Returns node path or empty when unreachable. */
     fun path(from: Int, to: Int): Pair<IntArray, IntArray>? {
-        if (from < 0 || to < 0) return null
+        if (from !in 0 until nodeCount || to !in 0 until nodeCount) return null
         if (from == to) return IntArray(1) { from } to IntArray(0)
         val g = FloatArray(nodeCount) { Float.POSITIVE_INFINITY }
         val via = IntArray(nodeCount) { -1 }
@@ -204,7 +234,7 @@ class RoadGraph(val code: String, val map: StateMap, everyVertex: Boolean = map.
                 while (n != from) {
                     nodes.add(n)
                     edges.add(via[n])
-                    n = source(via[n])
+                    n = origin[via[n]]
                 }
                 nodes.add(from)
                 return nodes.reversed().toIntArray() to edges.reversed().toIntArray()
@@ -221,17 +251,6 @@ class RoadGraph(val code: String, val map: StateMap, everyVertex: Boolean = map.
             }
         }
         return null
-    }
-
-    private fun source(edge: Int): Int {
-        // Binary search the CSR offsets for the edge's origin node.
-        var lo = 0
-        var hi = nodeCount - 1
-        while (lo < hi) {
-            val mid = (lo + hi + 1) / 2
-            if (first[mid] <= edge) lo = mid else hi = mid - 1
-        }
-        return lo
     }
 
     fun edgeMinutes(e: Int) = minutes[e]
@@ -258,6 +277,8 @@ class RoadGraph(val code: String, val map: StateMap, everyVertex: Boolean = map.
                 0 -> 100.0
                 1 -> 66.0
                 2 -> 44.0
+                3 -> 25.0
+                4, 5 -> 12.0
                 else -> 30.0
             }
     }
@@ -342,8 +363,8 @@ object NativeRouting {
                 listOf(start.lon, start.lat, end.lon, end.lat).all { it.isFinite() }
         )
         val direct = GeoData.km(start, end)
-        if (direct < .15) return approximation(start, end, speedKmh)
         val g = pickGraph(start, end, region) ?: return approximation(start, end, speedKmh)
+        if (direct < .15 && g.map.version < 2) return approximation(start, end, speedKmh)
         val from = g.nearest(start)
         val to = g.nearest(end)
         if (from < 0 || to < 0) return approximation(start, end, speedKmh)
@@ -364,7 +385,7 @@ object NativeRouting {
         points.add(end)
         // A road detour that is absurdly longer than driving cross-country means the network is
         // missing a link; prefer the honest approximation then.
-        if (distance > direct * 3.2 + 8) return approximation(start, end, speedKmh)
+        if (g.map.version < 2 && distance > direct * 3.2 + 8) return approximation(start, end, speedKmh)
         return NativeRoute(
             points,
             distance,
@@ -387,7 +408,7 @@ object NativeRouting {
         val start = GeoPoint(u.lon, u.lat)
         if (u.type == "HELI") return air(start, target, u.vehicleSpeed).durationMinutes
         val g = graph(u.region)
-        if (g == null || !g.covers(start) || !g.covers(target) || GeoData.km(start, target) < .15)
+        if (g == null || !g.covers(start) || !g.covers(target) || (g.map.version < 2 && GeoData.km(start, target) < .15))
             return approximation(start, target, u.vehicleSpeed).durationMinutes
         val goal = g.nearest(target)
         val key = "${g.code}:$goal"

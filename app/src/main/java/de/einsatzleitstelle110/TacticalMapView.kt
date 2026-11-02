@@ -165,6 +165,18 @@ class TacticalMapView(
 
     fun zoomBy(factor: Float) = zoomAround(factor, width / 2f, (topInset * density + height - bottomInset * density) / 2)
 
+    private fun districtView() = !overviewWholeState && OperationsAreas.bounds(game.state.region, game.state.scope) != null
+
+    private fun clampCamera() {
+        if (!districtView()) return
+        zoom = zoom.coerceAtLeast(1f)
+        val b = OperationsAreas.bounds(game.state.region, game.state.scope) ?: return
+        val t = makeTransform(zoom, 0f, 0f)
+        val scale = t.fitted * zoom
+        panX = DistrictCamera.pan(panX, (Transform.worldX(b[2]) - Transform.worldX(b[0])) * scale, (t.w - 46 * density).toDouble())
+        panY = DistrictCamera.pan(panY, (Transform.worldY(b[1]) - Transform.worldY(b[3])) * scale, (t.h - t.top - t.bottom - 40 * density).toDouble())
+    }
+
     private fun maxZoom(): Float {
         val t = makeTransform(1f, 0f, 0f)
         val lat = (t.region.bounds[1] + t.region.bounds[3]) / 2
@@ -174,7 +186,7 @@ class TacticalMapView(
 
     private fun zoomAround(factor: Float, fx: Float, fy: Float) {
         val old = zoom
-        val next = (zoom * factor).coerceIn(.8f, maxZoom())
+        val next = (zoom * factor).coerceIn(if (districtView()) 1f else .8f, maxZoom())
         if (next == old) return
         val t = makeTransform(old, panX, panY)
         val cy = t.top + (t.h - t.top - t.bottom) / 2
@@ -217,7 +229,10 @@ class TacticalMapView(
     fun prepareRegion() = renderer.prepare(game.region(), game.regions)
 
     /** True once the topographic base map of the current state has been rendered. */
-    fun baseMapReady() = renderer.frame?.key?.startsWith(game.state.region + "|") == true
+    fun baseMapReady(): Boolean {
+        val cam = makeTransform(zoom, panX, panY).camera()
+        return renderer.frame?.let { it.key.startsWith("${game.state.region}|${if (overviewWholeState) "STATE" else game.state.scope}|") && it.camera.same(cam) } == true
+    }
 
     private fun makeTransform(z: Float, px: Float, py: Float): Transform {
         val r = game.region()
@@ -349,15 +364,17 @@ class TacticalMapView(
         }
         val now = SystemClock.uptimeMillis()
         val paused = game.state.paused || game.state.phase != "RUNNING"
-        val isNight = night()
+        clampCamera()
+        val isNight = if (districtView()) false else night()
         val pal = MapPalette(isNight)
         val t = makeTransform(zoom, panX, panY)
         val cam = t.camera()
         // Base map: exact frame when ready, otherwise the last frame re-projected (pan/zoom).
-        val key = "${game.state.region}|${game.state.scope}|$isNight|${cam.w}x${cam.h}|${"%.6g".format(cam.a)}|${cam.bx.roundToInt()}|${cam.by.roundToInt()}"
+        val renderScope = if (overviewWholeState) "STATE" else game.state.scope
+        val key = "${game.state.region}|$renderScope|$isNight|${cam.w}x${cam.h}|${"%.6g".format(cam.a)}|${cam.bx.roundToInt()}|${cam.by.roundToInt()}"
         val frame = renderer.frame
         c.drawColor(pal.sea)
-        if (frame != null && frame.key.substringBefore('|') == game.state.region && frame.key.split('|')[2] == isNight.toString()) {
+        if (frame != null && frame.key.startsWith("${game.state.region}|$renderScope|") && frame.key.split('|')[2] == isNight.toString()) {
             val s = (cam.a / frame.camera.a).toFloat()
             val m = Matrix().apply {
                 setScale(s, s)
@@ -368,7 +385,7 @@ class TacticalMapView(
             c.drawBitmap(frame.bitmap, m, p)
         }
         if (frame?.key != key && width > 0 && height > 0)
-            renderer.request(MapRenderer.Request(cam, t.region, game.regions, game.state.scope, isNight, key))
+            renderer.request(MapRenderer.Request(cam, t.region, game.regions, renderScope, isNight, key))
         val pxKm = cam.pxPerKm((t.region.bounds[1] + t.region.bounds[3]) / 2) / density
         val detailed = pxKm > 2.5
 

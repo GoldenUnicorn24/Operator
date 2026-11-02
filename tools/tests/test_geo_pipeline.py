@@ -143,6 +143,11 @@ class GeoPipelineTest(unittest.TestCase):
         self.assertEqual(len(result['areas'][0][1]), 2)
         self.assertTrue(all(r[:2] == r[-2:] for a in result['areas'] for r in a[1]))
 
+    def test_missing_area_geometry_is_not_bridged(self):
+        feature = way(1, [(10, 53), (10.01, 53), (10.01, 53.01), (10, 53)], {'natural': 'water'})
+        feature['geometry'].insert(2, None)
+        self.assertEqual(extract.area_rings(feature), [])
+
     def test_packer_rejects_unknown_version_direction_and_open_area(self):
         for data in ({'version': 3, 'roads': []},
                      {'version': 2, 'roads': [[3, '', [0, 0, 1, 1], '', 7]]},

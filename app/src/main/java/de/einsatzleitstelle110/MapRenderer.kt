@@ -84,10 +84,15 @@ class MapRenderer(private val context: Context, private val density: Float, priv
         val rivers: List<Pair<Float, Path>>,
         val farRoads: Path,
         val roads: Array<Path>,
+        val detailTiles: List<DetailTile>,
+        val areas: Array<Path>,
+        val namedRoads: List<RoadLine>,
         val districts: List<Path>,
         val places: List<MapPlace>,
         val hasRoads: Boolean,
     )
+
+    private class DetailTile(val bounds: RectF, val roads: Array<Path>)
 
     @Volatile private var layers: Layers? = null
 
@@ -175,6 +180,30 @@ class MapRenderer(private val context: Context, private val density: Float, priv
         for (r in base.roads) if (r.cls == 0 && near(r.points)) flatLine(farRoads, r.points)
         val stateMap = MapData.state(context, region.code)
         val roads = Array(3) { Path() }
+        // Kilometer-sized detail tiles; only intersecting tiles are stroked at street zoom.
+        val buckets = stateMap?.roads.orEmpty().filter { it.cls in 3..5 }.groupBy {
+            floor(it.lon(0) * 100).toInt() to floor(it.lat(0) * 100).toInt()
+        }
+        val detailTiles = buckets.values.map { lines ->
+            val paths = Array(3) { Path() }
+            var minX = Float.POSITIVE_INFINITY
+            var minY = Float.POSITIVE_INFINITY
+            var maxX = Float.NEGATIVE_INFINITY
+            var maxY = Float.NEGATIVE_INFINITY
+            for (line in lines) {
+                flatLine(paths[line.cls - 3], line.points)
+                for (i in 0 until line.size) {
+                    val x = lx(line.lon(i)); val y = ly(line.lat(i))
+                    minX = min(minX, x); minY = min(minY, y)
+                    maxX = max(maxX, x); maxY = max(maxY, y)
+                }
+            }
+            DetailTile(RectF(minX - .01f, minY - .01f, maxX + .01f, maxY + .01f), paths)
+        }
+        val areas = Array(3) { Path().apply { fillType = Path.FillType.EVEN_ODD } }
+        stateMap?.areas?.forEach { area ->
+            if (area.kind in 0..2) for (ring in area.rings) flatLine(areas[area.kind], ring, true)
+        }
         stateMap?.roads?.forEach { r -> if (r.cls in 0..2) flatLine(roads[r.cls], r.points) }
         val districts =
             OperationsAreas.districts(region.code).map { (_, rings) -> Path().apply { rings.forEach { ring(this, it) } } }
@@ -183,7 +212,7 @@ class MapRenderer(private val context: Context, private val density: Float, priv
                 region.cities.map { MapPlace(it.name, "city", 80000, it.lon, it.lat) }
             })
                 .sortedByDescending { it.population }
-        return Layers(region.code, ox, oy, k, states, urban, lakes, rivers, farRoads, roads, districts, places, stateMap != null)
+        return Layers(region.code, ox, oy, k, states, urban, lakes, rivers, farRoads, roads, detailTiles, areas, stateMap?.roads.orEmpty().filter { it.name.isNotBlank() || it.oneway != 0 }, districts, places, stateMap != null)
             .also { layers = it }
     }
 
@@ -251,6 +280,25 @@ class MapRenderer(private val context: Context, private val density: Float, priv
             }
             c.restore()
         }
+        fill(if (pal.night) 0xff203e31.toInt() else 0xffd1e7be.toInt())
+        c.drawPath(l.areas[1], p)
+        fill(if (pal.night) 0xff35404a.toInt() else 0xffd8d4d0.toInt())
+        c.drawPath(l.areas[2], p)
+        fill(pal.water)
+        c.drawPath(l.areas[0], p)
+        if (pxKm > 14) {
+            val visible = RectF((-cam.bx / s - l.ox * l.k).toFloat(), (-cam.by / s - l.oy * l.k).toFloat(),
+                ((cam.w - cam.bx) / s - l.ox * l.k).toFloat(), ((cam.h - cam.by) / s - l.oy * l.k).toFloat())
+            visible.inset(-6 * density / s, -6 * density / s)
+            for (tile in l.detailTiles) if (RectF.intersects(visible, tile.bounds)) {
+                for (cls in 0..2) {
+                    stroke(pal.primaryCase, if (pxKm > 80) 4f else 2.1f)
+                    c.drawPath(tile.roads[cls], p)
+                    stroke(if (cls == 2 && !pal.night) 0xfffaf3df.toInt() else pal.minor, if (pxKm > 80) 2.6f else 1.2f)
+                    c.drawPath(tile.roads[cls], p)
+                }
+            }
+        }
         // Road hierarchy with casings; minor roads appear only when zoomed in.
         val zoomed = pxKm > 1.6
         val street = pxKm > 6
@@ -307,6 +355,30 @@ class MapRenderer(private val context: Context, private val density: Float, priv
         }
         c.restore()
         drawLabels(c, cam, l, pal, pxKm)
+        // Mask last, including labels. Live vehicles/routes remain a separate overlay.
+        if (scopeOutline.isNotEmpty()) {
+            val scope = Path().apply {
+                fillType = Path.FillType.EVEN_ODD
+                for (ring in scopeOutline) {
+                    ring.forEachIndexed { index, g ->
+                        if (index == 0) moveTo(cam.x(g.lon), cam.y(g.lat)) else lineTo(cam.x(g.lon), cam.y(g.lat))
+                    }
+                    close()
+                }
+            }
+            val outside = Path().apply {
+                fillType = Path.FillType.EVEN_ODD
+                addRect(0f, 0f, cam.w.toFloat(), cam.h.toFloat(), Path.Direction.CW)
+                addPath(scope)
+            }
+            p.style = Paint.Style.FILL
+            p.color = 0xff102330.toInt()
+            c.drawPath(outside, p)
+            p.style = Paint.Style.STROKE
+            p.strokeWidth = 2.5f * density
+            p.color = 0xff218a84.toInt()
+            c.drawPath(scope, p)
+        }
         frame = Frame(bmp, cam, r.key)
     }
 
@@ -350,6 +422,47 @@ class MapRenderer(private val context: Context, private val density: Float, priv
             c.drawText(pl.name, x - tw / 2, y - 6 * density, text)
             text.style = Paint.Style.FILL
             c.drawCircle(x, y, (if (big) 2.6f else 1.8f) * density, text)
+        }
+        if (pxKm < 45) return
+        val used = HashSet<String>()
+        text.textSize = 10f * density
+        text.isFakeBoldText = false
+        text.color = pal.labelMinor
+        halo.textSize = text.textSize
+        for (road in l.namedRoads) {
+            var best = -1
+            var length = 0f
+            for (i in 0 until road.size - 1) {
+                val x = cam.x(road.lon(i)); val y = cam.y(road.lat(i))
+                val x2 = cam.x(road.lon(i + 1)); val y2 = cam.y(road.lat(i + 1))
+                if (max(x, x2) < 0 || min(x, x2) > cam.w || max(y, y2) < 0 || min(y, y2) > cam.h) continue
+                val d = hypot(x2 - x, y2 - y)
+                if (d > length) { length = d; best = i }
+            }
+            if (best < 0) continue
+            val x = cam.x(road.lon(best)); val y = cam.y(road.lat(best))
+            val x2 = cam.x(road.lon(best + 1)); val y2 = cam.y(road.lat(best + 1))
+            val label = road.name + if (road.oneway != 0 && pxKm > 80) "  →" else ""
+            val tw = text.measureText(label)
+            if (road.name.isBlank() || road.name in used || length < 18 * density) continue
+            val mx = (x + x2) / 2; val my = (y + y2) / 2
+            if (mx < tw / 2 || mx > cam.w - tw / 2 || my < 12 * density || my > cam.h - 12 * density) continue
+            var angle = Math.toDegrees(atan2((y2 - y).toDouble(), (x2 - x).toDouble())).toFloat()
+            val directionFlipped = angle > 90 || angle < -90
+            if (directionFlipped) angle += 180
+            val rad = Math.toRadians(angle.toDouble())
+            val rw = (abs(cos(rad)) * tw + abs(sin(rad)) * 14 * density).toFloat()
+            val rh = (abs(sin(rad)) * tw + abs(cos(rad)) * 14 * density).toFloat()
+            val rect = RectF(mx - rw / 2 - 3, my - rh / 2 - 3, mx + rw / 2 + 3, my + rh / 2 + 3)
+            if (taken.any { RectF.intersects(it, rect) }) continue
+            taken.add(rect); used.add(road.name)
+            val shown = road.name + if (road.oneway != 0 && pxKm > 80) {
+                if ((road.oneway == -1) xor directionFlipped) "  ←" else "  →"
+            } else ""
+            c.save(); c.rotate(angle, mx, my)
+            c.drawText(shown, mx - tw / 2, my - 3 * density, halo)
+            c.drawText(shown, mx - tw / 2, my - 3 * density, text)
+            c.restore()
         }
     }
 }
