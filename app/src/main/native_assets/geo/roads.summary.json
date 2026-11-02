@@ -1,0 +1,98 @@
+{
+ "DE-BW": {
+  "roads": 56133,
+  "vertices": 116433,
+  "places": 295,
+  "bytes": 2696995
+ },
+ "DE-BY": {
+  "roads": 68629,
+  "vertices": 144602,
+  "places": 421,
+  "bytes": 3448826
+ },
+ "DE-BE": {
+  "roads": 23067,
+  "vertices": 46775,
+  "places": 97,
+  "bytes": 1339141
+ },
+ "DE-BB": {
+  "roads": 17748,
+  "vertices": 37622,
+  "places": 120,
+  "bytes": 903963
+ },
+ "DE-HB": {
+  "roads": 5024,
+  "vertices": 10759,
+  "places": 34,
+  "bytes": 292179
+ },
+ "DE-HH": {
+  "roads": 12313,
+  "vertices": 25522,
+  "places": 106,
+  "bytes": 696505
+ },
+ "DE-HE": {
+  "roads": 36941,
+  "vertices": 77674,
+  "places": 177,
+  "bytes": 1791904
+ },
+ "DE-MV": {
+  "roads": 12015,
+  "vertices": 25504,
+  "places": 89,
+  "bytes": 617070
+ },
+ "DE-NI": {
+  "roads": 44969,
+  "vertices": 93557,
+  "places": 246,
+  "bytes": 2178114
+ },
+ "DE-NW": {
+  "roads": 78520,
+  "vertices": 163046,
+  "places": 319,
+  "bytes": 3755075
+ },
+ "DE-RP": {
+  "roads": 31134,
+  "vertices": 66286,
+  "places": 126,
+  "bytes": 1507366
+ },
+ "DE-SL": {
+  "roads": 11452,
+  "vertices": 24423,
+  "places": 23,
+  "bytes": 573981
+ },
+ "DE-SN": {
+  "roads": 23642,
+  "vertices": 49345,
+  "places": 174,
+  "bytes": 1196116
+ },
+ "DE-ST": {
+  "roads": 17888,
+  "vertices": 37259,
+  "places": 110,
+  "bytes": 898826
+ },
+ "DE-SH": {
+  "roads": 14616,
+  "vertices": 30593,
+  "places": 95,
+  "bytes": 718733
+ },
+ "DE-TH": {
+  "roads": 14380,
+  "vertices": 30402,
+  "places": 114,
+  "bytes": 724972
+ }
+}
