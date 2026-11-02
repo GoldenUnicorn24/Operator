@@ -160,6 +160,23 @@ class NativeDispatchTest {
         assertTrue("different opening calls: $titles", titles.size >= 3)
     }
 
+    @Test
+    fun outcomeReasonsSurviveSaveAndLoad() {
+        val g = controller()
+        g.startShift()
+        val c = g.newIncident(IncidentTemplate("Prüffall", 2, "STREIFE", 5, "Test", deadline = 300), GeoPoint(10.0, 53.5))
+        val u = g.state.units.filter { it.type == "STREIFE" }.minByOrNull { g.eta(it, c) }!!
+        assertTrue(g.dispatch(c, u))
+        var guard = 0
+        while (c.status !in listOf("SOLVED", "FAILED") && guard++ < 600) g.advance(1)
+        assertTrue(c.outcome.contains("Chance"))
+        assertTrue(c.firstArrival >= 0 && c.closedAt > 0)
+        val restored = GameStore.fromJson(GameStore.toJson(g.state)).incidents.first { it.id == c.id }
+        assertEquals(c.outcome, restored.outcome)
+        assertEquals(c.firstArrival, restored.firstArrival)
+        assertEquals(c.closedAt, restored.closedAt)
+    }
+
     private fun asset(name: String) =
         listOf(File("src/main/native_assets/$name"), File("app/src/main/native_assets/$name")).firstOrNull { it.isFile }
 

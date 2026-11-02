@@ -35,7 +35,11 @@ class TacticalMapView(
     var showMinimap = true
     var showLegend = false
     var zoom = 1f
-    var nightMode: Boolean? = null
+    /** Dark operations-room look by default; null = follow the simulated time of day. */
+    var nightMode: Boolean? = true
+
+    /** Screen pixels at the bottom covered by a panel (dispatch file); focus keeps clear of it. */
+    var obstructedBottom = 0f
     // Compatibility with the previous settings screen; all geography stays offline.
     var useOnlineStreets = false
 
@@ -186,8 +190,9 @@ class TacticalMapView(
         zoom = max(zoom, min(maxZoom(), 6f))
         val t = makeTransform(zoom, 0f, 0f)
         val a = t.point(lon, lat)
+        val bottom = if (obstructedBottom > 0) height - obstructedBottom else height - bottomInset * density
         panX = width / 2f - a.x
-        panY = (topInset * density + (height - bottomInset * density)) / 2 - a.y
+        panY = (topInset * density + bottom) / 2 - a.y
         invalidate()
     }
 
@@ -218,7 +223,7 @@ class TacticalMapView(
         val r = game.region()
         val bounds =
             if (overviewWholeState) r.bounds
-            else OperationsAreas.bounds(r.code, game.state.scope) ?: r.bounds
+            else OperationsAreas.bounds(r.code, game.state.scope) ?: r.coreBounds
         val minX = Transform.worldX(bounds[0])
         val maxX = Transform.worldX(bounds[2])
         val minY = Transform.worldY(bounds[3])
@@ -764,7 +769,7 @@ class TacticalMapView(
         c.translate(x, y)
         paint(0xe60a1d2b.toInt())
         c.drawRoundRect(RectF(0f, 0f, w, h), 6 * density, 6 * density, p)
-        val b = t.region.bounds
+        val b = t.region.coreBounds
         val loX = Transform.worldX(b[0])
         val hiX = Transform.worldX(b[2])
         val loY = Transform.worldY(b[3])

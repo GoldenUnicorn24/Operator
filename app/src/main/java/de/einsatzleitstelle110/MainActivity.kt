@@ -1,6 +1,7 @@
 package de.einsatzleitstelle110
 
 import android.app.Activity
+import kotlin.math.roundToInt
 import android.app.AlertDialog
 import android.app.Dialog
 import android.content.Intent
@@ -526,14 +527,21 @@ class MainActivity : Activity() {
         zoom.addView(ui.button("−") { map.zoomBy(1 / 1.6f) }.apply { textSize = 20f; contentDescription = "Herauszoomen" }, LinearLayout.LayoutParams(dp(46), dp(46)))
         zoom.addView(View(this), LinearLayout.LayoutParams(1, dp(6)))
         zoom.addView(ui.button("⌂") { map.resetCamera() }.apply { textSize = 17f; contentDescription = "Zurück zur Übersicht" }, LinearLayout.LayoutParams(dp(46), dp(46)))
-        chrome.addView(zoom, FrameLayout.LayoutParams(-2, -2, Gravity.END or Gravity.CENTER_VERTICAL).apply { bottomMargin = dp(60) })
         if (::dispatch.isInitialized && dispatch.isOpen) {
             (dispatch.root.parent as? ViewGroup)?.removeView(dispatch.root)
-            val h = (body.height.takeIf { it > 0 } ?: resources.displayMetrics.heightPixels) * 56 / 100
+            val h = (body.height.takeIf { it > 0 } ?: resources.displayMetrics.heightPixels) * 54 / 100
+            map.obstructedBottom = h.toFloat() + dp(6)
+            // Zoom controls sit just above the panel so nothing overlaps.
+            chrome.addView(row().apply {
+                addView(ui.button("+") { map.zoomBy(1.6f) }.apply { textSize = 18f; contentDescription = "Hineinzoomen" }, LinearLayout.LayoutParams(dp(46), dp(42)))
+                addView(ui.button("−") { map.zoomBy(1 / 1.6f) }.apply { textSize = 18f; contentDescription = "Herauszoomen" }, LinearLayout.LayoutParams(dp(46), dp(42)).apply { marginStart = dp(6) })
+            }, FrameLayout.LayoutParams(-2, -2, Gravity.END or Gravity.BOTTOM).apply { setMargins(0, 0, dp(10), h + dp(14)) })
             chrome.addView(dispatch.root, FrameLayout.LayoutParams(-1, h, Gravity.BOTTOM).apply { setMargins(dp(6), 0, dp(6), dp(6)) })
             map.reveal(dispatch.call!!.lon, dispatch.call!!.lat, (body.height - h).toFloat())
             return
         }
+        map.obstructedBottom = 0f
+        chrome.addView(zoom, FrameLayout.LayoutParams(-2, -2, Gravity.END or Gravity.CENTER_VERTICAL).apply { bottomMargin = dp(60) })
         val bottom = column().apply {
             setPadding(dp(12), dp(9), dp(12), dp(9))
             background = ui.bg(Color.argb(240, 10, 24, 35), edge, 16)
@@ -779,6 +787,7 @@ class MainActivity : Activity() {
                 )
             )
             c.addView(text("${call.location} · ${statusName(call.status)}", 13f, muted))
+            if (call.outcome.isNotBlank()) c.addView(text(call.outcome, 12f, if (call.status == "SOLVED") mint else red))
             gap(c, 8)
             c.addView(text(call.description))
             gap(c)
@@ -1257,6 +1266,27 @@ class MainActivity : Activity() {
             c.addView(line)
         }
         gap(c)
+        val closed =
+            game.state.incidents
+                .filter { it.region == r.region && it.closedAt in r.startAbsolute..r.endAbsolute }
+                .sortedBy { it.closedAt }
+        val arrivals = closed.mapNotNull { it.firstArrival.takeIf { a -> a >= 0 } }
+        if (arrivals.isNotEmpty()) {
+            val line = row()
+            line.addView(text("Ø Eintreffzeit", 14f, muted), LinearLayout.LayoutParams(0, dp(40), 1f))
+            line.addView(text("${arrivals.average().roundToInt()} Min", 16f, ink, true))
+            c.addView(line)
+            gap(c)
+        }
+        if (closed.isNotEmpty()) {
+            c.addView(text("Einsatzbilanz – warum es so ausging", 16f, cyan, true))
+            for (i in closed.takeLast(20)) {
+                c.addView(text("${if (i.status == "SOLVED") "✓" else "✗"} P${i.priority} ${i.title} · ${i.location}", 13f, if (i.status == "SOLVED") mint else red, true))
+                if (i.outcome.isNotBlank()) c.addView(text(i.outcome, 12f, muted))
+                gap(c, 6)
+            }
+            gap(c)
+        }
         if (r.trainingDone.isNotEmpty()) {
             c.addView(text("Abgeschlossene Lehrgänge", 16f, mint, true))
             c.addView(text(r.trainingDone.joinToString("\n"), 13f, muted))

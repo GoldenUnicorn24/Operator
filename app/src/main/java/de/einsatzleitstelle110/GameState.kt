@@ -89,6 +89,8 @@ data class IncidentState(
     var outcome: String = "",
     /** Call age when the first unit reached the scene (-1 = nobody yet). */
     var firstArrival: Int = -1,
+    /** Absolute simulation minute when the call was solved or failed (-1 = still open). */
+    var closedAt: Long = -1,
 )
 
 data class ChainStage(
@@ -1045,6 +1047,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                             if (call.assignedUnits.isEmpty()) "Fehlschlag: Frist abgelaufen, keine Kräfte entsandt"
                             else "Fehlschlag: Frist abgelaufen, benötigte Kräfte nicht rechtzeitig vollständig vor Ort"
                         call.status = "FAILED"
+                        call.closedAt = state.absoluteMinute
                         state.shiftFailed++
                         state.reputation = (state.reputation - 2).coerceAtLeast(0)
                         release(call)
@@ -1091,6 +1094,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                             "${if (success) "Erfolg" else "Fehlschlag"} bei ${(probability * 100).roundToInt()} % Chance: " +
                                 reasons.joinToString(" · ").ifEmpty { "Standardlage" }
                         call.status = if (success) "SOLVED" else "FAILED"
+                        call.closedAt = state.absoluteMinute
                         if (success) {
                             state.shiftSolved++
                             state.reputation = (state.reputation + 1).coerceAtMost(100)

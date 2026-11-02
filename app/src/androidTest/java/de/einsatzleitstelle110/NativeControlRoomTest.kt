@@ -281,6 +281,8 @@ class NativeControlRoomTest {
                             .getDeclaredField("map")
                             .apply { isAccessible = true }
                             .get(a) as TacticalMapView
+                    // "Land" shows the complete state including exclaves (Neuwerk, islands).
+                    view.fitWholeState()
                     val transform =
                         TacticalMapView::class
                             .java

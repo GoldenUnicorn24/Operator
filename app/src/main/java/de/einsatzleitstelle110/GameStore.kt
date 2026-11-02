@@ -265,6 +265,7 @@ object GameStore {
                     .put("scope", i.scope)
                     .put("outcome", i.outcome)
                     .put("firstArrival", i.firstArrival)
+                    .put("closedAt", i.closedAt)
             },
         )
         o.put("customTemplates", jsonArray(s.customTemplates) { template(it as IncidentTemplate) })
@@ -626,6 +627,7 @@ object GameStore {
             i.followUpType = v.optString("followUpType", "KRIPO")
             i.outcome = v.optString("outcome").take(400)
             i.firstArrival = v.optInt("firstArrival", -1).coerceIn(-1, 1440)
+            i.closedAt = v.optLong("closedAt", -1L).coerceAtLeast(-1L)
             require(i.followUpType in GameController.TYPES)
             if (i.assignedUnits.isEmpty() && i.assignedUnit.isNotBlank())
                 i.assignedUnits.add(i.assignedUnit)

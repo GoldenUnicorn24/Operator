@@ -25,6 +25,25 @@ data class GeoRegion(
         )
     }
 
+    /**
+     * Bounds of the main territory for camera fitting: the largest ring plus nearby parts. Distant
+     * exclaves (Hamburg's Neuwerk, Bremerhaven is kept because it is a large ring) would otherwise
+     * shrink the city to a dot.
+     */
+    val coreBounds: DoubleArray by lazy {
+        fun box(r: List<GeoPoint>) = doubleArrayOf(r.minOf { it.lon }, r.minOf { it.lat }, r.maxOf { it.lon }, r.maxOf { it.lat })
+        val boxes = rings.map { box(it) }
+        val main = boxes.maxByOrNull { (it[2] - it[0]) * (it[3] - it[1]) } ?: return@lazy bounds
+        val area = (main[2] - main[0]) * (main[3] - main[1])
+        val keep =
+            boxes.filter { b ->
+                val big = (b[2] - b[0]) * (b[3] - b[1]) > area * .04
+                val near = b[0] < main[2] + .15 && b[2] > main[0] - .15 && b[1] < main[3] + .15 && b[3] > main[1] - .15
+                big || near
+            }
+        doubleArrayOf(keep.minOf { it[0] }, keep.minOf { it[1] }, keep.maxOf { it[2] }, keep.maxOf { it[3] })
+    }
+
     fun contains(p: GeoPoint): Boolean {
         // Multipolygons and holes: even-odd winding.
         var inside = false

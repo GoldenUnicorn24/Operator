@@ -121,7 +121,8 @@ class DispatchPanel(
     private var lastVersion = ""
 
     init {
-        root.background = ui.bg(Color.argb(244, 10, 24, 35), ui.edge, 16)
+        root.background = ui.bg(Color.rgb(10, 24, 35), ui.edge, 16)
+        root.elevation = ui.dp(8).toFloat()
         root.setPadding(ui.dp(12), ui.dp(10), ui.dp(12), ui.dp(10))
         root.isClickable = true
         scroll.addView(body)
@@ -157,6 +158,7 @@ class DispatchPanel(
 
     fun close() {
         call = null
+        map.obstructedBottom = 0f
         selected.clear()
         map.selectedCall = null
         map.previewUnits = emptySet()
@@ -209,6 +211,8 @@ class DispatchPanel(
                 else -> "gescheitert"
             }
         body.addView(ui.text("${c.location} · ${c.id} · $status", 12f, ui.muted).apply { setPadding(0, ui.dp(4), 0, ui.dp(6)) })
+        if (c.outcome.isNotBlank())
+            body.addView(ui.text(c.outcome, 12f, if (c.status == "SOLVED") ui.mint else ui.red, true).apply { setPadding(0, 0, 0, ui.dp(6)) })
         body.addView(
             ui.text("„${c.description}“", 13f, ui.ink).apply {
                 setPadding(ui.dp(10), ui.dp(8), ui.dp(10), ui.dp(8))
@@ -217,7 +221,8 @@ class DispatchPanel(
         )
         // Requirements with coverage.
         val need = c.requiredTypes
-        val left = game.remainingTypes(c).toMutableList()
+        val stillOpen = game.remainingTypes(c)
+        val left = stillOpen.toMutableList()
         val reqRow = ui.row().apply { setPadding(0, ui.dp(8), 0, ui.dp(4)) }
         reqRow.addView(ui.text("Benötigt  ", 12f, ui.muted, true))
         for (type in need) {
@@ -258,7 +263,7 @@ class DispatchPanel(
         // Candidates.
         val canDispatch = game.state.phase == "RUNNING" && c.status in listOf("OPEN", "DRIVING", "WORKING")
         if (canDispatch) {
-            val title = if (left.isEmpty()) "Verstärkung (optional)" else "Kräfte auswählen"
+            val title = if (stillOpen.isEmpty()) "Verstärkung (optional)" else "Kräfte auswählen"
             body.addView(ui.text(title, 13f, ui.cyan, true).apply { setPadding(0, ui.dp(10), 0, ui.dp(4)) })
             val candidates = game.candidates(c)
             selected.retainAll(candidates.map { it.first.id }.toSet() + bound(c).map { it.first.id }.toSet())
@@ -292,8 +297,8 @@ class DispatchPanel(
         } else {
             footer.addView(ui.button("Schließen") { close(); onChanged() }, LinearLayout.LayoutParams(0, ui.dp(48), 1f))
         }
-        footer.addView(ui.button("◎") { map.focus(c.lon, c.lat) }.apply { contentDescription = "Auf Einsatzort zoomen" },
-            LinearLayout.LayoutParams(ui.dp(52), ui.dp(48)).apply { marginStart = ui.dp(8) })
+        footer.addView(ui.button("Ort") { map.focus(c.lon, c.lat) }.apply { contentDescription = "Auf Einsatzort zoomen" },
+            LinearLayout.LayoutParams(ui.dp(64), ui.dp(48)).apply { marginStart = ui.dp(8) })
         if (c.decision.isBlank() && c.status in listOf("OPEN", "DRIVING", "WORKING") && game.state.phase == "RUNNING") {
             body.addView(ui.text("Maßnahmen", 13f, ui.ink, true).apply { setPadding(0, ui.dp(10), 0, ui.dp(4)) })
             val r = ui.row()
