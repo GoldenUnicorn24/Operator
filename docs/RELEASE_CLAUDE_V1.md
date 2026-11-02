@@ -1,4 +1,4 @@
-## Einsatzleitstelle 110 – V1-Entwicklungsstand · Meilensteine M1–M2
+## Einsatzleitstelle 110 – V1-Entwicklungsstand · Meilensteine M1–M3
 
 **Kein v1.0-Release.** Debug-APK des Branches `claude/operator-v1-gameplay`, automatisch gebaut, mit Unit-Tests, Lint, Paketprüfung (keine WebView, keine HTML/JS/CSS-Dateien) und einem Android-35-Emulatorlauf geprüft, bevor sie hier hochgeladen wird.
 
@@ -15,10 +15,16 @@
 - Folgeeinsätze je nach Ergebnis und Entscheidung; Nachforderungen öffnen den Einsatz wieder.
 - SEK/MEK/Hubschrauber: knapp, teuer, mit Erholungszeit; Zweckentfremdung kostet Ruf.
 
+### Neu in M3: Karriere, Loadout, Editor
+- Karriere in vier Stufen mit Freischaltung weiterer Bundesländer; Ruf muss täglich neu verdient werden.
+- Loadout mit Slots, Traglast, Kompatibilität und Wachen-Lager; jedes Teil zeigt, welche Entscheidungen es freischaltet.
+- Visueller Ketteneditor mit Verzweigungen, Timern, Funktexten, Ortswahl, Live-Prüfung und Einsatzpaket-Export/-Import.
+- Schwierigkeitsgrade; Sandbox-Regel Ausbildungspflicht.
+
 ### Bekannte Grenzen (ehrlich)
 - Routen sind Spielnäherungen: keine Einbahnstraßen, Abbiegeverbote oder Verkehrslage. Flächenländer haben nur das Haupt-, Stadtstaaten auch das Nebenstraßennetz.
 - Keine MapLibre-Integration: Die App bleibt bewusst ohne Internetberechtigung und ohne Tile-Server; die Karte ist eine native Canvas-Vektorkarte aus gebündelten Daten.
-- M3–M4 (Loadout-Bildschirm, Personal/Fahrzeug getrennt, visueller Ketteneditor, 10-Tage-Karriere-Balancing, Audio-Mixer-Ausbau, Onboarding) stehen noch aus.
+- M4 steht aus: Onboarding/Tutorial, Audio-Feinschliff, Personal und Fahrzeuge getrennt zuweisen, kompakteres Kartendatenformat, Leistungsmessung, finale Abnahme. Balancing basiert bisher auf Bot-Simulationen, nicht auf Spielertests.
 - Spielgefühl und Leistung auf physischen Mittelklassegeräten sind nicht gemessen; nur Emulator.
 
 Daten: © OpenStreetMap-Mitwirkende (ODbL) · Natural Earth (gemeinfrei) · © GeoBasis-DE/BKG · Freie und Hansestadt Hamburg (LGV/BWVI). Alle Wachen, Personen und Einsätze sind fiktiv.

@@ -182,6 +182,8 @@ class ChainEditor(
             stages.add(DraftStage("s1", existing.title, "", existing.requiredTypes.toMutableList(), existing.duration, existing.priority, existing.deadline))
         else stages.add(DraftStage("s1", "", "", mutableListOf("STREIFE"), 20, 2, 120))
         counter = stages.size + 1
+        // The first stage's timer is the call deadline itself.
+        stages.first().deadline = deadline
         selected = stages.first().id
         if (existing?.lat != null && existing.lon != null) place = MapPlace("Gespeicherter Ort", "fixed", 0, existing.lon, existing.lat)
     }
@@ -250,7 +252,10 @@ class ChainEditor(
         root.addView(field("Name des Einsatzes", name) { name = it.trim() })
         root.addView(field("Notruftext (was der Anrufer sagt)", caller, lines = 2) { caller = it })
         val row = ui.row()
-        row.addView(field("Frist erste Stufe (Min)", deadline.toString(), numeric = true) { deadline = it.toIntOrNull() ?: 0 }, LinearLayout.LayoutParams(0, -2, 1f))
+        row.addView(field("Frist erste Stufe (Min)", deadline.toString(), numeric = true) {
+            deadline = it.toIntOrNull() ?: 0
+            stages.first().deadline = deadline
+        }, LinearLayout.LayoutParams(0, -2, 1f))
         row.addView(field("Belohnung (€)", reward.toString(), numeric = true) { reward = it.toIntOrNull() ?: 0 }, LinearLayout.LayoutParams(0, -2, 1f).apply { marginStart = ui.dp(8) })
         root.addView(row)
         val region = game.region()
