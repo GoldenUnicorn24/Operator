@@ -1,4 +1,4 @@
-## Einsatzleitstelle 110 – V1-Entwicklungsstand · Meilensteine M1–M3
+## Einsatzleitstelle 110 – V1-Entwicklungsstand · Meilensteine M1–M4 · Version 0.10.0-v1-kandidat
 
 **Kein v1.0-Release.** Debug-APK des Branches `claude/operator-v1-gameplay`, automatisch gebaut, mit Unit-Tests, Lint, Paketprüfung (keine WebView, keine HTML/JS/CSS-Dateien) und einem Android-35-Emulatorlauf geprüft, bevor sie hier hochgeladen wird.
 
@@ -21,10 +21,17 @@
 - Visueller Ketteneditor mit Verzweigungen, Timern, Funktexten, Ortswahl, Live-Prüfung und Einsatzpaket-Export/-Import.
 - Schwierigkeitsgrade; Sandbox-Regel Ausbildungspflicht.
 
+### Neu in M4: Einstieg und Feinschliff
+- Tutorial mit drei geführten Einsätzen, danach freie Schicht.
+- Beamte samt Ablösungen zwischen Fahrzeugen versetzen; Mindestbesatzung.
+- Entprellte Audiosignale; kompakte Kartendaten (schnelleres Laden).
+- Flächenländer fair: Fristen und Kräfte wachsen mit der Landesgröße.
+- Abnahmecheckliste: `docs/ACCEPTANCE_CLAUDE_V1.md`.
+
 ### Bekannte Grenzen (ehrlich)
 - Routen sind Spielnäherungen: keine Einbahnstraßen, Abbiegeverbote oder Verkehrslage. Flächenländer haben nur das Haupt-, Stadtstaaten auch das Nebenstraßennetz.
 - Keine MapLibre-Integration: Die App bleibt bewusst ohne Internetberechtigung und ohne Tile-Server; die Karte ist eine native Canvas-Vektorkarte aus gebündelten Daten.
-- M4 steht aus: Onboarding/Tutorial, Audio-Feinschliff, Personal und Fahrzeuge getrennt zuweisen, kompakteres Kartendatenformat, Leistungsmessung, finale Abnahme. Balancing basiert bisher auf Bot-Simulationen, nicht auf Spielertests.
+- Kein menschlicher Spieltest, keine Messung auf einem physischen Gerät, Querformat und Audio-Mischung nicht abgenommen – deshalb noch kein v1.0.
 - Spielgefühl und Leistung auf physischen Mittelklassegeräten sind nicht gemessen; nur Emulator.
 
 Daten: © OpenStreetMap-Mitwirkende (ODbL) · Natural Earth (gemeinfrei) · © GeoBasis-DE/BKG · Freie und Hansestadt Hamburg (LGV/BWVI). Alle Wachen, Personen und Einsätze sind fiktiv.

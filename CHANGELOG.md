@@ -1,3 +1,12 @@
+# V1-Entwicklungsstand (Claude) – Meilenstein M4 · 02.11.2026 · Version 0.10.0-v1-kandidat
+
+**Tutorial:** drei geführte Hamburger Einsätze (Disponieren, Entscheidung bei der Anrufannahme, Mehrfachauswahl) mit Hinweisbanner auf der Karte, danach freie Schicht; jederzeit überspringbar.
+**Personal getrennt von Fahrzeugen:** Planstellen (Beamter samt Ablösungen) zwischen Fahrzeugen versetzen; Mindest- und Höchstbesatzung, unterbesetzte Fahrzeuge rücken nicht aus.
+**Audio:** Signale entprellt (je Signal Mindestabstand, höchstens drei in zwei Sekunden), keine Überlagerung bei vielen Ereignissen.
+**Kartendaten:** kompaktes Binärformat (23,3 MB JSON → 8,5 MB, Laden etwa 8× schneller); lesbare ODbL-Kopie in `data/osm`.
+**Balancing Flächenländer:** Fristen wachsen mit der Landesgröße, Länder über 25.000 km² mit 48 Einheiten an 16 Wachen, Spezialkräfte in den drei größten Städten, Streife kann Verkehrsaufgaben übernehmen.
+**Abnahme:** Schichten in Hamburg, Niedersachsen und Bayern auf echten Daten; eigenes Szenario erstellen → exportieren → importieren → speichern → am Folgetag spielen; Speichern mitten in einer 24h-Schicht über Mitternacht und identisches Weiterlaufen. 62 JVM-Tests, Android 35 `OK (4 tests)`, Emulator-Messwerte unter `docs/evidence/claude-m1/perf-emulator.txt`. Checkliste: `docs/ACCEPTANCE_CLAUDE_V1.md`.
+
 # V1-Entwicklungsstand (Claude) – Meilenstein M3 · 02.11.2026
 
 **Karriere:** vier Stufen (Leitstelle Hamburg → Regionalleitstelle Nord mit Niedersachsen/Schleswig-Holstein → Überregionale Leitstelle mit Bayern, Bremen, Mecklenburg-Vorpommern, Berlin → Lagezentrum Deutschland), jeweils an abgeschlossene Schichten, Ruf und ausgeglichenes Budget gebunden. Ruf muss täglich neu verdient werden (abnehmende Gewinne nahe 100, Routine-P3 ohne Rufgewinn, späte Ankunft kostet Vertrauen, nachts Annäherung an 72). Zuschüsse wachsen mit Stufe und Ruf. Gesperrte Länder mit Begründung, Karrierekarte mit Bedingungen, Beförderungsmeldung. Alte Spielstände behalten alle Länder.

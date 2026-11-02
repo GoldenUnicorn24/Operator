@@ -6,7 +6,7 @@
 
 ## V1-Entwicklungsstand (Branch `claude/operator-v1-gameplay`)
 
-Meilenstein **M1** umgesetzt: topografische Offline-Live-Karte aller 16 Länder, Routing auf dem Straßennetz, Disposition direkt auf der Karte (Mehrfachauswahl, Verstärkung, Abziehen, Umdisponieren) und eine spielbare Hamburger 8h-Schicht. [Preview-APK](https://github.com/GoldenUnicorn24/Operator/releases/tag/operator-claude-v1-preview) · [Gerätescreenshots](docs/evidence/claude-m1/) · [Release-Notes](docs/RELEASE_CLAUDE_V1.md). Noch kein v1.0 – M2–M4 folgen.
+Meilensteine **M1–M4** umgesetzt (Version 0.10.0-v1-kandidat): topografische Offline-Live-Karte aller 16 Länder mit Straßenrouting, Disposition direkt auf der Karte, 34 Einsatzabläufe mit Entscheidungen, SEK/MEK-Differenzierung, Karriere mit Freischaltungen, Loadout, visueller Ketteneditor, Tutorial. Abnahmestand: [docs/ACCEPTANCE_CLAUDE_V1.md](docs/ACCEPTANCE_CLAUDE_V1.md). [Preview-APK](https://github.com/GoldenUnicorn24/Operator/releases/tag/operator-claude-v1-preview) · [Gerätescreenshots](docs/evidence/claude-m1/) · [Release-Notes](docs/RELEASE_CLAUDE_V1.md). Noch kein v1.0: menschlicher Spieltest und Messung auf echtem Gerät stehen aus.
 
 ## Aktueller nativer Stand
 
