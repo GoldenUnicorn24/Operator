@@ -495,7 +495,7 @@ class TacticalMapView(
         }
         for (cluster in unitHits) {
             val v = cluster.members[0].value as UnitState
-            drawUnit(c, cluster.x, cluster.y, v, positions.getValue(v.id).second, detailed, pal)
+            drawUnit(c, cluster.x, cluster.y, v, positions.getValue(v.id).second, pxKm > 45, pal)
         }
         for (cluster in callHits) {
             if (cluster.members.size > 1) drawCallCluster(c, cluster)

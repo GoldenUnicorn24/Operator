@@ -475,6 +475,8 @@ class NativeControlRoomTest {
                 g.state.paused = true
                 assertTrue(old != GeoPoint(u.lon, u.lat))
                 assertEquals("DRIVING", u.status)
+                invoke(a, "updateLive")
+                mapView(a).invalidate()
             }
             screenshot("native-wandsbek-oneway-drive.png")
         }
