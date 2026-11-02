@@ -34,6 +34,35 @@ class RoadGraph(val code: String, val map: StateMap, everyVertex: Boolean = map.
     private val toVertex: IntArray
     private val main: BooleanArray
     private val grid = HashMap<Long, IntArray>()
+    private val snapCache = LinkedHashMap<GeoPoint, StreetSnap>()
+    private val detailFields = LinkedHashMap<Int, FloatArray>()
+    private val segmentGrid by lazy {
+        val cells = HashMap<Long, MutableList<Long>>()
+        for ((ri, line) in map.roads.withIndex()) {
+            val a = roadStart[ri]; val b = roadEnd[ri]
+            if (a < 0 || b < 0 || a == b || !main[a] || !main[b]) continue
+            for (i in 0 until line.size - 1) {
+                val x0 = floor(min(line.lon(i), line.lon(i + 1)) / CELL).toLong()
+                val x1 = floor(max(line.lon(i), line.lon(i + 1)) / CELL).toLong()
+                val y0 = floor(min(line.lat(i), line.lat(i + 1)) / CELL).toLong()
+                val y1 = floor(max(line.lat(i), line.lat(i + 1)) / CELL).toLong()
+                val segment = (ri.toLong() shl 32) or i.toLong()
+                for (x in x0..x1) for (y in y0..y1)
+                    cells.getOrPut((x shl 32) xor (y and 0xffffffffL)) { mutableListOf() }.add(segment)
+            }
+        }
+        cells.mapValues { it.value.toLongArray() }
+    }
+    private val roadStart = IntArray(map.roads.size) { -1 }
+    private val roadEnd = IntArray(map.roads.size) { -1 }
+    private val roadLengths by lazy {
+        map.roads.map { line ->
+            DoubleArray(line.size).also { cumulative ->
+                for (i in 1 until line.size) cumulative[i] = cumulative[i - 1] +
+                    GeoData.km(GeoPoint(line.lon(i - 1), line.lat(i - 1)), GeoPoint(line.lon(i), line.lat(i)))
+            }
+        }
+    }
     val bounds: DoubleArray
     val basis = when {
         map.source == "LGV" -> "HAMBURG_MAIN_ROADS_APPROXIMATION"
@@ -66,6 +95,8 @@ class RoadGraph(val code: String, val map: StateMap, everyVertex: Boolean = map.
                 for (k in va until vb) length += GeoData.km(GeoPoint(r.lon(k), r.lat(k)), GeoPoint(r.lon(k + 1), r.lat(k + 1)))
                 val a = node(r.lon(va), r.lat(va))
                 val b = node(r.lon(vb), r.lat(vb))
+                if (va == 0) roadStart[ri] = a
+                if (vb == r.size - 1) roadEnd[ri] = b
                 if (a == b) continue
                 val m = (length / speed * 60).toFloat()
                 if (r.oneway >= 0) list.add(E(a, b, m, length.toFloat(), ri, va, vb))
@@ -266,6 +297,166 @@ class RoadGraph(val code: String, val map: StateMap, everyVertex: Boolean = map.
         else for (k in a - 1 downTo b) out.add(GeoPoint(r.lon(k), r.lat(k)))
     }
 
+    private data class StreetSnap(val roadIndex: Int, val point: GeoPoint, val atKm: Double, val accessKm: Double)
+    private data class Attachment(val node: Int, val geometry: List<GeoPoint>, val km: Double, val minutes: Double)
+
+    /** Closest actual segment in the spatial grid; cached positions are shared by route and ETA. */
+    @Synchronized
+    private fun streetSnap(p: GeoPoint): StreetSnap? {
+        snapCache[p]?.let { return it }
+        val latitudeScale = cos(Math.toRadians(p.lat))
+        val cx = floor(p.lon / CELL).toLong()
+        val cy = floor(p.lat / CELL).toLong()
+        val visited = HashSet<Long>()
+        var bestSquared = Double.POSITIVE_INFINITY
+        var bestRoad = -1
+        var bestSegment = -1
+        var bestFraction = 0.0
+        var projected = p
+        for (ring in 0..40) {
+            for (dxCell in -ring..ring) for (dyCell in -ring..ring) {
+                if (max(abs(dxCell), abs(dyCell)) != ring) continue
+                val candidates = segmentGrid[((cx + dxCell) shl 32) xor ((cy + dyCell) and 0xffffffffL)] ?: continue
+                for (segment in candidates) {
+                    if (!visited.add(segment)) continue
+                    val ri = (segment ushr 32).toInt()
+                    val i = segment.toInt()
+                    val line = map.roads[ri]
+                    val dx = (line.lon(i + 1) - line.lon(i)) * latitudeScale
+                    val dy = line.lat(i + 1) - line.lat(i)
+                    val px = (p.lon - line.lon(i)) * latitudeScale
+                    val py = p.lat - line.lat(i)
+                    val denominator = dx * dx + dy * dy
+                    val fraction = if (denominator > 0) ((px * dx + py * dy) / denominator).coerceIn(0.0, 1.0) else 0.0
+                    val distance = (px - dx * fraction).pow(2) + (py - dy * fraction).pow(2)
+                    if (distance < bestSquared) {
+                        bestSquared = distance
+                        bestRoad = ri
+                        bestSegment = i
+                        bestFraction = fraction
+                        projected = GeoPoint(line.lon(i) + (line.lon(i + 1) - line.lon(i)) * fraction,
+                            line.lat(i) + (line.lat(i + 1) - line.lat(i)) * fraction)
+                    }
+                }
+            }
+            // An extra cell ring prevents selecting a farther edge across a cell boundary.
+            if (bestRoad >= 0 && ring >= 1 && sqrt(bestSquared) < (ring - .5) * CELL * latitudeScale) break
+        }
+        if (bestRoad < 0) return null
+        val lengths = roadLengths[bestRoad]
+        val result = StreetSnap(bestRoad, projected,
+            lengths[bestSegment] + (lengths[bestSegment + 1] - lengths[bestSegment]) * bestFraction,
+            GeoData.km(p, projected))
+        snapCache[p] = result
+        while (snapCache.size > 512) snapCache.remove(snapCache.keys.first())
+        return result
+    }
+
+    private fun partialGeometry(ri: Int, from: Double, to: Double, firstPoint: GeoPoint, lastPoint: GeoPoint): List<GeoPoint> {
+        val line = map.roads[ri]
+        val lengths = roadLengths[ri]
+        val out = ArrayList<GeoPoint>()
+        out.add(firstPoint)
+        if (from <= to) {
+            for (i in 1 until line.size - 1) if (lengths[i] > from && lengths[i] < to)
+                out.add(GeoPoint(line.lon(i), line.lat(i)))
+        } else {
+            for (i in line.size - 2 downTo 1) if (lengths[i] < from && lengths[i] > to)
+                out.add(GeoPoint(line.lon(i), line.lat(i)))
+        }
+        out.add(lastPoint)
+        return out
+    }
+
+    private fun attachments(snap: StreetSnap, departure: Boolean): List<Attachment> {
+        val ri = snap.roadIndex
+        val line = map.roads[ri]
+        val total = roadLengths[ri].last()
+        val options = ArrayList<Attachment>(2)
+        // On a junction, all incident streets remain accessible even if this polyline is one-way.
+        fun add(node: Int, endpointKm: Double) {
+            val endpoint = point(node)
+            val distance = abs(endpointKm - snap.atKm)
+            val points = if (departure) partialGeometry(ri, snap.atKm, endpointKm, snap.point, endpoint)
+                else partialGeometry(ri, endpointKm, snap.atKm, endpoint, snap.point)
+            options.add(Attachment(node, points, distance, distance / classSpeed(line.cls) * 60))
+        }
+        if (snap.atKm < .000001 || (if (departure) line.oneway <= 0 else line.oneway >= 0)) add(roadStart[ri], 0.0)
+        if (total - snap.atKm < .000001 || (if (departure) line.oneway >= 0 else line.oneway <= 0)) add(roadEnd[ri], total)
+        return options
+    }
+
+    /** Reverse Dijkstra ETA with the same legal partial-edge costs as [detailRoute]. */
+    @Synchronized
+    fun detailEta(start: GeoPoint, end: GeoPoint, speedKmh: Double): Int? {
+        val from = streetSnap(start) ?: return null
+        val to = streetSnap(end) ?: return null
+        if (from.accessKm > 25 || to.accessKm > 25) return null
+        val accessTime = (from.accessKm + to.accessKm) * 1.3 / ACCESS_SPEED * 60
+        var best = Double.POSITIVE_INFINITY
+        if (from.roadIndex == to.roadIndex) {
+            val line = map.roads[from.roadIndex]
+            val delta = to.atKm - from.atKm
+            if (abs(delta) < .000001 || (delta > 0 && line.oneway >= 0) || (delta < 0 && line.oneway <= 0))
+                best = accessTime + abs(delta) / classSpeed(line.cls) * 60
+        }
+        val departures = attachments(from, true)
+        for (enter in attachments(to, false)) {
+            val distances = detailFields.remove(enter.node)?.also { detailFields[enter.node] = it }
+                ?: field(enter.node).also {
+                    detailFields[enter.node] = it
+                    while (detailFields.size > 12) detailFields.remove(detailFields.keys.first())
+                }
+            for (leave in departures) {
+                val cost = distances[leave.node].toDouble()
+                if (cost.isFinite()) best = min(best, accessTime + leave.minutes + cost + enter.minutes)
+            }
+        }
+        return if (best.isFinite()) max(1, ceil(best * REFERENCE_SPEED / speedKmh).toInt()) else null
+    }
+
+    /** R2 routes include legal partial edges at both ends, including positions between junctions. */
+    fun detailRoute(start: GeoPoint, end: GeoPoint, speedKmh: Double): NativeRoute? {
+        val from = streetSnap(start) ?: return null
+        val to = streetSnap(end) ?: return null
+        if (from.accessKm > 25 || to.accessKm > 25) return null
+        val accessDistance = (from.accessKm + to.accessKm) * 1.3
+        val accessTime = accessDistance / ACCESS_SPEED * 60
+        var bestTime = Double.POSITIVE_INFINITY
+        var bestDistance = 0.0
+        var bestPoints: List<GeoPoint>? = null
+        fun consider(geometry: List<GeoPoint>, distance: Double, referenceTime: Double) {
+            if (referenceTime >= bestTime) return
+            bestTime = referenceTime
+            bestDistance = accessDistance + distance
+            bestPoints = listOf(start) + geometry + end
+        }
+        if (from.roadIndex == to.roadIndex) {
+            val line = map.roads[from.roadIndex]
+            val delta = to.atKm - from.atKm
+            if (abs(delta) < .000001 || (delta > 0 && line.oneway >= 0) || (delta < 0 && line.oneway <= 0)) {
+                consider(partialGeometry(from.roadIndex, from.atKm, to.atKm, from.point, to.point),
+                    abs(delta), accessTime + abs(delta) / classSpeed(line.cls) * 60)
+            }
+        }
+        for (leave in attachments(from, true)) for (enter in attachments(to, false)) {
+            val connected = path(leave.node, enter.node) ?: continue
+            var time = accessTime + leave.minutes + enter.minutes
+            var distance = leave.km + enter.km
+            val geometry = ArrayList<GeoPoint>()
+            geometry.addAll(leave.geometry)
+            for (edge in connected.second) {
+                appendGeometry(edge, geometry)
+                time += edgeMinutes(edge)
+                distance += edgeKm(edge)
+            }
+            geometry.addAll(enter.geometry.drop(1))
+            consider(geometry, distance, time)
+        }
+        val points = bestPoints ?: return null
+        return NativeRoute(points, bestDistance, max(1, ceil(bestTime * REFERENCE_SPEED / speedKmh).toInt()), basis)
+    }
+
     companion object {
         const val CELL = .02
         const val MAX_SPEED = 100.0
@@ -364,7 +555,8 @@ object NativeRouting {
         )
         val direct = GeoData.km(start, end)
         val g = pickGraph(start, end, region) ?: return approximation(start, end, speedKmh)
-        if (direct < .15 && g.map.version < 2) return approximation(start, end, speedKmh)
+        if (g.map.version >= 2) return g.detailRoute(start, end, speedKmh) ?: approximation(start, end, speedKmh)
+        if (direct < .15) return approximation(start, end, speedKmh)
         val from = g.nearest(start)
         val to = g.nearest(end)
         if (from < 0 || to < 0) return approximation(start, end, speedKmh)
@@ -410,6 +602,8 @@ object NativeRouting {
         val g = graph(u.region)
         if (g == null || !g.covers(start) || !g.covers(target) || (g.map.version < 2 && GeoData.km(start, target) < .15))
             return approximation(start, target, u.vehicleSpeed).durationMinutes
+        if (g.map.version >= 2) return g.detailEta(start, target, u.vehicleSpeed)
+            ?: approximation(start, target, u.vehicleSpeed).durationMinutes
         val goal = g.nearest(target)
         val key = "${g.code}:$goal"
         val field =

@@ -82,6 +82,61 @@ class NativeDirectedRoutingTest {
     }
 
     @Test
+    fun interiorOneWayPositionsUseLegalPartialEdgesAndMatchingEta() {
+        val aa = GeoPoint(10.0, 53.5)
+        val bb = GeoPoint(10.01, 53.5)
+        val cc = GeoPoint(10.01, 53.51)
+        val dd = GeoPoint(10.0, 53.51)
+        val map = map(listOf(road(aa, bb, 1), road(bb, cc), road(cc, dd), road(dd, aa)))
+        NativeRouting.install(map)
+        val start = GeoPoint(10.0075, 53.5)
+        val target = GeoPoint(10.0025, 53.5)
+        val reverse = NativeRouting.route(start, target, 25.0, map.code)
+        assertEquals("OSM_DETAIL_ROADS_APPROXIMATION", reverse.basis)
+        assertEquals("must first leave the one-way street in its legal direction", bb,
+            reverse.points.first { GeoData.km(it, start) > .001 })
+        assertTrue(cc in reverse.points)
+        assertTrue(dd in reverse.points)
+        assertTrue(aa in reverse.points)
+        assertEquals(target, reverse.points.last())
+        val finalApproach = reverse.points.last { GeoData.km(it, target) > .001 }
+        assertEquals("target must be approached from the allowed entrance", aa, finalApproach)
+        val u = UnitState("u", "Peter 31/1", "STREIFE", map.code, start.lat, start.lon, vehicleSpeed = 25.0)
+        assertEquals(reverse.durationMinutes, NativeRouting.eta(u, target))
+        val forward = NativeRouting.route(target, start, 25.0, map.code)
+        assertTrue(forward.points.none { it == aa || it == bb || it == cc || it == dd })
+        assertTrue(reverse.distanceKm > forward.distanceKm * 3)
+        assertTrue(reverse.durationMinutes > forward.durationMinutes)
+    }
+
+    @Test
+    fun partialSameRoadKeepsBendsAndReverseOnewayDirection() {
+        val bend = GeoPoint(a.lon, a.lat + .01)
+        val finish = GeoPoint(a.lon + .01, a.lat + .01)
+        val map = map(listOf(RoadLine(3, "", doubleArrayOf(a.lon, a.lat, bend.lon, bend.lat, finish.lon, finish.lat), "Bogenweg", -1)))
+        NativeRouting.install(map)
+        val start = GeoPoint(a.lon + .005, a.lat + .01)
+        val end = GeoPoint(a.lon, a.lat + .005)
+        val legal = NativeRouting.route(start, end, 25.0, map.code)
+        assertEquals("OSM_DETAIL_ROADS_APPROXIMATION", legal.basis)
+        assertEquals(start, legal.points.first())
+        assertTrue("a partial edge must retain the real road bend", bend in legal.points)
+        assertEquals(end, legal.points.last())
+        assertEquals("DISTANCE_APPROXIMATION", NativeRouting.route(end, start, 25.0, map.code).basis)
+    }
+
+    @Test
+    fun unreachableInteriorOneWayTripIsExplicitDistanceApproximation() {
+        val map = map(listOf(road(a, b, 1)))
+        NativeRouting.install(map)
+        val start = GeoPoint(10.0007, 53.5)
+        val target = GeoPoint(10.0002, 53.5)
+        val route = NativeRouting.route(start, target, 25.0, map.code)
+        assertEquals("DISTANCE_APPROXIMATION", route.basis)
+        assertEquals(listOf(start, target), route.points)
+    }
+
+    @Test
     fun oldMapsKeepBidirectionalRoadsAndOriginalBasis() {
         val old = StateMap("DE-TEST", listOf(RoadLine(2, "B 1", doubleArrayOf(a.lon, a.lat, b.lon, b.lat))), emptyList(), "OSM")
         val g = RoadGraph(old.code, old)
