@@ -1596,7 +1596,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                 }
                 if (u.status == "PATROLLING" && !available(u)) { u.patrolMode = "WATCH"; sendHome(u) }
                 if (previousFms != fms(u)) radioStatus(u)
-                if (state.autoCalls && u.status == "PATROLLING" && openIncidents() < 20 && rnd() < .0007) {
+                if (state.autoCalls && u.status == "PATROLLING" && inScope(GeoPoint(u.lon, u.lat)) && openIncidents() < 20 && rnd() < .0007) {
                     val call = newIncident(IncidentTemplate("Eigenfeststellung", 3, "STREIFE", 6, "Streife bemerkt eine kleine Störung vor Ort.", reward = 300), GeoPoint(u.lon, u.lat))
                     call.flags.add("patrol-discovery")
                     emit("Eigenfeststellung", "${u.callsign}: ${call.location}")
