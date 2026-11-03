@@ -285,7 +285,10 @@ class MainActivity : Activity() {
         showTab("MAP")
         handler.post(ticker)
         if (saved.phase == "DEBRIEF") handler.post { showDebrief() }
-        else if (saved.phase == "PLANNING" && saved.day == 1) handler.post { showWelcome() }
+        else if (saved.phase == "PLANNING" && saved.day == 1) handler.post {
+            // A queued startup sheet must not cover a shift already started by a fast action.
+            if (game.state.phase == "PLANNING" && game.state.day == 1 && !isFinishing && !isDestroyed) showWelcome()
+        }
     }
 
     /** Live map plus the dispatch panel that sits on top of it. */

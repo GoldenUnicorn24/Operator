@@ -88,7 +88,14 @@ class NativeControlRoomTest {
         var ready = false
         val until = System.currentTimeMillis() + 15000
         while (!ready && System.currentTimeMillis() < until) {
-            scenario.onActivity { a -> ready = mapView(a).baseMapReady() }
+            scenario.onActivity { a ->
+                ready = mapView(a).baseMapReady()
+                if (game(a).state.phase == "RUNNING") {
+                    val dialog = MainActivity::class.java.getDeclaredField("sheet").apply { isAccessible = true }.get(a) as? android.app.Dialog
+                    val name = MainActivity::class.java.getDeclaredField("sheetName").apply { isAccessible = true }.get(a) as String
+                    assertFalse("Startup welcome covers the running map", dialog?.isShowing == true && name == "Einsatzleitstelle 110")
+                }
+            }
             if (!ready) Thread.sleep(250)
         }
         assertTrue("base map rendered", ready)
