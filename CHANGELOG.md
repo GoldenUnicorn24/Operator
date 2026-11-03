@@ -8,7 +8,7 @@ P3: Fiktive Dienststellen und Ausbau, Fahrzeugkatalog, getrennte Bewerber/Person
 
 P4: Verkehr/Wetter als Spielwerte, Mehrfachanrufer/Rückruf mit Adresskorrektur, fünf atomare Speicherplätze, Querformat-Einsatzakte und ausgelagerte Bildschirmmodule. Save-Schema 7 migriert bestehende native und bereits unterstützte ältere Spielstände.
 
-Nachweise und Grenzen: [docs/ACCEPTANCE_POLIZEICHEF.md](docs/ACCEPTANCE_POLIZEICHEF.md). Kein v1.0; finale Geräte-/CI-Nachweise werden mit geprüfter Commit-ID ergänzt.
+Nachweise und Grenzen: [docs/ACCEPTANCE_POLIZEICHEF.md](docs/ACCEPTANCE_POLIZEICHEF.md). Geprüfter Code `960bfa1`: 112 JVM-Tests, 9 Python-Verträge, Android35 OK (8 tests), Lint und Paketprüfung grün ([CI](https://github.com/GoldenUnicorn24/Operator/actions/runs/41577783048)); 26 echte Screenshots und [APK](https://github.com/GoldenUnicorn24/Operator/releases/tag/operator-polizeichef-960bfa1), 17.6 MB. Kein v1.0.
 
 # V1-Entwicklungsstand (Claude) – Meilenstein M4 · 02.11.2026 · Version 0.10.0-v1-kandidat
 

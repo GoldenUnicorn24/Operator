@@ -1,0 +1,15 @@
+{
+  "source_commit": "960bfa1293744f66f3a156d460efc6389fbaeacb",
+  "run_id": 41577783048,
+  "run_url": "https://github.com/GoldenUnicorn24/Operator/actions/runs/41577783048",
+  "status": "success",
+  "jvm_tests": 112,
+  "python_tests": 9,
+  "android_tests": 8,
+  "screenshots": 26,
+  "apk_bytes": 17581366,
+  "apk_sha256": "91cdb34d2e0cb15e8b659ff9ecc853cce5176757084305610c75111d6ed42aeb",
+  "release_url": "https://github.com/GoldenUnicorn24/Operator/releases/tag/operator-polizeichef-960bfa1",
+  "apk_manifest_permissions": [],
+  "manifest_verification": "aapt2 dump permissions and badging on downloaded CI APK; versionCode112, versionName0.11.0-polizeichef-preview, minSdk26, targetSdk35"
+}

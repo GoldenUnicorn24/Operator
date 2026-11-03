@@ -1,0 +1,11 @@
+{
+  "source_commit": "960bfa1293744f66f3a156d460efc6389fbaeacb",
+  "environment": "managed Linux, JDK21, Gradle8.9/Kotlin2.0.21, AndroidSDK35, target JVM17",
+  "command": ":app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest :app:lintDebug",
+  "exit_code": 0,
+  "elapsed": "59s",
+  "jvm_tests": 112,
+  "failures": 0,
+  "errors": 0,
+  "device_tests": "CI only; see instrumentation.txt"
+}

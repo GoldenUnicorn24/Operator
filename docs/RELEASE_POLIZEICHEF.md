@@ -1,13 +1,14 @@
-# Polizeichef – Entwicklungsstand
+# Einsatzleitstelle 110 – Polizeichef 0.11.0
 
-Kein v1.0. Arbeitsbranch `codex/operator-v1-polizeichef`, Basis 0.10.0-v1-kandidat.
+Native Offline-Vorschau, **kein v1.0**. Geprüfter Quellstand `960bfa1` mit [grüner CI](https://github.com/GoldenUnicorn24/Operator/actions/runs/41577783048): **112 JVM-Tests, 9 Python-Verträge, Lint, APK-Prüfung und acht Android35-Gerätetests**. [Abnahmeliste und Grenzen](https://github.com/GoldenUnicorn24/Operator/blob/codex/operator-v1-polizeichef/docs/ACCEPTANCE_POLIZEICHEF.md).
 
-P1: Hamburg-Detailnetz aus einmaliger OSM-Abfrage in CI, Wohnstraßen, Namen getrennt von Referenzen, Einbahnrichtungen, Wasser-/Grün-/Bahnflächen. Alte R1-Kartendateien bleiben lesbar. Bezirksansicht mit heller Grundkarte, Außenmaske, geklemmter Kamera, Stadtteil-/Straßenbeschriftung. Landesübersicht bleibt erreichbar. Generierte Notrufe auf benannten Straßenpunkten; keine erfundenen Hausnummern.
+- **P1:** isolierte Hamburger Bezirkskarten mit Wohnstraßen, Namen, gerichteten Teilstrecken/Ringstraßen und Straßenadressen; Außenmaske, geklemmte Kamera, Wasser/Grün/Bahn. Hauptnetz für landesweite Fahrzeuge bleibt erhalten.
+- **P2:** gespeicherte Streifenaufträge, Präsenz/Eigenfeststellungen, Verbrauch/Kraft, wählbare Sonderrechte, FMS-Funkstatus und individuelle Fahrzeugzeichen.
+- **P3:** eigene fiktive Dienststellen mit Ausbau, neun Fahrzeugmodelle, getrennte Bewerber/Personal/Besatzung, Dienstgruppen/-zeiten, eigene Einheitentypen und tägliche Kosten mit Insolvenz-Warnung.
+- **P4:** Verkehrs-/Wetterspielwerte, Mehrfachanrufer/Rückruf mit echter Adresskorrektur, fünf Save-Slots/Backups, Querformat-Akte und eigene Bildschirmmodule.
 
-Das APK wird erst nach erfolgreichem Build, JVM-Tests, Lint, Paketprüfung und Android-35-Gerätetest veröffentlicht. Echte Screenshots und Emulatorwerte unter `docs/evidence/polizeichef/`, referenziert auf ihren geprüften Commit. Vorhandene Nachweise anderer Branches sind keine Abnahme dieses Standes.
+[26 echte Screenshots](https://github.com/GoldenUnicorn24/Operator/tree/codex/operator-v1-polizeichef/docs/evidence/polizeichef), einschließlich Dienststellengründung per langem Kartendruck, zwei Fahrzeugen/vier Beamten, erfolgreichem Einsatz und dauerhaftem Speichern/Laden.
 
-Grenzen: Fahrzeiten sind Spielwerte; keine Abbiegeverbote oder Echtzeitdaten. Fehlende Verbindungen bleiben ausdrücklich markierte Distanznäherungen. Keine Gebäudeumrisse. P2–P4 werden separat dokumentiert; bis dahin keine Vollabnahme des Gesamtauftrags. Physische Geräte und menschliches Balancing nicht geprüft.
+APK: **17581366 Bytes**, SHA256 `91cdb34d2e0cb15e8b659ff9ecc853cce5176757084305610c75111d6ed42aeb`. Ohne WebView, Web-Dokumente, Internetberechtigung oder Kartenserver. ODbL-Daten offen unter `data/osm/`; Quellen in THIRD_PARTY_NOTICES.md. Eigene Canvas-Grafiken und erhaltene Originalassets.
 
-Daten: © OpenStreetMap-Mitwirkende, ODbL, offene Kopie `data/osm/`; weitere Quellen siehe THIRD_PARTY_NOTICES.md. Keine Internetberechtigung oder Kartenserver.
-
-P2 ergänzt gespeicherte Streifenaufträge, Präsenz-/Kostenwirkung, Sonderrechte und FMS-Funkmeldungen. P3 ergänzt fiktive Dienststellen mit Ausbau, neun Fahrzeugmodelle, getrenntes Personal mit Dienstgruppen, eigene Einheitentypen und laufende Kosten. P4 ergänzt Verkehrs-/Wetterspielwerte, Mehrfachanrufer und Rückrufe, fünf Save-Slots, Querformat-Akte und getrennte UI-Module. Das Spielstandschema 7 liest die bisherigen Schemas und Migrationen weiter. Der klassische frei konfigurierbare Einheiteneditor bleibt in der Sandbox verfügbar; Karrierebeschaffung erfolgt über den Polizeichef.
+Grenzen: Emulatornachweis, keine physische Geräte-/Hörabnahme oder menschliches Langzeitbalancing; keine Abbiegeverbote/Echtzeitdaten/Gebäudeumrisse. Vorhandene Einheiten bleiben kompatibel, neue Beschaffungen verwenden die Polizeichef-Verwaltung. Schema7 migriert bisher unterstützte Saves. **Debug-APK: bei abweichender Signatur vorher den Spielstand exportieren.** Berlin-/Bremen-Bezirke bleiben optional.
