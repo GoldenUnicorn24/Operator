@@ -1,10 +1,10 @@
-DE-BY Straßengraph: 574 ms, 63658 Knoten
-DE-BY Region gewählt bis Grundkarte fertig: 3364 ms
-DE-BY Live-Overlay (Software-Canvas, 48 Einheiten, 3 Lagen): Ø 20.9 ms je Bild
-DE-NI Straßengraph: 443 ms, 42057 Knoten
-DE-NI Region gewählt bis Grundkarte fertig: 2745 ms
-DE-NI Live-Overlay (Software-Canvas, 48 Einheiten, 4 Lagen): Ø 17.5 ms je Bild
-P1 Wandsbek Übersicht bis Grundkarte: 1571 ms
+DE-BY Straßengraph: 517 ms, 63658 Knoten
+DE-BY Region gewählt bis Grundkarte fertig: 3448 ms
+DE-BY Live-Overlay (Software-Canvas, 48 Einheiten, 3 Lagen): Ø 21.5 ms je Bild
+DE-NI Straßengraph: 573 ms, 42057 Knoten
+DE-NI Region gewählt bis Grundkarte fertig: 2816 ms
+DE-NI Live-Overlay (Software-Canvas, 48 Einheiten, 4 Lagen): Ø 18.7 ms je Bild
+P1 Wandsbek Übersicht bis Grundkarte: 1572 ms
 P1 Einbahn-Wohnstraße: Weg 1, Richtung 1, 7 Routenpunkte, 2 min
-P1 Straßenebene bis Grundkarte: 797 ms
-P1 Detail-Overlay 60 Bilder: Ø 17.99189508333333 ms, p95 29.472541 ms, max 33.99399 ms; Bitmap 8320320 bytes
+P1 Straßenebene bis Grundkarte: 893 ms
+P1 Detail-Overlay 60 Bilder: Ø 18.67384666666667 ms, p95 31.764301 ms, max 33.893602 ms; Bitmap 8320320 bytes
