@@ -28,7 +28,7 @@ class IncidentDeskScreen(
         body.addView(ui.text("${game.region().name} · Priorität, Fristen und fehlende Kräfte", 12f, ui.muted))
         val active = calls.filter { it.status in listOf("OPEN", "DRIVING", "WORKING") }
         val action = active.count { IncidentDesk.attention(game, it).needsAction }
-        body.addView(ui.text("$action mit Handlungsbedarf · ${active.size} aktive Lagen", 15f,
+        body.addView(ui.text("Handlungsbedarf: $action · Aktive Lagen: ${active.size}", 15f,
             if (action > 0) ui.amber else ui.mint, true).apply { setPadding(0, ui.dp(12), 0, ui.dp(8)) })
         val filters = ui.row()
         for ((key, label) in listOf("ACTION" to "Handlungsbedarf", "ACTIVE" to "Alle aktiven", "ARCHIVE" to "Archiv"))

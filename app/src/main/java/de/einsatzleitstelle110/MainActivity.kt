@@ -521,7 +521,7 @@ class MainActivity : Activity() {
         val labels =
             listOf(
                 "MAP" to "Karte",
-                "CALLS" to "Lagezentrum",
+                "CALLS" to "Lagen",
                 "UNITS" to "Personal",
                 "MANAGE" to "Dienst",
                 "EDITOR" to "Editor",

@@ -4,7 +4,7 @@ Umgesetzt: Live-Lagezentrum mit Filter/Handlungsgründen und gemeinsam sortierte
 
 Neue Nachweise: `NativeRoleCoverageTest`, `NativeRoleMatchingTest` und `NativeDispatchAdvisorTest` prüfen korrekte Fähigkeiten/Mehrfachbedarf, vorhandene vielseitige Einheiten, Budget, Ausbildungs-/Besatzungs-/Fahrzeuggrenzen, Sonderrechte-/Fristprognose, Zustands-/Zufallsfreiheit und Handlungsreihenfolge. 150 deterministische kleine Zuordnungsprobleme werden mit einer unabhängigen vollständigen Suche verglichen. Große importierte Bedarfslisten haben keine Bitmaskenbegrenzung.
 
-Android-Geräteablauf: Lagezentrum → Vorschlag auswählen (noch kein Geldabzug, keine Entsendung) → bestätigte Entsendung zweier Kräfte → FMS 3 und reale Straßenrouten → Lagezentrum zeigt Anfahrt ohne fehlende Kräfte. Drei zusätzliche Screenshots sind in der verpflichtenden CI-Prüfung eingetragen.
+Android-Geräteablauf: Lagezentrum → Anrufannahme beantworten → Vorschlag auswählen (noch kein Geldabzug, keine Entsendung) → bestätigte Entsendung zweier Kräfte → FMS 3 und reale Straßenrouten → Lagezentrum zeigt Anfahrt ohne fehlende Kräfte. Drei zusätzliche Screenshots sind in der verpflichtenden CI-Prüfung eingetragen.
 
 Vorläufig: lokaler Gesamtbuild/CI/Emulator und endgültiger APK-Link werden nach tatsächlichem Abschluss hier zugeordnet. Kein v1.0.
 

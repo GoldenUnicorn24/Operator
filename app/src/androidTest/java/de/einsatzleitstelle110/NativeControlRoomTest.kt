@@ -209,6 +209,9 @@ class NativeControlRoomTest {
                 val g = game(a)
                 assertTrue(tapText(a.window.decorView,"Einsatzakte öffnen"))
                 val call = g.state.incidents.first { it.id == callId }
+                assertTrue(IncidentDesk.attention(g,call).reason.startsWith("Entscheidung"))
+                assertTrue("Resolve call-taking through the real UI",tapPrefix(a.window.decorView,"Sofort alarmieren"))
+                assertTrue(call.pending.isBlank())
                 val started = System.nanoTime()
                 val advice = DispatchAdvisor.plan(g,call,false)
                 perf("Lagezentrum Wandsbek: Vorschlag für ${call.requiredTypes.size} Rollen / ${g.state.units.size} Fahrzeuge in ${(System.nanoTime() - started) / 1_000_000.0} ms (warmer Routingcache)")
@@ -220,6 +223,7 @@ class NativeControlRoomTest {
                 assertEquals(budget,g.state.budget)
             }
             waitForBaseMap(scenario)
+            Thread.sleep(3500) // Let the real decision acknowledgement toast finish before evidence.
             screenshot("native-dispatch-advice.png")
             scenario.onActivity { a ->
                 val g = game(a)
