@@ -499,7 +499,8 @@ class MainActivity : Activity() {
         val version =
             game.state.incidents.joinToString { it.id + it.status } +
                 game.state.units.joinToString { it.id + it.status + it.trainingLeft }
-        if (tab in listOf("CALLS", "UNITS") && sheet?.isShowing != true && version != pageVersion) {
+        if (tab == "CALLS" && sheet?.isShowing != true) incidentDesk?.refresh()
+        if (tab == "UNITS" && sheet?.isShowing != true && version != pageVersion) {
             val old = (body.getChildAt(0) as? ScrollView)?.scrollY ?: 0
             pageVersion = version
             showTab(tab)
@@ -511,6 +512,7 @@ class MainActivity : Activity() {
 
     private fun showTab(next: String) {
         tab = next
+        incidentDesk = null
         body.removeAllViews()
         navigation.removeAllViews()
         mapCounter = null
@@ -519,7 +521,7 @@ class MainActivity : Activity() {
         val labels =
             listOf(
                 "MAP" to "Karte",
-                "CALLS" to "Notrufe",
+                "CALLS" to "Lagezentrum",
                 "UNITS" to "Personal",
                 "MANAGE" to "Dienst",
                 "EDITOR" to "Editor",
@@ -684,11 +686,9 @@ class MainActivity : Activity() {
     /** Up to three most urgent calls as tappable rows under the map. */
     private fun updateQueue() {
         val q = queueView ?: return
-        val calls =
-            game.state.incidents
-                .filter { it.region == game.state.region && game.inScope(it.lat, it.lon) && it.status in listOf("OPEN", "DRIVING", "WORKING") }
-                .sortedWith(compareBy<IncidentState>({ if (it.status == "OPEN") 0 else 1 }, { it.priority }, { it.deadline - it.age }))
-        val version = calls.take(3).joinToString { it.id + it.status + it.pending + (it.deadline - it.age) / 5 } + calls.size
+        val calls = IncidentDesk.ordered(game, game.state.incidents
+            .filter { it.region == game.state.region && game.inScope(it.lat, it.lon) && it.status in listOf("OPEN", "DRIVING", "WORKING") })
+        val version = calls.take(3).joinToString { it.id + it.status + IncidentDesk.attention(game, it).reason } + calls.size
         if (version == queueVersion) return
         queueVersion = version
         q.removeAllViews()
@@ -706,9 +706,9 @@ class MainActivity : Activity() {
             }
             r.addView(ui.chip("P${c.priority}", ui.priorityColor(c.priority), c.status == "OPEN"))
             if (c.pending.isNotBlank()) r.addView(ui.chip("⚠", ui.amber, true), LinearLayout.LayoutParams(-2, -2).apply { marginStart = dp(4) })
-            val state = when (c.status) { "OPEN" -> "offen"; "DRIVING" -> "Anfahrt"; else -> "vor Ort" }
+            val attention = IncidentDesk.attention(game, c)
             r.addView(text("  ${c.title} · ${c.location}", 13f, ink, c.status == "OPEN").apply { maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END }, LinearLayout.LayoutParams(0, -2, 1f))
-            r.addView(text(if (c.status == "WORKING") state else "$state · ${(c.deadline - c.age).coerceAtLeast(0)}′", 11f, if (c.status == "OPEN" && c.deadline - c.age < 15) red else muted, true))
+            r.addView(text(attention.reason, 11f, if (attention.order == 0) red else muted, true).apply { maxWidth = dp(150); maxLines = 2 })
             q.addView(r, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(4) })
         }
         if (calls.size > 3) q.addView(text("+ ${calls.size - 3} weitere Lagen · Liste", 11f, muted).apply { setPadding(dp(4), dp(4), 0, 0); setOnClickListener { showTab("CALLS") } })
@@ -861,48 +861,13 @@ class MainActivity : Activity() {
         showSheet("Zuständigkeit", panel)
     }
 
+    private var incidentDesk: IncidentDeskScreen? = null
+
     private fun showCalls() {
-        val list = page()
-        val head = card(list)
-        title(head, "Notrufe", scopeName())
-        gap(head)
-        head.addView(
-            action("Notruf simulieren", true) {
-                if (game.state.phase == "RUNNING") {
-                    game.newIncident()
-                    refresh()
-                } else showShiftDialog()
-            }
-        )
-        for (call in
-            game.state.incidents
-                .filter { it.region == game.state.region && game.inScope(it.lat, it.lon) }
-                .sortedBy { if (it.status == "OPEN") it.priority else 10 }
-                .take(100)) {
-            val c = card(list)
-            c.addView(
-                text(
-                    "P${call.priority}  ${call.title}",
-                    17f,
-                    when (call.priority) {
-                        1 -> red
-                        2 -> amber
-                        else -> cyan
-                    },
-                    true,
-                )
-            )
-            c.addView(text("${call.location} · ${statusName(call.status)}", 13f, muted))
-            if (call.outcome.isNotBlank()) c.addView(text(call.outcome, 12f, if (call.status == "SOLVED") mint else red))
-            gap(c, 8)
-            c.addView(text(call.description))
-            gap(c)
-            c.addView(
-                action(if (call.status == "OPEN") "Kräfte auswählen" else "Einsatzdetails") {
-                    showIncident(call)
-                }
-            )
-        }
+        incidentDesk = IncidentDeskScreen(this, game, ui, ::openCall) {
+            if (game.state.phase == "RUNNING") { game.newIncident(); save(); updateLive() }
+            else showShiftDialog()
+        }.also { body.addView(it.root, FrameLayout.LayoutParams(-1, -1)) }
     }
 
     private fun showIncident(call: IncidentState) = openCall(call)

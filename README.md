@@ -4,9 +4,9 @@
 
 [Native Android-APK herunterladen](https://github.com/GoldenUnicorn24/Operator/releases?q=operator-polizeichef) · [Android-Screenshots](docs/evidence/polizeichef/)
 
-## Polizeichef-Entwicklungsstand (0.11.0)
+## Lagezentrum und Polizeichef (0.12.0)
 
-Arbeitsbranch `codex/operator-v1-polizeichef`: Hamburger Bezirksdetailkarte, Streifen/FMS/Sonderrechte, eigene Dienststellen mit Fahrzeug- und Personalverwaltung sowie Wetter, Rückrufe, fünf Speicherplätze und Querformat-Einsatzakte. Native Offline-App, weiterhin ohne Internetberechtigung. [Abnahmestand](docs/ACCEPTANCE_POLIZEICHEF.md) · [Release-Notizen](docs/RELEASE_POLIZEICHEF.md). Kein v1.0; Tests und Gerätebelege werden auf den jeweils tatsächlich geprüften Commit bezogen.
+Arbeitsbranch `codex/operator-v1-polizeichef`: Live-Lagezentrum mit Handlungsgründen, Frist-/Entscheidungswarnungen und kostenschonenden Dispositionsvorschlägen. Vorschläge berücksichtigen die echten Fähigkeiten, Ausbildung, Gesamtbudget und Straßen-Anfahrt; entsendet wird nach Bestätigung. Dazu Hamburger Bezirksdetailkarte, Streifen/FMS/Sonderrechte, eigene Dienststellen mit Fahrzeug- und Personalverwaltung sowie Wetter, Rückrufe, fünf Speicherplätze und Querformat-Einsatzakte. Native Offline-App, weiterhin ohne Internetberechtigung. [Aktuelle Abnahme](docs/ACCEPTANCE_LAGEZENTRUM.md) · [Vorheriger Stand 0.11](docs/ACCEPTANCE_POLIZEICHEF.md) · [Release-Notizen](docs/RELEASE_POLIZEICHEF.md). Kein v1.0; Tests und Gerätebelege werden auf den jeweils tatsächlich geprüften Commit bezogen.
 
 ## V1-Entwicklungsstand (Branch `claude/operator-v1-gameplay`)
 

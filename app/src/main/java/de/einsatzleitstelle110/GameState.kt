@@ -1119,14 +1119,18 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
     }
 
     fun remainingTypes(call: IncidentState): List<String> {
-        val left = call.requiredTypes.toMutableList()
-        for (id in call.assignedUnits) {
-            val u = state.units.find { it.id == id } ?: continue
-            val exact = left.indexOf(u.type)
-            val index = if (exact >= 0) exact else left.indexOfFirst { canHandle(u, it) }
-            if (index >= 0) left.removeAt(index)
-        }
-        return left
+        val units = call.assignedUnits.distinct().mapNotNull { id -> state.units.find { it.id == id } }
+        val covered = RoleMatching.assign(call.requiredTypes, units, ::canHandle,
+            { u, role -> if (u.type == role) 0 else 1 }).map { it.role }.toSet()
+        return call.requiredTypes.filterIndexed { index, _ -> index !in covered }
+    }
+
+    /** Same qualification gate for manual dispatch and the read-only advisor. */
+    fun dispatchTrainingIssue(u: UnitState): String {
+        if (!state.trainingRequired || u.type !in listOf("SEK", "MEK")) return ""
+        val course = if (u.type == "SEK") "SEK-Fortbildung" else "MEK-Observation"
+        return if (u.officers.none { course in it.qualifications })
+            "Ausbildungspflicht: ${u.callsign} braucht den Lehrgang $course." else ""
     }
 
     fun dispatch(call: IncidentState, u: UnitState, specialRights: Boolean = call.priority == 1): Boolean {
@@ -1146,13 +1150,8 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
             return false
         ensureRoster(u)
         if (state.fatigueEnabled && u.officers.any { it.energy < 15 }) return false
-        if (state.trainingRequired && u.type in listOf("SEK", "MEK")) {
-            val course = if (u.type == "SEK") "SEK-Fortbildung" else "MEK-Observation"
-            if (u.officers.none { course in it.qualifications }) {
-                lastError = "Ausbildungspflicht: ${u.callsign} braucht den Lehrgang $course."
-                return false
-            }
-        }
+        val trainingIssue = dispatchTrainingIssue(u)
+        if (trainingIssue.isNotBlank()) { lastError = trainingIssue; return false }
         val fee = deploymentCost(u.type)
         if (fee > 0 && !spend(fee)) {
             lastError = "Budget reicht nicht für den ${u.type}-Einsatz (${fee} €)."
@@ -1400,16 +1399,10 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                 reasons.add("Anfahrt lang ($arrival Min)")
             }
         }
-        val need = call.requiredTypes.toMutableList()
-        var substitutes = 0
-        for (u in units) {
-            if (need.remove(u.type)) continue
-            val i = need.indexOfFirst { canHandle(u, it) }
-            if (i >= 0) {
-                need.removeAt(i)
-                substitutes++
-            }
-        }
+        val matching = RoleMatching.assign(call.requiredTypes, units.distinctBy { it.id }, ::canHandle,
+            { u, role -> if (u.type == role) 0 else 1 })
+        val uniqueUnits = units.distinctBy { it.id }
+        val substitutes = matching.count { uniqueUnits[it.unit].type != call.requiredTypes[it.role] }
         if (substitutes > 0) {
             p -= .04 * substitutes
             reasons.add("$substitutes× Ersatzkraft statt Fachkraft")

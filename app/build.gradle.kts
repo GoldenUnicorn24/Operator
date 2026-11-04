@@ -7,8 +7,8 @@ android {
         applicationId = "de.einsatzleitstelle110"
         minSdk = 26
         targetSdk = 35
-        versionCode = 112
-        versionName = "0.11.0-polizeichef-preview"
+        versionCode = 113
+        versionName = "0.12.0-lagezentrum-preview"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     compileOptions {

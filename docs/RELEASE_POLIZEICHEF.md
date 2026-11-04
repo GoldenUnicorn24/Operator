@@ -1,14 +1,12 @@
-# Einsatzleitstelle 110 – Polizeichef 0.11.0
+# Einsatzleitstelle 110 – Lagezentrum 0.12.0
 
-Native Offline-Vorschau, **kein v1.0**. Geprüfter Quellstand `960bfa1` mit [grüner CI](https://github.com/GoldenUnicorn24/Operator/actions/runs/41577783048): **112 JVM-Tests, 9 Python-Verträge, Lint, APK-Prüfung und acht Android35-Gerätetests**. [Abnahmeliste und Grenzen](https://github.com/GoldenUnicorn24/Operator/blob/codex/operator-v1-polizeichef/docs/ACCEPTANCE_POLIZEICHEF.md).
+Native Offline-Vorschau, kein v1.0. [Abnahmeliste](https://github.com/GoldenUnicorn24/Operator/blob/codex/operator-v1-polizeichef/docs/ACCEPTANCE_LAGEZENTRUM.md).
 
-- **P1:** isolierte Hamburger Bezirkskarten mit Wohnstraßen, Namen, gerichteten Teilstrecken/Ringstraßen und Straßenadressen; Außenmaske, geklemmte Kamera, Wasser/Grün/Bahn. Hauptnetz für landesweite Fahrzeuge bleibt erhalten.
-- **P2:** gespeicherte Streifenaufträge, Präsenz/Eigenfeststellungen, Verbrauch/Kraft, wählbare Sonderrechte, FMS-Funkstatus und individuelle Fahrzeugzeichen.
-- **P3:** eigene fiktive Dienststellen mit Ausbau, neun Fahrzeugmodelle, getrennte Bewerber/Personal/Besatzung, Dienstgruppen/-zeiten, eigene Einheitentypen und tägliche Kosten mit Insolvenz-Warnung.
-- **P4:** Verkehrs-/Wetterspielwerte, Mehrfachanrufer/Rückruf mit echter Adresskorrektur, fünf Save-Slots/Backups, Querformat-Akte und eigene Bildschirmmodule.
+- Live-Lagezentrum: Entscheidungen, Fristen und fehlende Verstärkung verständlich anzeigen; nach Handlungsbedarf, aktiven Lagen oder Archiv filtern. Kartenwarteschlange verwendet dieselbe Reihenfolge.
+- Kostenschonender Dispositionsvorschlag: echte Straßen-Anfahrt, Streifen/Rückkehrer, mehrfacher Bedarf, Besatzungen, Ausbildung und Gesamtbudget. Vorhandene Kräfte werden einbezogen. Auswahl und Entsendung bleiben getrennt; keine automatische Umdisposition.
+- Korrekte Fähigkeiten eigener Einheitentypen und eindeutige Rollenabdeckung; Fahrzeug-Grundtypen ersetzen keine fehlenden Fähigkeiten.
+- Hamburger Detailkarten, Streife/FMS, Polizeichef-Verwaltung, Wetter/Rückrufe, fünf Speicherplätze und Querformat bleiben enthalten. Save-Schema 7 unverändert, keine neuen Assets oder Berechtigungen.
 
-[26 echte Screenshots](https://github.com/GoldenUnicorn24/Operator/tree/codex/operator-v1-polizeichef/docs/evidence/polizeichef), einschließlich Dienststellengründung per langem Kartendruck, zwei Fahrzeugen/vier Beamten, erfolgreichem Einsatz und dauerhaftem Speichern/Laden.
+Prüfstand und APK-Prüfsumme werden nach tatsächlichem vollständigem CI-Abschluss ergänzt. Neues Android-Szenario mit drei zusätzlichen Screenshots neben den vorhandenen Abläufen.
 
-APK: **17581366 Bytes**, SHA256 `91cdb34d2e0cb15e8b659ff9ecc853cce5176757084305610c75111d6ed42aeb`. Ohne WebView, Web-Dokumente, Internetberechtigung oder Kartenserver. ODbL-Daten offen unter `data/osm/`; Quellen in THIRD_PARTY_NOTICES.md. Eigene Canvas-Grafiken und erhaltene Originalassets.
-
-Grenzen: Emulatornachweis, keine physische Geräte-/Hörabnahme oder menschliches Langzeitbalancing; keine Abbiegeverbote/Echtzeitdaten/Gebäudeumrisse. Vorhandene Einheiten bleiben kompatibel, neue Beschaffungen verwenden die Polizeichef-Verwaltung. Schema7 migriert bisher unterstützte Saves. **Debug-APK: bei abweichender Signatur vorher den Spielstand exportieren.** Berlin-/Bremen-Bezirke bleiben optional.
+Grenzen: Vorschlag spart Einsatzkosten vor Fahrzeit und warnt vor Fristüberschreitung; keine automatische Planung aller Lagen. Emulatorprüfung ersetzt keinen physischen Geräte- oder menschlichen Langzeittest. Debug-APK: Bei anderer Signatur vor Installation den Spielstand exportieren. Kein v1.0.

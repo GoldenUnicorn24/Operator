@@ -1,3 +1,12 @@
+# Lagezentrum · 0.12.0-Vorschau · 04.11.2026
+
+- Live-Lagezentrum statt einfacher Notrufliste: Handlungsbedarf, alle aktiven Lagen und Archiv; begründete Warnungen für Entscheidungen, Fristen und fehlende Verstärkung. Gleiche Reihenfolge in der Kartenwarteschlange.
+- Kostenschonende Dispositionshilfe mit mehrfachen Anforderungen, aktuellen Straßen-ETAs, Streifen/Rückkehrern, Qualifikationen und Gesamtbudget. Berücksichtigt bereits entsandte vielseitige Kräfte; Auswahl entsendet erst nach Bestätigung.
+- Korrekte eindeutige Rollenabdeckung auch für eigene Einheitentypen. Vorher konnte der Fahrzeug-Grundtyp trotz fehlender Fähigkeit fälschlich als erfüllt zählen; Regressionstest reproduzierte den Fehler vor der Korrektur.
+- Neues natives Bildschirmmodul, Filter und Scrollposition bleiben bei Live-Updates erhalten. Kein Save-Schemawechsel, kein neues Asset und keine Internetberechtigung.
+
+Nachweis folgt ausschließlich nach tatsächlicher CI-/Emulatorprüfung in [docs/ACCEPTANCE_LAGEZENTRUM.md](docs/ACCEPTANCE_LAGEZENTRUM.md). Kein v1.0.
+
 # Polizeichef-Entwicklungsstand · 0.11.0 · 02.11.2026
 
 P1: Hamburg mit Wohnstraßen, Einbahnrichtungen, getrennten Straßen-/Referenznamen und lokalen Wasser-/Grün-/Bahnflächen. Rückwärtslesbares Kartenformat R2, helle isolierte Bezirkskarte, geklemmte Kamera, Straßenbeschriftung und Straßenpunkte für neue Notrufe. Gerichtete Teilstrecken und ETA stimmen überein.

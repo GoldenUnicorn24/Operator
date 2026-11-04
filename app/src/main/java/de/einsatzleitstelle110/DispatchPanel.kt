@@ -140,16 +140,9 @@ class DispatchPanel(
             specialRights = c.priority == 1
             selected.clear()
             showBound = false
-            // Pre-select the fastest unit for every open requirement (player can change it).
-            val taken = HashSet<String>()
-            for (need in game.remainingTypes(c)) {
-                val best =
-                    game.candidates(c)
-                        .filter { (u, _) -> u.id !in taken && game.canHandle(u, need) && u.status == "FREE" }
-                        .minByOrNull { (u, eta) -> eta + if (u.type == need) 0 else 6 }
-                if (best != null) taken.add(best.first.id)
-            }
-            if (c.status == "OPEN") selected.addAll(taken)
+            scroll.scrollTo(0, 0)
+            // A proposal is only a selection; the player still confirms the actual radio order.
+            if (c.status == "OPEN") selected.addAll(DispatchAdvisor.plan(game, c, specialRights).picks.map { it.unitId })
         }
         call = c
         map.selectedCall = c
@@ -175,7 +168,7 @@ class DispatchPanel(
             return
         }
         val version =
-            c.status + c.pending + c.notes.size + c.assignedUnits.joinToString() + c.age / 2 +
+            c.status + c.pending + c.notes.size + c.assignedUnits.joinToString() + c.age / 2 + game.state.budget + game.state.weather +
                 game.state.units.filter { it.region == c.region }.joinToString { "${it.status[0]}${it.travelLeft / 2}" }
         if (version != lastVersion) render()
     }
@@ -185,7 +178,7 @@ class DispatchPanel(
     private fun render() {
         val c = call ?: return
         lastVersion =
-            c.status + c.pending + c.notes.size + c.assignedUnits.joinToString() + c.age / 2 +
+            c.status + c.pending + c.notes.size + c.assignedUnits.joinToString() + c.age / 2 + game.state.budget + game.state.weather +
                 game.state.units.filter { it.region == c.region }.joinToString { "${it.status[0]}${it.travelLeft / 2}" }
         val y = scroll.scrollY
         body.removeAllViews()
@@ -221,6 +214,8 @@ class DispatchPanel(
             body.addView(ui.button("Rückruf · Adresse und Angaben klären") {
                 if (game.callback(c)) { onChanged(); render() } else toast(game.lastError)
             })
+        decisionCard(c)
+        adviceCard(c)
         // Caller dialogue (scripted scenarios) or the original call description.
         val lines = Scenarios.find(c.scenario)?.caller ?: listOf("„${c.description}“")
         for (line in lines)
@@ -231,7 +226,6 @@ class DispatchPanel(
                 },
                 LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = ui.dp(4) },
             )
-        decisionCard(c)
         if (c.notes.isNotEmpty()) {
             body.addView(ui.text("Entscheidungen", 12f, ui.muted, true).apply { setPadding(0, ui.dp(6), 0, ui.dp(2)) })
             for (n in c.notes) body.addView(ui.text("• $n", 12f, if (n.startsWith("⏱")) ui.amber else ui.muted))
@@ -436,6 +430,33 @@ class DispatchPanel(
             setPadding(0, ui.dp(3), 0, ui.dp(3))
             addView(r)
         }
+    }
+
+    private fun adviceCard(c: IncidentState) {
+        if (game.state.phase != "RUNNING" || c.status !in listOf("OPEN", "DRIVING", "WORKING")) return
+        if (game.remainingTypes(c).isEmpty()) return
+        val advice = DispatchAdvisor.plan(game, c, specialRights)
+        val card = ui.column().apply {
+            setPadding(ui.dp(10), ui.dp(8), ui.dp(10), ui.dp(8))
+            background = ui.bg(Color.rgb(14, 39, 48), ui.cyan, 10)
+        }
+        card.addView(ui.text("Kostenschonender Vorschlag", 13f, ui.cyan, true))
+        val summary = if (advice.picks.isEmpty()) "Keine passende freie Besetzung verfügbar."
+            else "${advice.picks.size} Kräfte · alle vorgeschlagenen vor Ort in ${advice.arrival} Min · ${advice.fee} € Einsatzkosten"
+        card.addView(ui.text(summary, 12f, ui.ink))
+        card.addView(ui.text("Zuerst Bedarf abdecken, dann Einsatzkosten sparen; bei gleichen Kosten kurze Anfahrt und passende Fachkräfte. Keine automatische Entsendung.", 11f, ui.muted))
+        if (advice.missing.isNotEmpty()) card.addView(ui.text("Weiter offen: " + advice.missing.joinToString { ui.roleName(it) }, 12f, ui.amber, true))
+        for (warning in advice.warnings) card.addView(ui.text(warning, 12f, ui.amber))
+        if (advice.picks.isNotEmpty()) {
+            val names = advice.picks.mapNotNull { p -> game.state.units.find { it.id == p.unitId }?.let { "${it.callsign}: ${p.eta} Min" } }
+            card.addView(ui.text(names.joinToString(" · "), 11f, ui.muted))
+            card.addView(ui.button("Vorschlag auswählen · ${advice.picks.size} Kräfte") {
+                selected.clear()
+                selected.addAll(DispatchAdvisor.plan(game, c, specialRights).picks.map { it.unitId })
+                render()
+            })
+        }
+        body.addView(card, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8); bottomMargin = ui.dp(8) })
     }
 
     private fun send(c: IncidentState, units: List<UnitState>) {

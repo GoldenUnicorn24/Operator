@@ -182,6 +182,75 @@ class NativeControlRoomTest {
      * a full 8-hour day and the shift report.
      */
     @Test
+    fun incidentDeskProposalAndConfirmedDispatchUseRealStreets() {
+        reset()
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            instrument.waitForIdleSync()
+            var callId = ""
+            var chosen = emptySet<String>()
+            scenario.onActivity { a ->
+                dismiss(a)
+                val g = game(a)
+                g.state.autoCalls = false
+                assertTrue(g.setScope("WANDSBEK"))
+                g.startShift(); g.state.paused = true
+                g.state.incidents.clear()
+                val graph = NativeRouting.graph("DE-HH")!!
+                val target = graph.namedStreetPoint(GeoPoint(10.10,53.60)) { g.inScope(it) }!!.first
+                val call = g.newIncident(IncidentTemplate("Lagezentrum: Nachbarschaftshilfe",2,"STREIFE",8,
+                    "Zwei fiktive Streifen werden für Betreuung und Aufnahme benötigt.",requiredTypes = listOf("STREIFE","STREIFE")),target)
+                callId = call.id
+                invoke(a,"showTab","CALLS")
+                assertTrue(tapText(a.window.decorView,"Alle aktiven"))
+                assertTrue(call.assignedUnits.isEmpty())
+            }
+            screenshot("native-incident-desk.png")
+            scenario.onActivity { a ->
+                val g = game(a)
+                assertTrue(tapText(a.window.decorView,"Einsatzakte öffnen"))
+                val call = g.state.incidents.first { it.id == callId }
+                val started = System.nanoTime()
+                val advice = DispatchAdvisor.plan(g,call,false)
+                perf("Lagezentrum Wandsbek: Vorschlag für ${call.requiredTypes.size} Rollen / ${g.state.units.size} Fahrzeuge in ${(System.nanoTime() - started) / 1_000_000.0} ms (warmer Routingcache)")
+                assertEquals(2,advice.picks.size)
+                chosen = advice.picks.map { it.unitId }.toSet()
+                val budget = g.state.budget
+                assertTrue(tapPrefix(a.window.decorView,"Vorschlag auswählen ·"))
+                assertTrue("A proposal must not dispatch automatically",call.assignedUnits.isEmpty())
+                assertEquals(budget,g.state.budget)
+            }
+            waitForBaseMap(scenario)
+            screenshot("native-dispatch-advice.png")
+            scenario.onActivity { a ->
+                val g = game(a)
+                val call = g.state.incidents.first { it.id == callId }
+                assertTrue(tapPrefix(a.window.decorView,"Entsenden (2)"))
+                assertEquals(chosen,call.assignedUnits.toSet())
+                assertTrue(g.remainingTypes(call).isEmpty())
+                for (id in chosen) {
+                    val u = g.state.units.first { it.id == id }
+                    assertEquals(3,g.fms(u))
+                    assertFalse(u.specialSignal)
+                    assertNotEquals("DISTANCE_APPROXIMATION",u.routeBasis)
+                    assertTrue(u.routePoints.size > 2)
+                }
+                invoke(a,"showTab","CALLS")
+                assertTrue(IncidentDesk.attention(g,call).needsAction.not())
+                assertTrue(tapText(a.window.decorView,"Alle aktiven"))
+            }
+            scenario.onActivity { a ->
+                val g = game(a)
+                g.advance(1)
+                invoke(a,"updateLive")
+                val matches = arrayListOf<View>()
+                a.window.decorView.findViewsWithText(matches,g.state.incidents.first { it.id == callId }.title,View.FIND_VIEWS_WITH_TEXT)
+                assertTrue("Live updates keep the active filter and its dispatched call visible",matches.isNotEmpty())
+            }
+            screenshot("native-incident-desk-dispatched.png")
+        }
+    }
+
+    @Test
     fun weatherCallerFollowUpSaveSlotsAndLandscapeDispatch() {
         reset()
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
