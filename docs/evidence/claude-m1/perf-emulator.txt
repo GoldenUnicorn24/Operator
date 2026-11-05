@@ -1,11 +1,11 @@
-Lagezentrum Wandsbek: Vorschlag für 2 Rollen / 40 Fahrzeuge in 1.09312 ms (warmer Routingcache)
-DE-BY Straßengraph: 480 ms, 63658 Knoten
-DE-BY Region gewählt bis Grundkarte fertig: 3473 ms
-DE-BY Live-Overlay (Software-Canvas, 48 Einheiten, 3 Lagen): Ø 22.5 ms je Bild
-DE-NI Straßengraph: 416 ms, 42057 Knoten
-DE-NI Region gewählt bis Grundkarte fertig: 2804 ms
-DE-NI Live-Overlay (Software-Canvas, 48 Einheiten, 4 Lagen): Ø 16.9 ms je Bild
-P1 Wandsbek Übersicht bis Grundkarte: 1590 ms
+Lagezentrum Wandsbek: Vorschlag für 2 Rollen / 40 Fahrzeuge in 1.126961 ms (warmer Routingcache)
+DE-BY Straßengraph: 507 ms, 63658 Knoten
+DE-BY Region gewählt bis Grundkarte fertig: 3471 ms
+DE-BY Live-Overlay (Software-Canvas, 48 Einheiten, 3 Lagen): Ø 20.3 ms je Bild
+DE-NI Straßengraph: 448 ms, 42057 Knoten
+DE-NI Region gewählt bis Grundkarte fertig: 2944 ms
+DE-NI Live-Overlay (Software-Canvas, 48 Einheiten, 4 Lagen): Ø 17.3 ms je Bild
+P1 Wandsbek Übersicht bis Grundkarte: 1616 ms
 P1 Einbahn-Wohnstraße: Weg 1, Richtung 1, 7 Routenpunkte, 2 min
-P1 Straßenebene bis Grundkarte: 692 ms
-P1 Detail-Overlay 60 Bilder: Ø 19.35701228333334 ms, p95 30.690692 ms, max 41.015092 ms; Bitmap 8320320 bytes
+P1 Straßenebene bis Grundkarte: 696 ms
+P1 Detail-Overlay 60 Bilder: Ø 18.351177350000004 ms, p95 29.973054 ms, max 49.51989 ms; Bitmap 8320320 bytes
