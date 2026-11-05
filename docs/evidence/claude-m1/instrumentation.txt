@@ -141,7 +141,7 @@ INSTRUMENTATION_STATUS: test=wandsbekDetailStreetsMaskNamesAndOneWayDrive
 INSTRUMENTATION_STATUS_CODE: 0
 INSTRUMENTATION_RESULT: stream=
 
-Time: 296.301
+Time: 303.803
 
 OK (10 tests)
 
