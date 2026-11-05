@@ -36,7 +36,7 @@ data class ShiftEvent(val id: String, val title: String, val briefing: String, v
 object PhoneDesk {
     const val MAX_RINGING = 4
     /** Sim-minutes a caller stays on the line while ringing. */
-    const val PATIENCE = 7
+    const val PATIENCE = 8
     const val SURGE_LENGTH = 100
     const val SURGE_RATE = 2.3
 
@@ -131,7 +131,8 @@ object PhoneDesk {
             (sc.kind != "REAL" || template(g, sc.correct)?.let { usable(g, it) } == true) &&
                 !(opener && (sc.kind != "REAL" || sc.mood == "PANISCH" || template(g, sc.correct)?.priority == 1)) &&
                 !(night && "DAY" in sc.tags) && !(!night && "NIGHT" in sc.tags && h in 8..17) &&
-                sc.id !in s.recentScripts
+                sc.id !in s.recentScripts &&
+                (sc.place == null || (s.region == "DE-HH" && g.inScope(sc.place)))
         }
         if (pool.isEmpty()) return null
         val weights = pool.map { sc ->
@@ -155,7 +156,7 @@ object PhoneDesk {
         val sc = script ?: return null
         if (ringing(s).size >= MAX_RINGING) return null
         val r = g.region()
-        val p = duplicateOf?.let { GeoPoint(it.actualLon, it.actualLat) } ?: at ?: g.samplePosition(r)
+        val p = duplicateOf?.let { GeoPoint(it.actualLon, it.actualLat) } ?: at ?: sc.place ?: g.samplePosition(r)
         val street = NativeRouting.loadedGraph(r.code)?.takeIf { it.map.version >= 2 }?.namedStreetPoint(p) { r.contains(it) && g.inScope(it) }
         val point = if (duplicateOf == null) street?.first ?: p else p
         val call = PhoneCall("T-${s.nextId++}", sc.id, point.lat, point.lon, street?.second ?: "Hauptstraße", g.locationName(r, point), duplicateOf = duplicateOf?.id ?: "")
@@ -188,6 +189,9 @@ object PhoneDesk {
         ring(g, pick(g))
     }
 
+    /** The player answers as the police of the state, "Polizei Hamburg" in Hamburg. */
+    fun greeting(g: GameController) = "Polizei ${g.region().name}, Notruf. Wo genau ist der Notfallort?"
+
     fun answer(g: GameController, c: PhoneCall): Boolean {
         val s = g.state
         if (c.status != "RINGING" || active(s) != null || s.phase != "RUNNING") return false
@@ -195,7 +199,7 @@ object PhoneDesk {
         if (c.lines.isEmpty()) {
             s.shiftAnswered++
             val sc = script(g, c)
-            c.lines.add("D|Notruf Polizei und Feuerwehr. Wo genau ist der Notfallort?")
+            c.lines.add("D|${greeting(g)}")
             c.lines.add("C|" + fill(c, if (c.duplicateOf.isNotBlank()) "Hallo? Hier ist auch etwas bei der ${c.street}! ${sc.opening}" else sc.opening))
             if (sc.mood == "PANISCH") c.lines.add("S|Anrufer ist in Panik. Erst beruhigen, sonst bleiben die Antworten unbrauchbar.")
             if (sc.mood == "FLUESTERND") c.lines.add("S|Anrufer flüstert.")

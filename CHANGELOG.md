@@ -1,3 +1,14 @@
+# Hamburg-Ausbau · 0.14.0-Vorschau · 05.11.2026
+
+- **Schneller:** ×4 spielt eine 8-Stunden-Schicht in 10 Minuten statt in 16. Auch während eines Gesprächs läuft die Uhr schneller.
+- **Ruckler behoben:** Das Einsatzfenster baute bei jeder Fahrzeugbewegung alle Zeilen und Fahrzeiten neu auf, die Vorschau-Route wurde in jedem Bild neu gezeichnet. Beides ist weg, Routen werden sparsamer gezeichnet und schon vor dem Disponieren berechnet.
+- **Dunkle Stadtteilkarten:** Die Bezirksansicht war fest auf die helle Karte gestellt und folgt jetzt dem Dunkelmodus.
+- **Mehr Telefonate:** 53 statt 27 geschriebene Anrufe, davon 26 an echten Hamburger Orten wie Reeperbahn, Außenalster, Hauptbahnhof und Elbstrand.
+- **Gesprochene Anrufe:** Anrufer und du selbst werden mit der deutschen Stimme des Geräts vorgelesen. Abschaltbar in den Einstellungen.
+- **Dauerhafter Polizeifunk:** Leises Rauschen läuft ständig, darüber echte Meldungen aus deiner Schicht und erfundener Routinefunk mit Funkklang. Ohne deutsche Stimme bleibt es bei unverständlichem Funkgemurmel. Während eines Anrufs wird der Funk leiser.
+- **„Polizei Hamburg“:** So meldest du dich jetzt am Telefon.
+- **Nur Hamburg:** Die anderen Bundesländer stehen auf „Coming Soon“. Spielstände aus anderen Ländern gehen zur Schichtplanung in Hamburg über.
+
 # Notrufleitung · 0.13.0-Vorschau · 05.11.2026
 
 Das Spiel dreht sich jetzt um das Telefon. Bisher erschienen Einsätze einfach auf der Karte, eine 8-Stunden-Schicht lief in 2 Minuten durch, und jede Option zeigte vorab ihre Folgen.

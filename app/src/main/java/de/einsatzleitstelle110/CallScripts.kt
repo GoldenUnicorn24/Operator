@@ -41,6 +41,8 @@ data class CallScript(
     val worse: String = "",
     val worseAdd: List<String> = emptyList(),
     val cpr: Boolean = false,
+    /** Fixed place of the call; such a call only rings when that place is in the area. */
+    val place: GeoPoint? = null,
 )
 
 object CallScripts {
@@ -56,7 +58,7 @@ object CallScripts {
 
     /** Calls that need a template the original catalog does not have. */
     val templates =
-        listOf(
+        CallScriptsHamburg.templates + listOf(
             IncidentTemplate("Reanimation", 1, "RETTUNG", 22, "Leblose Person, Telefonreanimation läuft.", requiredTypes = listOf("RETTUNG", "RETTUNG"), deadline = 20, reward = 1900),
             IncidentTemplate("Medizinischer Notfall", 2, "RETTUNG", 18, "Akute Erkrankung, Rettungsdienst erforderlich.", requiredTypes = listOf("RETTUNG"), deadline = 30, reward = 900),
             IncidentTemplate("Wohnungsbrand", 1, "FEUERWEHR", 35, "Feuer in einem Wohnhaus, Absperrung und Rettungsdienst erforderlich.", requiredTypes = listOf("FEUERWEHR", "RETTUNG", "STREIFE"), deadline = 25, reward = 2100),
@@ -72,7 +74,9 @@ object CallScripts {
             IncidentTemplate("Blinder Alarm", 3, "STREIFE", 4, "Vor Ort kein Notfall feststellbar.", requiredTypes = listOf("STREIFE"), deadline = 120, reward = 0),
         )
 
-    val all: List<CallScript> =
+    val all: List<CallScript> by lazy { base + CallScriptsHamburg.list }
+
+    private val base: List<CallScript> =
         listOf(
             CallScript(
                 "herzstillstand", tags = set("MED"), caller = "Herr Sander", mood = "PANISCH", cpr = true,
@@ -432,7 +436,7 @@ object CallScripts {
             ),
         )
 
-    private val byId = all.associateBy { it.id }
+    private val byId by lazy { all.associateBy { it.id } }
 
     fun find(id: String): CallScript? = byId[id]
 

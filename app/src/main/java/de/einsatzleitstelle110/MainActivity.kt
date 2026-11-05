@@ -64,6 +64,8 @@ class MainActivity : Activity() {
     private var liveTick = 0
     private var ringTick = 0
     private var radioView: TextView? = null
+    private lateinit var radio: RadioChannel
+    private lateinit var speech: SpeechDesk
     private val SAVE = 701
     private val LOAD = 702
     private val PORTRAIT = 703
@@ -252,10 +254,13 @@ class MainActivity : Activity() {
         val regions = GeoData.load(this)
         val saved = GameStore.load(this) ?: GameState(phoneEnabled = phoneDeskDefault)
         if (saved.phase == "RUNNING") saved.paused = true
+        moveToHamburg(saved)
         game = GameController(saved, regions)
         game.placeProvider = { MapData.places(this, it) }
         game.seedUnitsIfNeeded()
         audio = NativeAudio(this)
+        radio = RadioChannel(this)
+        speech = SpeechDesk(this)
         audio.muted = saved.mute
         audio.setVolumes(
             saved.masterVolume,
@@ -356,6 +361,7 @@ class MainActivity : Activity() {
     }
 
     private fun restoreState(restored: GameState) {
+        moveToHamburg(restored)
         val next = GameController(restored, GeoData.all)
         next.placeProvider = { MapData.places(this, it) }
         next.seedUnitsIfNeeded()
@@ -384,6 +390,7 @@ class MainActivity : Activity() {
 
     private fun installNotifications() {
         game.notify = { name, message ->
+            if (::radio.isInitialized) radio.say(RadioScript.event(name, message))
             when {
                 name == "Tutorial abgeschlossen" -> {
                     audio.cue("SUCCESS")
@@ -438,6 +445,7 @@ class MainActivity : Activity() {
                 }
                 if (old != game.state.phase) save()
                 updatePhone()
+                updateRadio()
                 if (moved || ++liveTick % 4 == 0) updateLive()
                 if (old == "RUNNING" && !game.state.paused && ++saveTick % 60 == 0) save()
                 if (
@@ -455,9 +463,26 @@ class MainActivity : Activity() {
     /** Simulated minutes per real second. ×8 is the old minute per second, ×4 an 8h shift in 16 minutes. */
     private fun simulationRate(): Double {
         val s = game.state
-        if (PhoneDesk.active(s) != null) return 1 / 15.0
-        val busy = PhoneDesk.ringing(s).isNotEmpty() || game.pendingDecisions() > 0
-        return (if (busy) minOf(s.speed, 4) else s.speed) / 8.0
+        if (PhoneDesk.active(s) != null) return 1 / 10.0
+        if (PhoneDesk.ringing(s).isNotEmpty()) return minOf(s.speed, 2) / SPEED_DIVISOR
+        return (if (game.pendingDecisions() > 0) minOf(s.speed, 4) else s.speed) / SPEED_DIVISOR
+    }
+
+    /** Saves from a state that is still locked continue in Hamburg between shifts. */
+    private fun moveToHamburg(s: GameState) {
+        if (!hamburgOnly || s.region == "DE-HH") return
+        s.region = "DE-HH"
+        s.scope = "STATE"
+        s.phase = "PLANNING"
+        s.unlockedRegions.add("DE-HH")
+        s.phones.clear()
+    }
+
+    private fun updateRadio() {
+        if (!::radio.isInitialized) return
+        radio.volume = if (game.state.mute) 0f else game.state.masterVolume * game.state.radioVolume
+        radio.ducked = PhoneDesk.active(game.state) != null
+        radio.pump { game.state.units.filter { it.region == game.state.region }.take(24).map { it.callsign } }
     }
 
     private fun answerNext() {
@@ -470,7 +495,8 @@ class MainActivity : Activity() {
     }
 
     private fun openPhone(call: PhoneCall) {
-        val screen = PhoneScreen(this, game, { phoneScreen = null; save(); updateLive() }, { openCall(it) })
+        speech.enabled = game.state.speechEnabled
+        val screen = PhoneScreen(this, game, { phoneScreen = null; save(); updateLive() }, { openCall(it) }, speech)
         screen.onReplace = { phoneScreen = it; it.onReplace = screen.onReplace }
         phoneScreen = screen
         screen.show(call)
@@ -494,6 +520,8 @@ class MainActivity : Activity() {
 
     override fun onPause() {
         if (::audio.isInitialized) audio.pause()
+        if (::radio.isInitialized) radio.stop()
+        if (::speech.isInitialized) speech.stop()
         foreground = false
         handler.removeCallbacks(ticker)
         if (::game.isInitialized) {
@@ -506,6 +534,7 @@ class MainActivity : Activity() {
     override fun onResume() {
         super.onResume()
         if (::audio.isInitialized) audio.resume()
+        if (::radio.isInitialized && !game.state.mute) radio.start()
         if (!foreground) {
             foreground = true
             handler.post(ticker)
@@ -518,6 +547,8 @@ class MainActivity : Activity() {
         chiefScreen?.close()
         pendingMapPoint = null
         if (::audio.isInitialized) audio.close()
+        if (::radio.isInitialized) radio.close()
+        if (::speech.isInitialized) speech.close()
         if (::map.isInitialized) map.close()
         images.evictAll()
         super.onDestroy()
@@ -925,7 +956,11 @@ class MainActivity : Activity() {
         }
         gap(panel)
         panel.addView(
-            action("Anderes Bundesland wählen") {
+            action("Andere Bundesländer: Coming Soon") {
+                if (hamburgOnly) {
+                    toast("Wir bauen erst Hamburg aus. Die anderen Bundesländer folgen.")
+                    return@action
+                }
                 sheet?.dismiss()
                 AlertDialog.Builder(this)
                     .setTitle("Bundesland")
@@ -1817,10 +1852,29 @@ class MainActivity : Activity() {
             action(if (game.state.mute) "Sound einschalten" else "Sound stummschalten") {
                 game.state.mute = !game.state.mute
                 audio.muted = game.state.mute
+                if (game.state.mute) radio.stop() else radio.start()
                 save()
                 showSettings()
             }
         )
+        gap(c)
+        c.addView(
+            action(if (game.state.speechEnabled) "Anrufer sprechen hörbar: an" else "Anrufer sprechen hörbar: aus") {
+                game.state.speechEnabled = !game.state.speechEnabled
+                save()
+                showSettings()
+            }
+        )
+        if (!speech.available) {
+            gap(c)
+            c.addView(action("Deutsche Stimme installieren") {
+                try {
+                    startActivity(android.content.Intent(android.speech.tts.TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA))
+                } catch (_: Exception) {
+                    toast("Bitte in den Android-Einstellungen unter Sprachausgabe eine deutsche Stimme laden.")
+                }
+            })
+        }
         gap(c)
         c.addView(
             action(
@@ -2093,6 +2147,10 @@ class MainActivity : Activity() {
 
     companion object {
         const val TICK_MS = 250L
+        /** Speed ÷ this = simulated minutes per real second. ×4 plays an 8h shift in 10 minutes. */
+        const val SPEED_DIVISOR = 5.0
+        /** Only Hamburg can be played for now; device tests of other states switch this off. */
+        @JvmField var hamburgOnly = true
         /** New games take calls by phone. Device tests of the map flow switch this off. */
         @JvmField var phoneDeskDefault = true
     }

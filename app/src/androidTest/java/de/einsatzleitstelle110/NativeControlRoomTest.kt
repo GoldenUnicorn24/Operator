@@ -39,6 +39,7 @@ class NativeControlRoomTest {
 
     private fun reset() {
         MainActivity.phoneDeskDefault = false
+        MainActivity.hamburgOnly = false
         GameStore.awaitSaves()
         instrument.targetContext.deleteFile("einsatzleitstelle-native-v1.json")
         instrument.targetContext.deleteFile("einsatzleitstelle-native-v1.json.backup")

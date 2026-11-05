@@ -263,6 +263,8 @@ data class GameState(
     var weather: String = "CLEAR",
     /** Players take every 110 call themselves. New games switch this on in the app. */
     var phoneEnabled: Boolean = false,
+    /** Callers are read aloud by the voice installed on the device. */
+    var speechEnabled: Boolean = true,
     val phones: MutableList<PhoneCall> = mutableListOf(),
     val recentScripts: MutableList<String> = mutableListOf(),
     var shiftEvent: String = "",

@@ -377,7 +377,7 @@ class TacticalMapView(
         val now = SystemClock.uptimeMillis()
         val paused = game.state.paused || game.state.phase != "RUNNING"
         clampCamera()
-        val isNight = if (districtView()) false else night()
+        val isNight = night()
         val pal = MapPalette(isNight)
         val t = makeTransform(zoom, panX, panY)
         val cam = t.camera()
@@ -420,13 +420,14 @@ class TacticalMapView(
         if (sel != null) {
             for (id in previewUnits) {
                 val u = units.find { it.id == id } ?: continue
-                val r = previewCache.getOrPut("${u.id}:${sel.id}:${u.lat}:${u.lon}") { NativeRouting.routeFor(u, GeoPoint(sel.lon, sel.lat)) }
+                val r = previewCache.getOrPut("${u.id}:${sel.id}:${(u.lat * 500).toInt()}:${(u.lon * 300).toInt()}") { NativeRouting.routeFor(u, GeoPoint(sel.lon, sel.lat)) }
                 val path = Path()
                 r.points.forEachIndexed { i, g -> val q = t.point(g.lon, g.lat); if (i == 0) path.moveTo(q.x, q.y) else path.lineTo(q.x, q.y) }
                 paint(0x55ffffff, 7f, Paint.Style.STROKE)
                 c.drawPath(path, p)
                 paint(0xfff5e663.toInt(), 3f, Paint.Style.STROKE)
-                p.pathEffect = DashPathEffect(floatArrayOf(10 * density, 6 * density), ((now / 25) % 1000).toFloat() * -density)
+                // A static dash: animating it re-rasterises the whole path every frame.
+                p.pathEffect = DashPathEffect(floatArrayOf(10 * density, 6 * density), 0f)
                 c.drawPath(path, p)
                 p.pathEffect = null
             }
@@ -537,8 +538,15 @@ class TacticalMapView(
         val done = Path()
         val todo = Path()
         var started = false
+        // Road geometry is far denser than the screen: skip vertices less than 3 px apart.
+        var lastX = Float.NaN
+        var lastY = 0f
+        val minStep = 9f * density * density / 4
         for (i in pts.indices) {
             val q = t.point(pts[i].lon, pts[i].lat)
+            if (i != 0 && i != pts.lastIndex && started && (q.x - lastX).let { it * it } + (q.y - lastY).let { it * it } < minStep) continue
+            lastX = q.x
+            lastY = q.y
             if (cum[i] <= d) {
                 if (i == 0) done.moveTo(q.x, q.y) else done.lineTo(q.x, q.y)
             } else {

@@ -23,6 +23,7 @@ class PhoneScreen(
     private val game: GameController,
     private val onClosed: () -> Unit,
     private val onDispatch: (IncidentState) -> Unit,
+    private val speech: SpeechDesk,
 ) {
     private val ui = UiKit(activity)
     private val handler = Handler(Looper.getMainLooper())
@@ -110,7 +111,12 @@ class PhoneScreen(
 
     private fun drain(animate: Boolean = true) {
         val c = call ?: return
-        for (line in c.lines.drop(shownLines)) bubble(line, animate)
+        val script = PhoneDesk.script(game, c)
+        val fresh = c.lines.drop(shownLines)
+        fresh.forEachIndexed { i, line ->
+            bubble(line, animate)
+            speech.say(line, script, flush = i == 0)
+        }
         shownLines = c.lines.size
         scroll.post { scroll.fullScroll(View.FOCUS_DOWN) }
     }
@@ -161,6 +167,12 @@ class PhoneScreen(
     private fun finish(c: PhoneCall, code: CallCode) {
         val result = PhoneDesk.classify(game, c, code)
         call = null
+        speech.stop()
+        // Fill the road fields now, so opening the dispatch panel does not stall.
+        result.incident?.let { i ->
+            val unit = game.state.units.firstOrNull { it.region == i.region }
+            if (unit != null) Thread({ try { NativeRouting.eta(unit, GeoPoint(i.lon, i.lat)) } catch (_: Exception) {} }, "route-prewarm").start()
+        }
         actions.removeAllViews()
         val color = if (result.score >= 65) ui.mint else if (result.score >= 40) ui.amber else ui.red
         actions.addView(ui.text("Notrufaufnahme: ${result.rating} · ${result.score} %", 18f, color, true))
@@ -172,7 +184,7 @@ class PhoneScreen(
         if (next != null) action("Nächsten Anruf annehmen") {
             if (PhoneDesk.answer(game, next)) {
                 dialog.dismiss()
-                val fresh = PhoneScreen(activity, game, onClosed, onDispatch)
+                val fresh = PhoneScreen(activity, game, onClosed, onDispatch, speech)
                 fresh.show(next)
                 onReplace?.invoke(fresh)
             }
@@ -228,6 +240,7 @@ class PhoneScreen(
     fun close() {
         if (closing) return
         closing = true
+        speech.stop()
         handler.removeCallbacksAndMessages(null)
         if (::dialog.isInitialized) dialog.dismiss()
         onClosed()
@@ -236,6 +249,7 @@ class PhoneScreen(
     /** Leaves the screen without further callbacks, for example when another save is loaded. */
     fun abandon() {
         closing = true
+        speech.stop()
         handler.removeCallbacksAndMessages(null)
         if (::dialog.isInitialized) dialog.dismiss()
     }

@@ -167,19 +167,20 @@ class DispatchPanel(
             render()
             return
         }
-        val version =
-            c.status + c.pending + c.notes.size + c.assignedUnits.joinToString() + c.age / 2 + game.state.budget + game.state.weather +
-                game.state.units.filter { it.region == c.region }.joinToString { "${it.status[0]}${it.travelLeft / 2}" }
-        if (version != lastVersion) render()
+        if (version(c) != lastVersion) render()
     }
+
+    /** Who can be sent, not where they are: rows and ETAs are only rebuilt when that changes. */
+    private fun version(c: IncidentState) =
+        c.status + c.pending + c.notes.size + c.assignedUnits.joinToString() + c.age / 3 + game.state.weather +
+            game.state.units.count { it.region == c.region && game.dispatchable(it) } +
+            c.assignedUnits.joinToString { id -> game.state.units.find { it.id == id }?.status.orEmpty() }
 
     private fun minutesLeft(c: IncidentState) = (c.deadline - c.age).coerceAtLeast(0)
 
     private fun render() {
         val c = call ?: return
-        lastVersion =
-            c.status + c.pending + c.notes.size + c.assignedUnits.joinToString() + c.age / 2 + game.state.budget + game.state.weather +
-                game.state.units.filter { it.region == c.region }.joinToString { "${it.status[0]}${it.travelLeft / 2}" }
+        lastVersion = version(c)
         val y = scroll.scrollY
         body.removeAllViews()
         footer.removeAllViews()

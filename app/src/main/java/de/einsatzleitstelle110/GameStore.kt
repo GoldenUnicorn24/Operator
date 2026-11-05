@@ -197,6 +197,7 @@ object GameStore {
             .put("shiftFuelCosts", s.shiftFuelCosts)
             .put("shiftSignalIncidents", s.shiftSignalIncidents)
             .put("phoneEnabled", s.phoneEnabled)
+            .put("speechEnabled", s.speechEnabled)
             .put("recentScripts", strings(s.recentScripts))
             .put("shiftEvent", s.shiftEvent)
             .put("surgeStart", s.surgeStart)
@@ -547,6 +548,7 @@ object GameStore {
                 shiftFuelCosts = n(root, "shiftFuelCosts", 0),
                 shiftSignalIncidents = n(root, "shiftSignalIncidents", 0),
                 phoneEnabled = root.optBoolean("phoneEnabled", true),
+                speechEnabled = root.optBoolean("speechEnabled", true),
                 recentScripts = texts(array(root, "recentScripts", 8)),
                 shiftEvent = root.optString("shiftEvent").takeIf { id -> PhoneDesk.events.any { it.id == id } } ?: "",
                 surgeStart = n(root, "surgeStart", 0, 0, 1440),
