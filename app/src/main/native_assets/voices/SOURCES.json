@@ -1,0 +1,11 @@
+{
+ "engine": "Piper",
+ "voices": {
+  "thorsten": true,
+  "thorsten_medium": true,
+  "kerstin": true,
+  "ramona": false,
+  "eva_k": false
+ },
+ "license": "CC0 voice models"
+}
