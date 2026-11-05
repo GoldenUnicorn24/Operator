@@ -2,7 +2,7 @@
 
 Das Spiel dreht sich jetzt um das Telefon. Bisher erschienen Einsätze einfach auf der Karte, eine 8-Stunden-Schicht lief in 2 Minuten durch, und jede Option zeigte vorab ihre Folgen.
 
-- **Echte Notrufannahme:** Das Telefon klingelt, du nimmst an, fragst selbst nach und wählst das Einsatzstichwort. 28 geschriebene Anrufe, dazu alle Katalog- und eigenen Editor-Einsätze.
+- **Echte Notrufannahme:** Das Telefon klingelt, du nimmst an, fragst selbst nach und wählst das Einsatzstichwort. 27 geschriebene Anrufe, dazu alle Katalog- und eigenen Editor-Einsätze.
 - **Was du nicht fragst, weißt du nicht:** Unterbliebene Fragen kommen als Nachforderung vor Ort zurück. Ein ungeklärter Ort bedeutet Nachsuche.
 - **Keine Sicherheit:** Scherzanrufe, Taschenanrufe, Verwählte, Bürgeranliegen und Doppelmeldungen wollen erkannt werden. Eine leise Pizza-Bestellung kann ein Hilferuf sein.
 - **Anrufer sind Menschen:** Panik muss erst beruhigt werden, Ortsunkundige brauchen Mobilfunkortung (AML), gefährliche Anweisungen kosten Punkte, unbeantwortete Anrufer legen auf.

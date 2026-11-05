@@ -1534,6 +1534,8 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         setShift(10, 8)
         startShift()
         state.incidents.removeAll { it.status == "OPEN" && it.assignedUnits.isEmpty() && it.region == state.region }
+        state.phones.clear()
+        state.shiftEvent = ""
         state.shiftIncoming = 0
         state.tutorialStep = 1
         spawnTutorialCall()
@@ -1812,6 +1814,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         val workingStaff = duty.flatMap { it.officers }
         val fatigue = if (workingStaff.isEmpty()) 0 else workingStaff.map { 100 - it.energy }.average().roundToInt()
         state.phones.clear()
+        PhoneDesk.event(state)?.takeIf { it.weather.isNotBlank() }?.let { state.weather = "CLEAR" }
         val closedP1 = state.incidents.filter { it.region == state.region && it.priority == 1 && it.closedAt >= state.shiftStartAbsolute }
         val hilfsfrist = if (closedP1.isEmpty()) -1 else closedP1.count { it.firstArrival in 0..10 } * 100 / closedP1.size
         val takeAverage = if (state.shiftTakes == 0) -1 else state.shiftTakeTotal / state.shiftTakes

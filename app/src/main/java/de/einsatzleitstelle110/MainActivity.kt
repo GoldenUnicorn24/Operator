@@ -775,7 +775,7 @@ class MainActivity : Activity() {
         val q = queueView ?: return
         val calls = IncidentDesk.ordered(game, game.state.incidents
             .filter { it.region == game.state.region && game.inScope(it.lat, it.lon) && it.status in listOf("OPEN", "DRIVING", "WORKING") })
-        val version = calls.take(3).joinToString { it.id + it.status + IncidentDesk.attention(game, it).reason } + calls.size
+        val version = calls.take(3).joinToString { it.id + it.status + IncidentDesk.attention(game, it).reason } + calls.size + game.state.phase
         if (version == queueVersion) return
         queueVersion = version
         q.removeAllViews()

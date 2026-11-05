@@ -49,6 +49,18 @@ object PhoneDesk {
             ShiftEvent("WELLE", "Grippewelle", "Rettungsdienst stark gefordert: viele medizinische Notrufe.", setOf("MED", "HOME")),
         )
 
+    fun roleLabel(type: String) = when (type) {
+        "STREIFE" -> "Streife"
+        "FEUERWEHR" -> "Feuerwehr"
+        "RETTUNG" -> "Rettungsdienst"
+        "HUND" -> "Diensthund"
+        "HELI" -> "Hubschrauber"
+        "VERKEHR" -> "Verkehrspolizei"
+        "KRIPO" -> "Kripo"
+        "BEREITSCHAFT" -> "Bereitschaftspolizei"
+        else -> type
+    }
+
     fun event(s: GameState) = events.firstOrNull { it.id == s.shiftEvent }
 
     fun surgeActive(s: GameState) = s.shiftEvent.isNotBlank() && s.elapsed in s.surgeStart until s.surgeStart + SURGE_LENGTH
@@ -352,7 +364,7 @@ object PhoneDesk {
             incident.requiredTypes.forEach { missing.remove(it) }
             if (known && code.correct) {
                 incident.requiredTypes.addAll(hiddenTwist)
-                if (hiddenTwist.isNotEmpty()) notes.add("Durch Nachfragen gleich die richtigen Kräfte: ${hiddenTwist.joinToString()}.")
+                if (hiddenTwist.isNotEmpty()) notes.add("Durch Nachfragen gleich die richtigen Kräfte: ${hiddenTwist.joinToString { roleLabel(it) }}.")
             } else if (missing.isNotEmpty()) {
                 incident.surprise.addAll(missing)
                 incident.surpriseText = if (code.correct) sc.twistRadio else "Lage vor Ort anders als gemeldet: ${sc.correct}."
@@ -408,6 +420,7 @@ object PhoneDesk {
         val incident = g.reportCaller(t, GeoPoint(c.lon, c.lat), disconnected = true, addressUncertain = true)
         incident.phoneScript = sc.id
         incident.deadline = (phoneDeadline(g, incident.priority, t.deadline) * g.regionDeadlineFactor()).roundToInt().coerceAtLeast(12)
+        if (s.tutorialStep in 1..3) incident.flags.add("tutorial")
         val hidden = t.requiredTypes.drop(1)
         if (hidden.isNotEmpty() && incident.assignedUnits.isEmpty()) {
             incident.requiredTypes = t.requiredTypes.take(1).toMutableList()
@@ -431,8 +444,8 @@ object PhoneDesk {
         call.requiredTypes.addAll(add.take((7 - call.requiredTypes.size).coerceAtLeast(0)))
         call.riskDelta += .08
         call.deadline = (call.deadline + 15).coerceAtMost(1440)
-        call.notes.add("Nachforderung vor Ort: ${add.joinToString()}")
-        g.emit("Nachforderung", "${call.title}: ${call.surpriseText.ifBlank { add.joinToString() }}")
+        call.notes.add("Nachforderung vor Ort: ${add.joinToString { roleLabel(it) }}")
+        g.emit("Nachforderung", "${call.title}: ${call.surpriseText.ifBlank { add.joinToString { roleLabel(it) } }}")
     }
 
     /** Waiting makes it worse: at half of the deadline an unattended situation escalates. */
