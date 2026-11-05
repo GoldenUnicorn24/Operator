@@ -1,0 +1,16 @@
+{
+  "source_commit": "fc680157c82558ca5b16ccefcc15bd668f606f0d",
+  "run_id": 41939501660,
+  "run_url": "https://github.com/GoldenUnicorn24/Operator/actions/runs/41939501660",
+  "status": "success",
+  "jvm_tests": 126,
+  "python_tests": 9,
+  "android_tests": 9,
+  "screenshots": 29,
+  "apk_bytes": 17601778,
+  "apk_sha256": "07165f4241b83989b1f25895a568a54bdbf13bfa2b6010db8acc0b0b0789e0d7",
+  "apk_manifest_permissions": [],
+  "version": "0.12.0-lagezentrum-preview",
+  "version_code": 113,
+  "release_url": "https://github.com/GoldenUnicorn24/Operator/releases/tag/operator-polizeichef-fc68015"
+}

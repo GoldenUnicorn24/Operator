@@ -1,0 +1,33 @@
+{
+ "bounds": 4,
+ "roads": 1046,
+ "rivers": 74,
+ "lakes": 27,
+ "urban": 460,
+ "places": 58,
+ "bytes": 381288,
+ "road_classes": {
+  "0": 286,
+  "1": 12,
+  "2": 699,
+  "9": 49
+ },
+ "places_per_state": {
+  "DE-BE": 1,
+  "DE-BW": 6,
+  "DE-HE": 4,
+  "DE-HH": 1,
+  "DE-NW": 9,
+  "DE-BY": 11,
+  "DE-SL": 1,
+  "DE-HB": 2,
+  "DE-NI": 6,
+  "DE-SN": 3,
+  "DE-RP": 2,
+  "DE-SH": 3,
+  "DE-ST": 1,
+  "DE-BB": 2,
+  "DE-TH": 3,
+  "DE-MV": 3
+ }
+}

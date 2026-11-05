@@ -1,7 +1,7 @@
 name: Native Android APK and device verification
 on:
   push:
-    branches: [main, 'codex/**']
+    branches: [main, 'codex/**', 'claude/**']
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -26,6 +26,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Test, build and lint native app
         run: ./gradlew --no-daemon :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest :app:lintDebug
+      - name: Verify offline geo pipeline contracts
+        run: python3 -m unittest discover -s tools/tests -v
       - name: Audit real APK contents
         run: |
           mkdir -p release
@@ -91,14 +93,44 @@ jobs:
         with:
           name: Einsatzleitstelle110-native-build
           path: release/
+      - uses: actions/download-artifact@v4
+        if: startsWith(github.ref_name, 'claude/') || github.ref_name == 'codex/operator-v1-polizeichef'
+        with:
+          name: native-device-screenshots
+          path: runtime/
+      - name: Publish device evidence into the branch
+        if: startsWith(github.ref_name, 'claude/') || github.ref_name == 'codex/operator-v1-polizeichef'
+        run: |
+          git fetch origin "${GITHUB_REF_NAME}"
+          git checkout -B evidence "origin/${GITHUB_REF_NAME}"
+          EVIDENCE=docs/evidence/claude-m1
+          if [ "${GITHUB_REF_NAME}" = codex/operator-v1-polizeichef ]; then EVIDENCE=docs/evidence/polizeichef; fi
+          mkdir -p "$EVIDENCE"
+          cp runtime/screens/*.png "$EVIDENCE/" || true
+          cp runtime/instrumentation.txt "$EVIDENCE/instrumentation.txt" || true
+          cp runtime/screens/perf.txt "$EVIDENCE/perf-emulator.txt" || true
+          echo "Commit ${GITHUB_SHA} · Lauf ${GITHUB_RUN_ID} · Android 35 Emulator (pixel_6)" > "$EVIDENCE/SOURCE.txt"
+          git config user.name "evidence-bot"
+          git config user.email "evidence-bot@users.noreply.github.com"
+          git add "$EVIDENCE"
+          git diff --cached --quiet && exit 0
+          git commit -m "evidence: Android device screenshots for ${GITHUB_SHA::7} [skip ci]"
+          git push origin "HEAD:${GITHUB_REF_NAME}" || (git pull --rebase origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}")
       - name: Upload verified native preview APK
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
           TAG=operator-native-v2-preview
+          NOTES=docs/NATIVE_PREVIEW_RELEASE.md
+          TITLE="Native Leitstelle: neue Grafik, Bezirke und persönliche Ausstattung"
+          case "${GITHUB_REF_NAME}" in
+            codex/operator-v1-polizeichef) TAG=operator-polizeichef-${GITHUB_SHA::7}; NOTES=docs/RELEASE_POLIZEICHEF.md; TITLE="Einsatzleitstelle 110 – Polizeichef Entwicklungsstand";;
+            claude/*) TAG=operator-claude-v1-preview; NOTES=docs/RELEASE_CLAUDE_V1.md; TITLE="Einsatzleitstelle 110 – V1-Entwicklungsstand (Claude)";;
+          esac
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" release/Einsatzleitstelle110-Native-Leitstelle.apk release/SHA256SUMS.txt release/package-audit.json --clobber
+            gh release edit "$TAG" --notes-file "$NOTES" --target "$GITHUB_SHA" || true
           else
-            gh release create "$TAG" release/Einsatzleitstelle110-Native-Leitstelle.apk release/SHA256SUMS.txt release/package-audit.json --target "$GITHUB_SHA" --prerelease --title "Native Leitstelle: neue Grafik, Bezirke und persönliche Ausstattung" --notes-file docs/NATIVE_PREVIEW_RELEASE.md
+            gh release create "$TAG" release/Einsatzleitstelle110-Native-Leitstelle.apk release/SHA256SUMS.txt release/package-audit.json --target "$GITHUB_SHA" --prerelease --title "$TITLE" --notes-file "$NOTES"
           fi

@@ -6,6 +6,9 @@ import org.json.JSONObject
 
 /** Validated native saves. Originals remain untouched until a complete replacement is durable. */
 object GameStore {
+    val ALL_STATES =
+        listOf("DE-BW", "DE-BY", "DE-BE", "DE-BB", "DE-HB", "DE-HH", "DE-HE", "DE-MV", "DE-NI", "DE-NW", "DE-RP", "DE-SL", "DE-SN", "DE-ST", "DE-SH", "DE-TH")
+
     private const val FILE = "einsatzleitstelle-native-v1.json"
 
     private val writer = java.util.concurrent.Executors.newSingleThreadExecutor()
@@ -110,6 +113,7 @@ object GameStore {
             .put("dutyMinutes", o.dutyMinutes)
             .put("restMinutes", o.restMinutes)
             .put("photo", o.photo)
+            .put("personnelId", o.personnelId)
 
     private fun chain(n: ChainStage) =
         JSONObject()
@@ -121,6 +125,8 @@ object GameStore {
             .put("onSuccess", n.onSuccess)
             .put("onFailure", n.onFailure)
             .put("requiredTypes", strings(n.requiredTypes))
+            .put("radio", n.radio)
+            .put("deadline", n.deadline)
 
     private fun template(t: IncidentTemplate) =
         JSONObject()
@@ -140,7 +146,7 @@ object GameStore {
             .put("lon", t.lon)
 
     fun toJson(s: GameState): JSONObject {
-        val o = JSONObject().put("schemaVersion", 5)
+        val o = JSONObject().put("schemaVersion", 7)
         o.put("region", s.region)
             .put("mode", s.mode)
             .put("day", s.day)
@@ -171,13 +177,25 @@ object GameStore {
             .put("customEnabled", s.customEnabled)
             .put("shiftRotations", s.shiftRotations)
             .put("shiftSpecial", s.shiftSpecial)
+            .put("shiftSpecialCost", s.shiftSpecialCost)
+            .put("shiftDecisions", s.shiftDecisions)
             .put("masterVolume", s.masterVolume.toDouble())
             .put("radioVolume", s.radioVolume.toDouble())
             .put("sfxVolume", s.sfxVolume.toDouble())
             .put("ambientVolume", s.ambientVolume.toDouble())
             .put("randomSeed", s.randomSeed)
             .put("legacySource", s.legacySource)
+            .put("careerLevel", s.careerLevel)
+            .put("difficulty", s.difficulty)
+            .put("trainingRequired", s.trainingRequired)
+            .put("tutorialStep", s.tutorialStep)
+            .put("depot", JSONObject().also { d -> s.depot.forEach { (k, v) -> d.put(k, v) } })
+            .put("unlockedRegions", strings(s.unlockedRegions))
             .put("logs", strings(s.logs))
+            .put("chief", PoliceChiefCodec.write(s.chief))
+            .put("weather", s.weather)
+            .put("shiftFuelCosts", s.shiftFuelCosts)
+            .put("shiftSignalIncidents", s.shiftSignalIncidents)
         o.put(
             "units",
             jsonArray(s.units) { value ->
@@ -224,6 +242,13 @@ object GameStore {
                     .put("onDuty", u.onDuty)
                     .put("scope", u.scope)
                     .put("routeBasis", u.routeBasis)
+                    .put("patrolMode", u.patrolMode)
+                    .put("patrolScope", u.patrolScope)
+                    .put("focusLon", u.focusLon)
+                    .put("focusLat", u.focusLat)
+                    .put("specialSignal", u.specialSignal)
+                    .put("distanceDrivenKm", u.distanceDrivenKm)
+                    .put("shiftDrivenKm", u.shiftDrivenKm)
                     .put(
                         "routePoints",
                         JSONArray().apply {
@@ -263,6 +288,23 @@ object GameStore {
                     .put("riskDelta", i.riskDelta)
                     .put("handoffStatus", i.handoffStatus)
                     .put("scope", i.scope)
+                    .put("outcome", i.outcome)
+                    .put("firstArrival", i.firstArrival)
+                    .put("closedAt", i.closedAt)
+                    .put("scenario", i.scenario)
+                    .put("stagesDone", strings(i.stagesDone))
+                    .put("pending", i.pending)
+                    .put("pendingAge", i.pendingAge)
+                    .put("flags", strings(i.flags))
+                    .put("notes", strings(i.notes))
+                    .put("waitSince", i.waitSince)
+                    .put("disconnected", i.disconnected)
+                    .put("duplicateCallers", i.duplicateCallers)
+                    .put("addressUncertain", i.addressUncertain)
+                    .put("callbackDone", i.callbackDone)
+                    .put("actualLat", i.actualLat)
+                    .put("actualLon", i.actualLon)
+                    .put("actualLocation", i.actualLocation)
             },
         )
         o.put("customTemplates", jsonArray(s.customTemplates) { template(it as IncidentTemplate) })
@@ -290,6 +332,11 @@ object GameStore {
                     .put("specialDispatches", r.specialDispatches)
                     .put("trainingDone", strings(r.trainingDone))
                     .put("fatigue", r.fatigue)
+                    .put("specialCosts", r.specialCosts)
+                    .put("decisions", r.decisions)
+                    .put("fuel", r.fuel)
+                    .put("buildings", r.buildings)
+                    .put("signalIncidents", r.signalIncidents)
             },
         )
         return o
@@ -355,6 +402,7 @@ object GameStore {
             n(o, "dutyMinutes", 0),
             n(o, "restMinutes", 960),
             o.optString("photo"),
+            o.optString("personnelId").take(90),
         )
     }
 
@@ -374,10 +422,27 @@ object GameStore {
                     v.optString("onSuccess"),
                     v.optString("onFailure"),
                     requirements,
+                    v.optString("radio").take(600),
+                    n(v, "deadline", 0, 0, 1440),
                 )
             out.add(stage)
         }
         return out
+    }
+
+    /** Shareable scenario pack (editor export). */
+    fun exportTemplates(list: List<IncidentTemplate>): JSONObject =
+        JSONObject().put("format", "einsatzleitstelle110-scenarios").put("version", 1).put("templates", jsonArray(list) { template(it as IncidentTemplate) })
+
+    /** Parse a scenario pack; throws IllegalArgumentException with a readable message. */
+    fun importTemplates(raw: String): List<IncidentTemplate> {
+        require(raw.length <= 2 * 1024 * 1024) { "Datei größer als 2 MB" }
+        val root = try { JSONObject(raw) } catch (e: Exception) { throw IllegalArgumentException("Keine gültige JSON-Datei") }
+        require(root.optString("format") == "einsatzleitstelle110-scenarios") { "Kein Einsatzpaket dieses Spiels" }
+        val a = array(root, "templates", 200)
+        return (0 until a.length()).map {
+            try { readTemplate(a.getJSONObject(it)) } catch (e: Exception) { throw IllegalArgumentException("Einsatz ${it + 1} ist beschädigt: ${e.message}") }
+        }
     }
 
     private fun readTemplate(v: JSONObject) =
@@ -400,8 +465,10 @@ object GameStore {
 
     fun fromJson(input: JSONObject): GameState {
         require(input.toString().length <= 15 * 1024 * 1024) { "Datei größer als 15 MB" }
-        val root = if (input.optInt("schemaVersion") == 5) input else NativeMigration.migrate(input)
-        require(root.getInt("schemaVersion") == 5) { "Ungültiger Spielstand" }
+        require(input.optInt("schemaVersion") <= 7) { "Spielstand einer neueren Version" }
+        val migrated = if (input.optInt("schemaVersion") in 5..7) input else NativeMigration.migrate(input)
+        val root = if (migrated.optInt("schemaVersion") in 5..6) JSONObject(migrated.toString()).put("schemaVersion", 7) else migrated
+        require(root.getInt("schemaVersion") == 7) { "Ungültiger Spielstand" }
         val s =
             GameState(
                 region = root.optString("region", "DE-HH"),
@@ -434,14 +501,34 @@ object GameStore {
                 customEnabled = root.optBoolean("customEnabled", true),
                 shiftRotations = n(root, "shiftRotations", 0),
                 shiftSpecial = n(root, "shiftSpecial", 0),
+                shiftSpecialCost = n(root, "shiftSpecialCost", 0),
+                shiftDecisions = n(root, "shiftDecisions", 0),
                 masterVolume = root.optDouble("masterVolume", .7).toFloat(),
                 radioVolume = root.optDouble("radioVolume", .7).toFloat(),
                 sfxVolume = root.optDouble("sfxVolume", .7).toFloat(),
                 ambientVolume = root.optDouble("ambientVolume", 0.0).toFloat(),
                 randomSeed = root.optLong("randomSeed", 982341),
                 legacySource = root.optString("legacySource"),
+                careerLevel = root.optInt("careerLevel", 4).coerceIn(1, 4),
+                difficulty = root.optString("difficulty", "NORMAL").takeIf { it in listOf("LEICHT", "NORMAL", "SCHWER") } ?: "NORMAL",
+                trainingRequired = root.optBoolean("trainingRequired", false),
+                tutorialStep = root.optInt("tutorialStep", 0).coerceIn(0, 4),
                 logs = texts(array(root, "logs", 250)),
+                chief = PoliceChiefCodec.read(root.optJSONObject("chief")),
+                weather = root.optString("weather", "CLEAR"),
+                shiftFuelCosts = n(root, "shiftFuelCosts", 0),
+                shiftSignalIncidents = n(root, "shiftSignalIncidents", 0),
             )
+        require(s.weather in SimulationConditions.weatherOptions) { "Unbekanntes Wetter" }
+        root.optJSONObject("depot")?.let { d ->
+            for (k in d.keys()) if (k in GameContent.equipment && k != "P99") s.depot[k] = d.optInt(k, 0).coerceIn(0, 999)
+        }
+        // Older saves had no career gating: keep every state open for them.
+        s.unlockedRegions.clear()
+        val unlocked = root.optJSONArray("unlockedRegions")
+        if (unlocked == null) s.unlockedRegions.addAll(ALL_STATES)
+        else s.unlockedRegions.addAll(texts(array(root, "unlockedRegions", 16)).filter { it in ALL_STATES })
+        s.unlockedRegions.add(s.region)
         require(
             s.mode in listOf("CAREER", "SANDBOX") &&
                 s.phase in listOf("PLANNING", "RUNNING", "DEBRIEF") &&
@@ -487,12 +574,13 @@ object GameStore {
             val list = array(v, "officers", 8)
             val officers = mutableListOf<Officer>()
             for (k in 0 until list.length()) officers.add(readOfficer(list.getJSONObject(k)))
-            if (officers.isEmpty()) officers.add(o)
+            val managed = s.chief.vehicles.any { it.unitId == id }
+            if (officers.isEmpty() && !managed) officers.add(o)
             val relief = mutableListOf<MutableList<Officer>>()
             val teams = array(v, "reliefTeams", 2)
             for (k in 0 until teams.length()) {
                 val a = teams.getJSONArray(k)
-                require(a.length() == officers.size)
+                require(a.length() in 1..8)
                 relief.add(
                     (0 until a.length()).map { readOfficer(a.getJSONObject(it)) }.toMutableList()
                 )
@@ -507,10 +595,10 @@ object GameStore {
                     v.optString("region", s.region),
                     lat,
                     lon,
-                    n(v, "crew", officers.size, 1, 8),
+                    n(v, "crew", officers.size, if (managed) 0 else 1, 8),
                     n(v, "level", 1, 1, 100),
                     n(v, "experience", 0),
-                    officers.first(),
+                    officers.firstOrNull() ?: o,
                     texts(array(v, "equipment", 30)).toMutableSet(),
                     v.optString("status", "FREE"),
                     v.optString("incidentId"),
@@ -539,6 +627,16 @@ object GameStore {
                     mutableListOf(),
                     v.optString("routeBasis", "DISTANCE_APPROXIMATION"),
                 )
+            u.patrolMode = v.optString("patrolMode", "WATCH")
+            u.patrolScope = v.optString("patrolScope", u.scope)
+            u.focusLon = coordinate(v, "focusLon", lon)
+            u.focusLat = coordinate(v, "focusLat", lat)
+            u.specialSignal = v.optBoolean("specialSignal", u.status == "DRIVING")
+            u.distanceDrivenKm = v.optDouble("distanceDrivenKm", 0.0)
+            u.shiftDrivenKm = v.optDouble("shiftDrivenKm", 0.0)
+            require(u.patrolMode in listOf("WATCH", "PATROL", "FOCUS", "CHECKPOINT") &&
+                (u.patrolScope == "STATE" || u.region == "DE-HH" && u.patrolScope in listOf("WANDSBEK", "MITTE", "ALTONA", "NORD", "EIMSBÜTTEL", "HARBURG", "BERGEDORF")) &&
+                u.distanceDrivenKm.isFinite() && u.distanceDrivenKm >= 0 && u.shiftDrivenKm.isFinite() && u.shiftDrivenKm >= 0)
             val points = array(v, "routePoints", 5000)
             for (k in 0 until points.length()) {
                 val a = points.getJSONArray(k)
@@ -553,6 +651,8 @@ object GameStore {
                         "ON_SCENE",
                         "WORKING",
                         "RETURNING",
+                        "PATROLLING",
+                        "CHECKPOINT",
                         "TRAINING",
                         "REST",
                         "OFF_DUTY",
@@ -622,6 +722,23 @@ object GameStore {
                     100000,
                 )
             i.followUpType = v.optString("followUpType", "KRIPO")
+            i.outcome = v.optString("outcome").take(400)
+            i.firstArrival = v.optInt("firstArrival", -1).coerceIn(-1, 1440)
+            i.closedAt = v.optLong("closedAt", -1L).coerceAtLeast(-1L)
+            i.scenario = v.optString("scenario").take(120)
+            i.stagesDone = texts(array(v, "stagesDone", 20))
+            i.pending = v.optString("pending").take(40)
+            i.pendingAge = v.optInt("pendingAge", 0).coerceIn(0, 1440)
+            i.flags = texts(array(v, "flags", 40)).toMutableSet()
+            i.notes = texts(array(v, "notes", 40))
+            i.waitSince = v.optInt("waitSince", -1).coerceIn(-1, 1440)
+            i.disconnected = v.optBoolean("disconnected", false)
+            i.duplicateCallers = n(v, "duplicateCallers", 1, 1, 999)
+            i.addressUncertain = v.optBoolean("addressUncertain", false)
+            i.callbackDone = v.optBoolean("callbackDone", false)
+            i.actualLat = coordinate(v, "actualLat", i.lat)
+            i.actualLon = coordinate(v, "actualLon", i.lon)
+            i.actualLocation = v.optString("actualLocation", i.location).take(120)
             require(i.followUpType in GameController.TYPES)
             if (i.assignedUnits.isEmpty() && i.assignedUnit.isNotBlank())
                 i.assignedUnits.add(i.assignedUnit)
@@ -667,6 +784,11 @@ object GameStore {
                     n(v, "specialDispatches", 0),
                     texts(array(v, "trainingDone", 2000)),
                     n(v, "fatigue", 0, 0, 100),
+                    n(v, "specialCosts", 0, 0, 10000000),
+                    n(v, "decisions", 0, 0, 10000),
+                    n(v, "fuel", 0),
+                    n(v, "buildings", 0),
+                    n(v, "signalIncidents", 0),
                 )
             )
         }

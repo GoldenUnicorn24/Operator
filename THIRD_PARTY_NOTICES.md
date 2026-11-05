@@ -8,6 +8,14 @@
 
 **Hauptstraßen Hamburg:** Freie und Hansestadt Hamburg, Behörde für Wirtschaft, Verkehr und Innovation, WFS Hauptverkehrsstraßen, Datenlizenz Deutschland Namensnennung2.0.3.735 Straßenfeatures, Attribute reduziert/gerundet/vereinfacht. Quellenmetadaten: `sources/roads-source.json`.
 
+**Landesweite Straßen und Orte (seit V1-Entwicklungsstand, Claude):** © OpenStreetMap-Mitwirkende, https://www.openstreetmap.org/copyright. Lizenz: Open Database License (ODbL) 1.0, https://opendatacommons.org/licenses/odbl/1-0/. Einmaliger Auszug je Bundesland über die öffentliche Overpass-API (Autobahnen, Bundes-/Hauptstraßen; in Stadtstaaten zusätzlich Neben-/Stadtstraßen; Städte/Orte mit Einwohnerzahl), erzeugt durch `tools/build_osm_roads.py` in GitHub Actions, vereinfacht und an Kreuzungen geteilt. Die abgeleitete Datenbank liegt offen und lesbar unter `data/osm/roads-*.json` im Repository und steht ebenfalls unter ODbL 1.0; die App enthält dieselben Daten kompakt kodiert (`geo/roads-*.bin`, erzeugt von `tools/pack_geo.py`). Keine Tile-Server, kein Laufzeitabruf: die App bleibt ohne Internetberechtigung.
+
+**Gewässer, Siedlungsflächen, Übersichtsstraßennetz:** Natural Earth 1:10m (gemeinfrei, https://www.naturalearthdata.com/about/terms-of-use/), erzeugt durch `tools/build_geo_base.py` als `geo/germany-base.json`.
+
+**Hamburg-Detailauszug (P1, Format R2):** derselbe OSM-/ODbL-Quellenvertrag gilt für Wohnstraßen, unclassified, living_street, tertiary und öffentliche sinnvolle Zufahrten sowie Wasser-, Grün- und Bahnflächen. Private Zufahrten und Parkplatzgassen werden gefiltert. Straßennamen und Straßenreferenzen bleiben getrennt, Einbahnrichtungen einschließlich umgekehrter OSM-Ways und Kreisverkehre werden übernommen. Offene lesbare Datenkopie: `data/osm/roads-DE-HH.json`; Binärkopie: `geo/roads-DE-HH.bin`. Keine Gebäudeumrisse. Extraktion ausschließlich einmalig in CI; spätere Builds verwenden die gebündelten Dateien.
+
+Fahrzeiten und Routen auf diesen Netzen sind Spielnäherungen (Hamburg mit Einbahnrichtungen seit R2; keine Abbiegeverbote oder Verkehrslage). Fehlt für eine Strecke ein Netzanschluss, zeigt die Karte gestrichelt eine ausdrücklich gekennzeichnete Distanznäherung; Hubschrauber fliegen direkt.
+
 Routen sind ausdrücklich Simulationsnäherungen. Keine echte Navigation und keine heruntergeladenen OSM-Tiles im nativen Spiel. Der ehemalige optionale Online-Tileadapter bleibt nur unter `prototype/previous-native/` als Referenz erhalten und wird nicht kompiliert. Die App besitzt keine Internetberechtigung.
 
 Früher mitgelieferte, inzwischen inaktive Geometrie aus isellsoap/deutschlandGeoJSON: Unlicense, ursprünglicher Anbieter GIS-DATA/diva-gis.org. Diese Quelle bleibt als Repository-Referenz erhalten; die aktuelle native Karte nutzt die oben genannten amtlichen Daten.

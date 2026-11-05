@@ -255,7 +255,9 @@ class NativeGameEngineTest {
         assertEquals("Initial", c.title)
         assertEquals("KRIPO", c.required)
         assertEquals(100, c.duration)
-        g.advance(11)
+        // Deadlines scale with the size of the territory; fail right after the actual deadline.
+        assertTrue(c.deadline >= 10)
+        g.advance(c.deadline + 1)
         assertEquals("FAILED", c.status)
         assertEquals(1, g.state.incidents.count { it.title == "Escalation" })
         g.advance(1)

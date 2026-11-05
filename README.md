@@ -2,7 +2,15 @@
 
 **Native Android-Leitstellensimulation.** Die entwickelte Spielversion wird als Kotlin-App mit nativen Views, Canvas-Karte und SoundPool weitergeführt. Die installierbare App enthält keine HTML-, JavaScript- oder CSS-Dateien, keine WebView und benötigt weder Internet noch eine eigene Domäne.
 
-[Native Android-APK herunterladen](https://github.com/GoldenUnicorn24/Operator/releases/download/operator-native-v2-preview/Einsatzleitstelle110-Native-Leitstelle.apk) · [Android-Screenshots](docs/evidence/native-v2/)
+[Native Android-APK herunterladen](https://github.com/GoldenUnicorn24/Operator/releases?q=operator-polizeichef) · [Android-Screenshots](docs/evidence/polizeichef/)
+
+## Lagezentrum und Polizeichef (0.12.0)
+
+Arbeitsbranch `codex/operator-v1-polizeichef`: Live-Lagezentrum mit Handlungsgründen, Frist-/Entscheidungswarnungen und kostenschonenden Dispositionsvorschlägen. Vorschläge berücksichtigen die echten Fähigkeiten, Ausbildung, Gesamtbudget und Straßen-Anfahrt; entsendet wird nach Bestätigung. Dazu Hamburger Bezirksdetailkarte, Streifen/FMS/Sonderrechte, eigene Dienststellen mit Fahrzeug- und Personalverwaltung sowie Wetter, Rückrufe, fünf Speicherplätze und Querformat-Einsatzakte. Native Offline-App, weiterhin ohne Internetberechtigung. [Aktuelle Abnahme](docs/ACCEPTANCE_LAGEZENTRUM.md) · [Vorheriger Stand 0.11](docs/ACCEPTANCE_POLIZEICHEF.md) · [Release-Notizen](docs/RELEASE_POLIZEICHEF.md). Kein v1.0; Tests und Gerätebelege werden auf den jeweils tatsächlich geprüften Commit bezogen.
+
+## V1-Entwicklungsstand (Branch `claude/operator-v1-gameplay`)
+
+Meilensteine **M1–M4** umgesetzt (Version 0.10.0-v1-kandidat): topografische Offline-Live-Karte aller 16 Länder mit Straßenrouting, Disposition direkt auf der Karte, 34 Einsatzabläufe mit Entscheidungen, SEK/MEK-Differenzierung, Karriere mit Freischaltungen, Loadout, visueller Ketteneditor, Tutorial. Abnahmestand: [docs/ACCEPTANCE_CLAUDE_V1.md](docs/ACCEPTANCE_CLAUDE_V1.md). [Preview-APK](https://github.com/GoldenUnicorn24/Operator/releases/tag/operator-claude-v1-preview) · [Gerätescreenshots](docs/evidence/claude-m1/) · [Release-Notes](docs/RELEASE_CLAUDE_V1.md). Noch kein v1.0: menschlicher Spieltest und Messung auf echtem Gerät stehen aus.
 
 ## Aktueller nativer Stand
 
@@ -13,7 +21,7 @@
 - **SEK und MEK können auch Streifenaufträge übernehmen**; umgekehrt ersetzt eine Streife keine Spezialkräfte. Direkte, nach Fahrzeit sortierte Disposition mit Unterstützung von außerhalb des Bezirks.
 - 48 Szenarien, zehn freiwillige mehrtägige Lehrgänge, acht Polizeiorganisationen plus koordinierte Hilfsdienste, individuelle Inventare, Erfahrung, Ermüdung, Fahrzeugwartung und Dienstplan.
 - 8/12/24h-Schichten in Karriere und Sandbox, Beginn0–23 Uhr, Pause und1/4/8/16×. Absolute Simulationszeit, einmaliger Tagesabschluss, interne Ablösungsteams und gespeicherte offene Lagen über mehrere Tage.
-- Native Editoren für Einheiten/Fahrzeuge, eigene Einsätze und verzweigte Ketten, JSON-Import/Export. Alpha-0.2-/Geo-v2-/vorherige Web-Schema3-Exporte sowie ältere native Spielstände werden in das native Schema5 übernommen. Laufende Anfahrten und verbleibende Bearbeitung werden erhalten.
+- Native Editoren für Einheiten/Fahrzeuge, eigene Einsätze und verzweigte Ketten, JSON-Import/Export. Alpha-0.2-/Geo-v2-/vorherige Web-Schema3-Exporte sowie ältere native Spielstände werden in das native Schema7 übernommen. Laufende Anfahrten und verbleibende Bearbeitung werden erhalten.
 - Zehn originale WAV-Signale, Master/Funk/SFX/Ambiente, Mute, AudioFocus und Hintergrundpause. Keine Pflicht-CDNs, Kartenserver, Registrierung oder Telemetrie.
 
 ## Bauen
@@ -26,18 +34,18 @@ python3 scripts/verify_native_apk.py app/build/outputs/apk/debug/app-debug.apk
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Version: **0.9.0-native-preview**, minSdk26, targetSdk35. Kein Release-Signing-Schlüssel im Repository. `app/src/main/native_assets` und die Bildressourcen sind die einzigen APK-Assetquellen. Frühere Alpha-/Webquellen bleiben als Entwicklungs- und Migrationsreferenz erhalten; sie werden nicht mit dem Spiel ausgeführt oder als Web-App ausgeliefert.
+Version: **0.11.0-polizeichef-preview**, minSdk26, targetSdk35. Kein Release-Signing-Schlüssel im Repository. `app/src/main/native_assets` und die Bildressourcen sind die einzigen APK-Assetquellen. Frühere Alpha-/Webquellen bleiben als Entwicklungs- und Migrationsreferenz erhalten; sie werden nicht mit dem Spiel ausgeführt oder als Web-App ausgeliefert.
 
 Der CI-Workflow baut das APK, führt Unit-Tests/Lint/Paketprüfung aus und startet einen nativen Android-Emulatorablauf inklusive Wandsbek, P99, Spezialkräfte-Disposition,24h, Folgetag und Screenshots. Ein verifizierter Preview-Build wird als APK-Artefakt und separater GitHub-Preview-Download bereitgestellt. [Actions](https://github.com/GoldenUnicorn24/Operator/actions/workflows/android-ci.yml).
 
 ## Architektur
 
-`GameState.kt`: reine native Engine und Modelle; `GameStore.kt`/`NativeMigration.kt`: validierte atomare Speicherung und Datenübernahme; `OperationsAreas.kt`/`GeoData.kt`: echte Regionen und Bezirke; `NativeRouting.kt`/`MapClustering.kt`/`TacticalMapView.kt`: Offline-Routing und Canvas-Karte; `MainActivity.kt`: native Bedienung; `EquipmentArt.kt`: Bitmap-Atlanten; `NativeAudio.kt`: native Audiosignale.
+`PoliceChief.kt`/`PoliceChiefCodec.kt`: Dienststellen, Fuhrpark und Personal; `PatrolRouting.kt`/`SimulationConditions.kt`: Streifen und Verkehrs-/Wetterwerte; `SaveSlots.kt`: unabhängige Speicherplätze; `GameState.kt`: reine native Engine und Modelle; `GameStore.kt`/`NativeMigration.kt`: validierte atomare Speicherung und Datenübernahme; `OperationsAreas.kt`/`GeoData.kt`: echte Regionen und Bezirke; `NativeRouting.kt`/`MapClustering.kt`/`TacticalMapView.kt`: Offline-Routing und Canvas-Karte; `MainActivity.kt`: native Bedienung; `EquipmentArt.kt`: Bitmap-Atlanten; `NativeAudio.kt`: native Audiosignale.
 
 Die Ausgabe wird zusätzlich direkt auf HTML-/Script-Dateien und WebView-Klassenreferenzen geprüft. Vor einem Wechsel von einer anders signierten Debug-APK den Spielstand exportieren; nach Installation über „Spielstand importieren“ übernehmen. Eine native App kann den alten Chromium-localStorage nicht ohne Browserkomponente automatisch ausführen; vorhandene Daten werden deshalb über den JSON-Export übernommen.
 
 ## Grenzen und Nachweise
 
-Hauptstraßengraph und Fahrzeiten sind **Spielnäherungen**: keine Einbahn-/Abbiege-/Verkehrsdaten. Andere Bundesländer verwenden geografische Distanzkorridore. Alle Wachen, Personen, Einsätze und Ausstattungswerte sind fiktiv. Die Fahrzeug- und Ausrüstungsbilder sind generierte Illustrationen und keine Herstellerproduktdokumentation. Die visuelle Abnahme und Leistung auf physischen Mittelklassegeräten bleiben eigene Releasegates; kein vorzeitiges v1.0-Fertiglabel.
+Straßengraph und Fahrzeiten sind **Spielnäherungen**: Hamburg berücksichtigt Einbahnrichtungen; Abbiegeverbote und Echtzeit-Verkehrsdaten fehlen. Alle 16 Länder besitzen gebündelte OSM-Netze; bei fehlenden Anschlüssen wird eine Distanznäherung ausdrücklich markiert. Alle Wachen, Personen, Einsätze und Ausstattungswerte sind fiktiv. Die Fahrzeug- und Ausrüstungsbilder sind generierte Illustrationen und keine Herstellerproduktdokumentation. Die visuelle Abnahme und Leistung auf physischen Mittelklassegeräten bleiben eigene Releasegates; kein vorzeitiges v1.0-Fertiglabel.
 
 [Native Änderungsanforderungen und Nachweise](docs/NATIVE_REVISION.md) · [Implementierungslog](docs/IMPLEMENTATION_LOG.md) · [Quellen/Lizenzen](THIRD_PARTY_NOTICES.md).
