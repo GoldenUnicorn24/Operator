@@ -1,11 +1,16 @@
 {
-  "source_commit": "960bfa1293744f66f3a156d460efc6389fbaeacb",
+  "source_commit": "fc680157c82558ca5b16ccefcc15bd668f606f0d",
   "environment": "managed Linux, JDK21, Gradle8.9/Kotlin2.0.21, AndroidSDK35, target JVM17",
-  "command": ":app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest :app:lintDebug",
+  "latest_command": ":app:assembleDebugAndroidTest :app:lintDebug",
   "exit_code": 0,
-  "elapsed": "59s",
-  "jvm_tests": 112,
+  "elapsed": "23s",
+  "unchanged_production_source_from": "993f5fae0a9a5e0b6292868b7fc8c5cb7c66c5e3",
+  "prior_full_command": ":app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest :app:lintDebug",
+  "prior_full_exit_code": 0,
+  "prior_full_elapsed": "59s",
+  "jvm_tests": 126,
   "failures": 0,
   "errors": 0,
+  "python_tests": 9,
   "device_tests": "CI only; see instrumentation.txt"
 }

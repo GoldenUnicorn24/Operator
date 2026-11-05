@@ -5,7 +5,7 @@
 - Korrekte eindeutige Rollenabdeckung auch für eigene Einheitentypen. Vorher konnte der Fahrzeug-Grundtyp trotz fehlender Fähigkeit fälschlich als erfüllt zählen; Regressionstest reproduzierte den Fehler vor der Korrektur.
 - Neues natives Bildschirmmodul, Filter und Scrollposition bleiben bei Live-Updates erhalten. Kein Save-Schemawechsel, kein neues Asset und keine Internetberechtigung.
 
-Nachweis folgt ausschließlich nach tatsächlicher CI-/Emulatorprüfung in [docs/ACCEPTANCE_LAGEZENTRUM.md](docs/ACCEPTANCE_LAGEZENTRUM.md). Kein v1.0.
+Geprüfter Code `fc68015`: [grüne CI](https://github.com/GoldenUnicorn24/Operator/actions/runs/41939501660), 126 JVM-Tests, 9 Python-Verträge, Android35 OK (9 tests), Lint und Paketprüfung. [APK](https://github.com/GoldenUnicorn24/Operator/releases/tag/operator-polizeichef-fc68015), 17.6 MB; 29 echte Screenshots und [Abnahme](docs/ACCEPTANCE_LAGEZENTRUM.md). Kein v1.0.
 
 # Polizeichef-Entwicklungsstand · 0.11.0 · 02.11.2026
 
