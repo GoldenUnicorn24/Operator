@@ -65,6 +65,8 @@ class TacticalMapView(
     private var lastRegion = ""
     private var screenHits = listOf<MapClustering.Cluster<Any>>()
     private var closed = false
+    /** Time between engine minutes; vehicles glide across it. */
+    var glideMs = 1000.0
     private val renderer = MapRenderer(context, density) { postInvalidate() }
     private val previewCache = HashMap<String, NativeRoute>()
 
@@ -341,7 +343,7 @@ class TacticalMapView(
         }
         a.shown =
             if (paused) a.to
-            else a.from + (a.to - a.from) * ((now - a.started) / 1000.0).coerceIn(0.0, 1.0)
+            else a.from + (a.to - a.from) * ((now - a.started) / glideMs).coerceIn(0.0, 1.0)
         return along(a, a.shown)
     }
 

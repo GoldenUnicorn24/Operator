@@ -126,6 +126,13 @@ data class IncidentState(
     var actualLat: Double = lat,
     var actualLon: Double = lon,
     var actualLocation: String = location,
+    /** Written phone call behind this incident (blank = reported by radio or map). */
+    var phoneScript: String = "",
+    /** Forces the call taker did not find out about; revealed by the first crew on scene. */
+    var surprise: MutableList<String> = mutableListOf(),
+    var surpriseText: String = "",
+    var worsened: Boolean = false,
+    var takeScore: Int = -1,
 )
 
 data class ChainStage(
@@ -185,6 +192,14 @@ data class ShiftReport(
     val fuel: Int = 0,
     val buildings: Int = 0,
     val signalIncidents: Int = 0,
+    val answered: Int = 0,
+    val missed: Int = 0,
+    val takeAverage: Int = -1,
+    /** Share of P1 calls with a first unit within ten minutes (-1 = no P1). */
+    val hilfsfrist: Int = -1,
+    /** German school mark 1–6 (0 = shift without phone desk). */
+    val grade: Int = 0,
+    val event: String = "",
 )
 
 data class GameState(
@@ -246,6 +261,17 @@ data class GameState(
     var shiftSignalIncidents: Int = 0,
     var chief: PoliceChiefState = PoliceChiefState(),
     var weather: String = "CLEAR",
+    /** Players take every 110 call themselves. New games switch this on in the app. */
+    var phoneEnabled: Boolean = false,
+    val phones: MutableList<PhoneCall> = mutableListOf(),
+    val recentScripts: MutableList<String> = mutableListOf(),
+    var shiftEvent: String = "",
+    var surgeStart: Int = 0,
+    var shiftAnswered: Int = 0,
+    var shiftMissed: Int = 0,
+    var shiftTakes: Int = 0,
+    var shiftTakeTotal: Int = 0,
+    var takeStreak: Int = 0,
 )
 
 object GameContent {
@@ -416,7 +442,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         r.cities.map { MapPlace(it.name, "city", 80000, it.lon, it.lat) }
     }
 
-    private fun rnd(): Double {
+    internal fun rnd(): Double {
         state.randomSeed = (state.randomSeed * 1664525L + 1013904223L) and 0xffffffffL
         return state.randomSeed.toDouble() / 4294967296.0
     }
@@ -910,7 +936,10 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                 it.handoffStatus = ""
             }
         // Varied but fair opener: a single-patrol call fitting the time of day, never a P1 at minute 0.
-        newIncident(pickTemplate(opener = true))
+        if (state.phoneEnabled) {
+            PhoneDesk.beginShift(this)
+            if (state.tutorialStep == 0) PhoneDesk.ring(this, PhoneDesk.pick(this, opener = true))
+        } else newIncident(pickTemplate(opener = true))
         emit("Schicht begonnen", "Neuer Notruf eingegangen")
     }
 
@@ -1048,7 +1077,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         state.incidents.add(0, call)
         state.shiftIncoming++
         emit("Neuer Notruf P${call.priority}", call.title)
-        trigger(call, "CALL")
+        if (state.phoneEnabled) call.stagesDone.add("call") else trigger(call, "CALL")
         return call
     }
 
@@ -1309,6 +1338,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                     if (call.firstArrival < 0) {
                         call.firstArrival = call.age
                         emit("Am Einsatzort", "${u.callsign} · ${call.title}")
+                        PhoneDesk.onArrival(this, call)
                         trigger(call, "ARRIVAL")
                     } else emit("Am Einsatzort", "${u.callsign} · ${call.title}")
                 }
@@ -1480,7 +1510,12 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
 
     /** Hint shown on the map for the current tutorial step. */
     fun tutorialHint(): String =
-        when (state.tutorialStep) {
+        if (state.phoneEnabled) when (state.tutorialStep) {
+            1 -> "Einsatz 1/3: Das Telefon klingelt. Nimm den Notruf an, frage nach Ort und Lage und wähle dann das Stichwort. Danach eine Streife entsenden."
+            2 -> "Einsatz 2/3: Stelle die Fragen, gib dem Anrufer eine sinnvolle Anweisung. Falsche Tipps kosten Punkte."
+            3 -> "Einsatz 3/3: Frage nach Verletzten! Was du nicht erfährst, meldet die Streife erst vor Ort als Nachforderung."
+            else -> ""
+        } else when (state.tutorialStep) {
             1 -> "Einsatz 1/3: Tippe den gelben Notruf auf der Karte an. Eine passende Streife ist vorgewählt – tippe „Entsenden“ und sieh dem Fahrzeug zu."
             2 -> "Einsatz 2/3: Lies den Anrufer und triff in der orangen Karte eine Entscheidung (z. B. Rettungsdienst mitalarmieren). Jede Option zeigt vorher ihre Folgen."
             3 -> "Einsatz 3/3: Hier werden zwei Streifen gebraucht. Wähle beide aus (Mehrfachauswahl) oder schicke später Verstärkung nach."
@@ -1513,6 +1548,11 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                 (0 until 12).map { k -> GeoPoint(u.homeLon + .012 * cos(k * .52), u.homeLat + .007 * sin(k * .52)) }
                     .firstOrNull { region().contains(it) && inScope(it) }
             } ?: samplePosition()
+        if (state.phoneEnabled) {
+            val script = CallScripts.find(listOf("ruhestoerung", "unfall_einfach", "schlaegerei")[state.tutorialStep - 1])
+            PhoneDesk.ring(this, script, p)
+            return
+        }
         val call = newIncident(t, p)
         call.flags.add("tutorial")
         // Calls 1 and 3 skip the call-taking question so each step teaches one thing.
@@ -1550,6 +1590,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
             state.elapsed++
             state.absoluteMinute++
             syncChiefRoster()
+            PhoneDesk.tick(this)
             for (u in state.units.filter { it.region == state.region }) {
                 val previousFms = fms(u)
                 if (
@@ -1601,6 +1642,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                     choose(call, pendingStage(call)?.default ?: "", auto = true)
                 }
                 if (call.status == "WORKING") call.age++
+                PhoneDesk.pressure(this, call)
                 if (call.status in listOf("OPEN", "DRIVING")) {
                     call.age++
                     if (call.age > call.deadline) {
@@ -1707,11 +1749,13 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                 state.autoCalls &&
                     openIncidents() < 30 &&
                     state.elapsed < state.duration - 25 &&
-                    rnd() < hourFactor() * difficultyRate() / state.callInterval.coerceIn(10, 240)
+                    rnd() < hourFactor() * difficultyRate() * PhoneDesk.rate(state) / state.callInterval.coerceIn(10, 240)
             ) {
+                if (state.phoneEnabled) PhoneDesk.ringAuto(this) else {
                 val template = pickTemplate()
                 val position = if (template.lat != null && template.lon != null) GeoPoint(template.lon, template.lat) else samplePosition()
                 reportCaller(template, position, disconnected = rnd() < .08, addressUncertain = rnd() < .08)
+                }
             }
             if (state.elapsed >= state.duration) finishShift()
         }
@@ -1767,6 +1811,12 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         state.completedShifts++
         val workingStaff = duty.flatMap { it.officers }
         val fatigue = if (workingStaff.isEmpty()) 0 else workingStaff.map { 100 - it.energy }.average().roundToInt()
+        state.phones.clear()
+        val closedP1 = state.incidents.filter { it.region == state.region && it.priority == 1 && it.closedAt >= state.shiftStartAbsolute }
+        val hilfsfrist = if (closedP1.isEmpty()) -1 else closedP1.count { it.firstArrival in 0..10 } * 100 / closedP1.size
+        val takeAverage = if (state.shiftTakes == 0) -1 else state.shiftTakeTotal / state.shiftTakes
+        val grade = if (state.phoneEnabled) PhoneDesk.grade(state.shiftSolved, state.shiftFailed, state.shiftMissed,
+            takeAverage.coerceAtLeast(0), hilfsfrist.takeIf { it >= 0 } ?: 70) else 0
         state.reports.add(
             0,
             ShiftReport(
@@ -1794,6 +1844,12 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                 state.shiftFuelCosts + chiefCosts.fuel,
                 chiefCosts.buildings,
                 state.shiftSignalIncidents,
+                state.shiftAnswered,
+                state.shiftMissed,
+                takeAverage,
+                hilfsfrist,
+                grade,
+                PhoneDesk.event(state)?.title ?: "",
             ),
         )
         state.phase = "DEBRIEF"
@@ -2114,7 +2170,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         return true
     }
 
-    private fun emit(title: String, message: String) {
+    internal fun emit(title: String, message: String) {
         state.logs.add(0, "[Tag ${state.day} · ${clock()}] $title · $message")
         while (state.logs.size > 250) state.logs.removeAt(state.logs.lastIndex)
         notify?.invoke(title, message)

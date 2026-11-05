@@ -58,6 +58,12 @@ class MainActivity : Activity() {
     private var foreground = true
     private var lastReportDay = -1
     private var lastRosterStatus = ""
+    private var phoneScreen: PhoneScreen? = null
+    private lateinit var phoneBar: TextView
+    private var simCarry = 0.0
+    private var liveTick = 0
+    private var ringTick = 0
+    private var radioView: TextView? = null
     private val SAVE = 701
     private val LOAD = 702
     private val PORTRAIT = 703
@@ -244,7 +250,7 @@ class MainActivity : Activity() {
         window.statusBarColor = dark
         window.navigationBarColor = dark
         val regions = GeoData.load(this)
-        val saved = GameStore.load(this) ?: GameState()
+        val saved = GameStore.load(this) ?: GameState(phoneEnabled = phoneDeskDefault)
         if (saved.phase == "RUNNING") saved.paused = true
         game = GameController(saved, regions)
         game.placeProvider = { MapData.places(this, it) }
@@ -273,6 +279,14 @@ class MainActivity : Activity() {
         header.addView(clockView)
         header.addView(action("☰") { showSettings() }, LinearLayout.LayoutParams(dp(48), dp(48)))
         root.addView(header, LinearLayout.LayoutParams(-1, dp(68)))
+        phoneBar = text("", 15f, Color.WHITE, true).apply {
+            gravity = Gravity.CENTER
+            setPadding(dp(12), dp(10), dp(12), dp(10))
+            visibility = View.GONE
+            contentDescription = "Notruf annehmen"
+            setOnClickListener { answerNext() }
+        }
+        root.addView(phoneBar, LinearLayout.LayoutParams(-1, -2))
         body = FrameLayout(this)
         root.addView(body, LinearLayout.LayoutParams(-1, 0, 1f))
         navigation = row().apply { setBackgroundColor(panel) }
@@ -347,6 +361,8 @@ class MainActivity : Activity() {
         next.seedUnitsIfNeeded()
         chiefScreen?.close()
         pendingMapPoint = null
+        phoneScreen?.abandon()
+        phoneScreen = null
         map.close()
         game = next
         installNotifications()
@@ -377,8 +393,11 @@ class MainActivity : Activity() {
                     audio.cue("SUCCESS")
                     toast("Beförderung! $message")
                 }
+                name == "Notruf klingelt" -> audio.cue("CALL")
+                name == "Lageverschärfung" || name == "Anrufer aufgelegt" -> audio.cue("P2")
+                name == "Lagebild" -> { audio.cue("RADIO"); toast(message) }
                 name.startsWith("Neuer Notruf") -> {
-                    audio.cue("CALL")
+                    if (!game.state.phoneEnabled) audio.cue("CALL")
                     if (name.contains("P1")) audio.cue("P1")
                     else if (name.contains("P2")) audio.cue("P2")
                 }
@@ -406,12 +425,21 @@ class MainActivity : Activity() {
             override fun run() {
                 if (isFinishing) return
                 val old = game.state.phase
-                // Open decisions slow the clock to at most ×4 so nobody misses a radio report.
-                if (foreground && old == "RUNNING" && !game.state.paused)
-                    game.advance(if (game.pendingDecisions() > 0) minOf(game.state.speed, 4) else game.state.speed)
+                var moved = false
+                if (foreground && old == "RUNNING" && !game.state.paused) {
+                    val steps = simulationRate() * TICK_MS / 1000.0 + simCarry
+                    val whole = steps.toInt()
+                    simCarry = steps - whole
+                    if (whole > 0) {
+                        game.advance(whole)
+                        moved = true
+                    }
+                    map.glideMs = 1000.0 / simulationRate()
+                }
                 if (old != game.state.phase) save()
-                updateLive()
-                if (old == "RUNNING" && !game.state.paused && ++saveTick % 15 == 0) save()
+                updatePhone()
+                if (moved || ++liveTick % 4 == 0) updateLive()
+                if (old == "RUNNING" && !game.state.paused && ++saveTick % 60 == 0) save()
                 if (
                     old == "RUNNING" &&
                         game.state.phase == "DEBRIEF" &&
@@ -420,9 +448,49 @@ class MainActivity : Activity() {
                     lastReportDay = game.state.day
                     showDebrief()
                 }
-                if (foreground) handler.postDelayed(this, 1000)
+                if (foreground) handler.postDelayed(this, TICK_MS)
             }
         }
+
+    /** Simulated minutes per real second. ×8 is the old minute per second, ×4 an 8h shift in 16 minutes. */
+    private fun simulationRate(): Double {
+        val s = game.state
+        if (PhoneDesk.active(s) != null) return 1 / 15.0
+        val busy = PhoneDesk.ringing(s).isNotEmpty() || game.pendingDecisions() > 0
+        return (if (busy) minOf(s.speed, 4) else s.speed) / 8.0
+    }
+
+    private fun answerNext() {
+        if (phoneScreen?.isShowing == true) return
+        val s = game.state
+        val next = PhoneDesk.ringing(s).firstOrNull() ?: return
+        if (!PhoneDesk.answer(game, next)) return
+        sheet?.dismiss()
+        openPhone(next)
+    }
+
+    private fun openPhone(call: PhoneCall) {
+        val screen = PhoneScreen(this, game, { phoneScreen = null; save(); updateLive() }, { openCall(it) })
+        screen.onReplace = { phoneScreen = it; it.onReplace = screen.onReplace }
+        phoneScreen = screen
+        screen.show(call)
+    }
+
+    /** Ringing banner above every tab; the call screen stays up to date while someone talks. */
+    private fun updatePhone() {
+        val waiting = PhoneDesk.ringing(game.state)
+        phoneScreen?.takeIf { it.isShowing }?.updateStatus()
+        if (waiting.isEmpty() || phoneScreen?.isShowing == true) {
+            phoneBar.visibility = View.GONE
+            return
+        }
+        ringTick++
+        phoneBar.visibility = View.VISIBLE
+        val left = (PhoneDesk.PATIENCE - waiting.first().waited).coerceAtLeast(0)
+        phoneBar.text = "☎  NOTRUF ANNEHMEN" + (if (waiting.size > 1) " · ${waiting.size} in der Leitung" else "") + " · legt auf in ~$left Min"
+        phoneBar.setBackgroundColor(if (ringTick % 4 < 2) Color.rgb(196, 42, 62) else Color.rgb(140, 26, 44))
+        if (ringTick % 16 == 1) audio.cue("CALL")
+    }
 
     override fun onPause() {
         if (::audio.isInitialized) audio.pause()
@@ -479,7 +547,10 @@ class MainActivity : Activity() {
                 (if (game.state.phase == "RUNNING") "  ·  Schichtende in %d:%02d".format(left / 60, left % 60) else "") +
                 "\n${SimulationConditions.weatherOptions[game.state.weather]} · " +
                 (if (SimulationConditions.trafficFactor(game.hour()) > 1) "Berufsverkehr" else if (SimulationConditions.trafficFactor(game.hour()) < 1) "Freie Straßen" else "Normalverkehr") +
-                " · Präsenz −${(game.patrolPresence() * 100).roundToInt()}% Einbruch/Sachbeschädigung"
+                " · Präsenz −${(game.patrolPresence() * 100).roundToInt()}% Einbruch/Sachbeschädigung" +
+                (PhoneDesk.event(game.state)?.let { "\n${if (PhoneDesk.surgeActive(game.state)) "⚠ Hochphase: " else "Lagebild: "}${it.title}" } ?: "") +
+                (if (game.state.takeStreak >= 2) "  ·  Serie ${game.state.takeStreak}" else "")
+        radioView?.text = game.state.logs.firstOrNull()?.substringAfter("] ") ?: ""
         mapAction?.text =
             when (game.state.phase) {
                 "PLANNING" -> "Schicht planen"
@@ -574,6 +645,7 @@ class MainActivity : Activity() {
         mapAction = null
         incomingView = null
         queueView = null
+        radioView = null
         speedView = null
         queueVersion = ""
         val top = row().apply { setPadding(dp(8), dp(6), dp(8), dp(6)) }
@@ -651,6 +723,14 @@ class MainActivity : Activity() {
         mapCounter = text("", 12f, mint, true)
         head.addView(mapCounter, LinearLayout.LayoutParams(0, -2, 1f))
         bottom.addView(head)
+        radioView = text("", 11f, ui.cyan).apply {
+            maxLines = 1
+            ellipsize = android.text.TextUtils.TruncateAt.END
+            setPadding(0, dp(3), 0, 0)
+            contentDescription = "Letzte Funkmeldung"
+            setOnClickListener { showRadioLog() }
+        }
+        bottom.addView(radioView)
         val queue = column().apply { setPadding(0, dp(4), 0, dp(6)) }
         queueView = queue
         bottom.addView(queue)
@@ -681,6 +761,13 @@ class MainActivity : Activity() {
         chrome.addView(bottom, FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM).apply { setMargins(dp(6), 0, dp(6), dp(6)) })
         updateQueue()
         updateLive()
+    }
+
+    private fun showRadioLog() {
+        val log = ui.column()
+        game.state.logs.take(150).forEach { log.addView(text(it, 12f, ink).apply { setPadding(0, dp(5), 0, dp(5)) }) }
+        sheet?.dismiss()
+        sheet = showShiftScreenDialog(this, "Funkprotokoll", log)
     }
 
     /** Up to three most urgent calls as tappable rows under the map. */
@@ -865,7 +952,10 @@ class MainActivity : Activity() {
 
     private fun showCalls() {
         incidentDesk = IncidentDeskScreen(this, game, ui, ::openCall) {
-            if (game.state.phase == "RUNNING") { game.newIncident(); save(); updateLive() }
+            if (game.state.phase == "RUNNING") {
+                if (game.state.phoneEnabled) PhoneDesk.ringAuto(game) else game.newIncident()
+                save(); updateLive()
+            }
             else showShiftDialog()
         }.also { body.addView(it.root, FrameLayout.LayoutParams(-1, -1)) }
     }
@@ -1743,6 +1833,18 @@ class MainActivity : Activity() {
             }
         )
         gap(c)
+        c.addView(
+            action(if (game.state.phoneEnabled) "Notrufe selbst annehmen: an" else "Notrufe selbst annehmen: aus") {
+                if (game.state.phase == "RUNNING") {
+                    toast("Nur zwischen den Schichten umstellbar.")
+                    return@action
+                }
+                game.state.phoneEnabled = !game.state.phoneEnabled
+                save()
+                showSettings()
+            }
+        )
+        gap(c)
         c.addView(action("Zuständigkeit auswählen") { chooseArea() })
         gap(c)
         c.addView(action("Speichern & Exportieren") { exportSave() })
@@ -1802,7 +1904,7 @@ class MainActivity : Activity() {
         gap(c)
         c.addView(
             text(
-                "Disponiere Kräfte auf der Live-Karte, verwalte Personal und Ausstattung und entwickle deine Dienstgruppe über mehrere Tage.",
+                "Nimm Notrufe selbst an: Was du nicht fragst, weißt du nicht. Schicke die richtigen Kräfte, führe sie auf der Live-Karte und halte eine Schulnote von 1 für deine Schicht.",
                 14f,
                 muted,
             )
@@ -1987,5 +2089,11 @@ class MainActivity : Activity() {
                 }
                 .setNegativeButton("Weiterspielen", null)
                 .show()
+    }
+
+    companion object {
+        const val TICK_MS = 250L
+        /** New games take calls by phone. Device tests of the map flow switch this off. */
+        @JvmField var phoneDeskDefault = true
     }
 }

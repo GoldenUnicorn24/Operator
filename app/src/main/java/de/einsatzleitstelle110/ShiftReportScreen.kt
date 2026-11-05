@@ -21,7 +21,24 @@ class ShiftReportScreen(
         val report = game.state.reports.firstOrNull() ?: return null
         val body = ui.column()
         body.addView(ui.text("Dienst abgeschlossen", 22f, ui.ink, true))
-        body.addView(ui.text("TAG ${report.day} · ${report.duration / 60} Stunden", 13f, ui.cyan))
+        body.addView(ui.text("TAG ${report.day} · ${report.duration / 60} Stunden" + if (report.event.isNotBlank()) " · ${report.event}" else "", 13f, ui.cyan))
+        if (report.grade > 0) {
+            val color = if (report.grade <= 2) ui.mint else if (report.grade <= 4) ui.amber else ui.red
+            val hero = ui.row().apply {
+                setPadding(ui.dp(12), ui.dp(12), ui.dp(12), ui.dp(12))
+                background = ui.bg(ui.panel, color, 14)
+            }
+            hero.addView(ui.text("${report.grade}", 46f, color, true), LinearLayout.LayoutParams(ui.dp(62), -2))
+            val text = ui.column()
+            text.addView(ui.text(listOf("Sehr gut", "Gut", "Befriedigend", "Ausreichend", "Mangelhaft", "Ungenügend")[report.grade - 1], 18f, ui.ink, true))
+            text.addView(ui.text(gradeReason(report), 12f, ui.muted))
+            hero.addView(text, LinearLayout.LayoutParams(0, -2, 1f))
+            body.addView(hero, LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, ui.dp(10), 0, ui.dp(6)) })
+            line(body, "Notrufe angenommen", "${report.answered}")
+            line(body, "Aufgelegt ohne Annahme", "${report.missed}")
+            if (report.takeAverage >= 0) line(body, "Qualität der Notrufaufnahme", "${report.takeAverage} %")
+            if (report.hilfsfrist >= 0) line(body, "P1 unter 10 Min vor Ort", "${report.hilfsfrist} %")
+        }
         val rows = listOf(
             "Notrufe" to "${report.served}",
             "Erfolgreich" to "${report.solved}",
@@ -94,10 +111,20 @@ class ShiftReportScreen(
         return dialog
     }
 
+    private fun gradeReason(r: ShiftReport): String {
+        val notes = mutableListOf<String>()
+        if (r.missed > 0) notes.add("${r.missed} Anrufer haben aufgelegt")
+        if (r.takeAverage in 0..59) notes.add("Notrufe lückenhaft aufgenommen")
+        if (r.hilfsfrist in 0..59) notes.add("P1-Lagen zu spät erreicht")
+        if (r.failed > r.solved / 3) notes.add("zu viele Einsätze gescheitert")
+        return if (notes.isEmpty()) "Saubere Schicht: Anrufe, Anfahrten und Ausgang passen." else notes.joinToString(" · ")
+    }
+
     private fun line(body: LinearLayout, label: String, value: String) {
         val row = ui.row()
         row.contentDescription = "$label: $value"
-        row.addView(ui.text(label, 14f, ui.muted), LinearLayout.LayoutParams(0, ui.dp(40), 1f))
+        row.minimumHeight = ui.dp(34)
+        row.addView(ui.text(label, 14f, ui.muted), LinearLayout.LayoutParams(0, -2, 1f))
         row.addView(ui.text(value, 16f, ui.ink, true))
         body.addView(row)
     }

@@ -39,6 +39,7 @@ object GameSnapshots {
                             stagesDone = i.stagesDone.toMutableList(),
                             flags = i.flags.toMutableSet(),
                             notes = i.notes.toMutableList(),
+                            surprise = i.surprise.toMutableList(),
                         )
                     }
                     .toMutableList(),
@@ -54,6 +55,8 @@ object GameSnapshots {
             reports =
                 s.reports.map { it.copy(trainingDone = it.trainingDone.toList()) }.toMutableList(),
             logs = s.logs.toMutableList(),
+            phones = s.phones.map { it.copy(lines = it.lines.toMutableList(), asked = it.asked.toMutableSet(), advised = it.advised.toMutableSet()) }.toMutableList(),
+            recentScripts = s.recentScripts.toMutableList(),
             unlockedRegions = s.unlockedRegions.toMutableSet(),
             depot = s.depot.toMutableMap(),
             chief = s.chief.deepCopy(),

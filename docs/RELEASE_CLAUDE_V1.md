@@ -1,37 +1,18 @@
-## Einsatzleitstelle 110 – V1-Entwicklungsstand · Meilensteine M1–M4 · Version 0.10.0-v1-kandidat
+# Einsatzleitstelle 110 – Notrufleitung 0.13.0
 
-**Kein v1.0-Release.** Debug-APK des Branches `claude/operator-v1-gameplay`, automatisch gebaut, mit Unit-Tests, Lint, Paketprüfung (keine WebView, keine HTML/JS/CSS-Dateien) und einem Android-35-Emulatorlauf geprüft, bevor sie hier hochgeladen wird.
+Das Spiel dreht sich jetzt um das Telefon. Bisher erschienen Einsätze einfach auf der Karte, eine 8-Stunden-Schicht lief in 2 Minuten durch, und jede Option zeigte vorab ihre Folgen.
 
-### Neu in M1: Live-Karte und Disposition
-- **Topografische Offline-Karte für alle 16 Länder:** Autobahnen, Bundes- und Hauptstraßen aus OpenStreetMap (ODbL, einmaliger Auszug, im Repo), Gewässer und Siedlungsflächen aus Natural Earth, Nachbarländer als Kontext, Ortsnamen nach Einwohnerzahl, Hamburger Bezirksgrenzen. Wird im Hintergrund gerendert; Zoom und Schwenken bleiben flüssig.
-- **Echtes Routing auf dem Straßennetz** jedes Landes (A* mit Straßenklassen-Geschwindigkeiten). Fahrzeuge fahren sichtbar die Route entlang, mit Fahrtrichtung, Blaulicht und Restzeit. Fehlt ein Netzanschluss, wird gestrichelt eine *gekennzeichnete* Distanznäherung gezeigt. Hubschrauber fliegen direkt.
-- **Disposition direkt auf der Karte:** Notruf antippen → Einsatzakte mit Anrufertext, benötigten Kräften und Restfrist → mehrere Einheiten mit Fahrzeit, Eignung, Besatzung und Kraft auswählen → Routenvorschau → „Entsenden“. Später: Verstärkung nachschicken, Einheiten abziehen, gebundene Kräfte umdisponieren, Einheiten auf Rückfahrt sofort neu alarmieren.
-- **Einsatzmarker** mit Priorität, Lagetyp-Symbol und Frist-Ring; **Wachen** mit freien/gesamten Kräften; Legende, Filter, Minikarte, Doppeltipp- und fingerzentrierter Zoom, Zurück-zur-Übersicht.
-- **Spielbare Hamburger 8-Stunden-Schicht:** Notrufaufkommen nach Tageszeit, Notrufe bevölkerungsgewichtet an echten Orten, abwechslungsreicher Schichtbeginn, Countdown bis Schichtende, Funkmeldungen bei Ankunft/Verstärkung/Abzug.
-- **Erklärbarer Einsatzausgang:** Erfolgschance aus Anfahrtszeit gegenüber Frist, passenden Kräften, Erfahrung/Ausrüstung, Müdigkeit, Verstärkung, Gefahrenlage und Maßnahmen; die Begründung steht in der Einsatzakte und im Protokoll.
+- **Echte Notrufannahme:** Das Telefon klingelt, du nimmst an, fragst selbst nach und wählst das Einsatzstichwort. 28 geschriebene Anrufe, dazu alle Katalog- und eigenen Editor-Einsätze.
+- **Was du nicht fragst, weißt du nicht:** Unterbliebene Fragen kommen als Nachforderung vor Ort zurück. Ein ungeklärter Ort bedeutet Nachsuche.
+- **Keine Sicherheit:** Scherzanrufe, Taschenanrufe, Verwählte, Bürgeranliegen und Doppelmeldungen wollen erkannt werden. Eine leise Pizza-Bestellung kann ein Hilferuf sein.
+- **Anrufer sind Menschen:** Panik muss erst beruhigt werden, Ortsunkundige brauchen Mobilfunkortung (AML), gefährliche Anweisungen kosten Punkte, unbeantwortete Anrufer legen auf.
+- **Telefonreanimation:** Herzdruckmassage im Takt von 100–120 pro Minute anleiten.
+- **Lage wartet nicht:** Unbesetzte Lagen verschärfen sich zur Hälfte der Frist. Fristen orientieren sich an Prioritäten (P1 25, P2 45, P3 90 Minuten vor Flächenfaktor).
+- **Tempo:** ×4 ist jetzt eine 8-Stunden-Schicht in 16 Minuten statt in 2. Während eines Gesprächs läuft die Uhr langsam, klingelnde Telefone begrenzen das Tempo.
+- **Schichtlagen:** Derby, Stadtfest, Sturmfront, Blitzeis und Grippewelle bringen Hochphasen mit passenden Anrufen.
+- **Schulnote:** Tagesbericht mit Note 1–6, Aufnahmequalität, P1-Quote und Serie. Letzte Funkmeldung direkt auf der Karte.
 
-### Neu in M2: Entscheidungen statt Abwarten
-- 34 ausgearbeitete Einsatzabläufe mit Anruferdialog und Entscheidungen bei Anrufannahme, Eintreffen und Lageänderung; jede Option zeigt ihre Folgen, manche werden erst durch passende Kräfte, Ausrüstung oder Lehrgänge freigeschaltet.
-- Folgeeinsätze je nach Ergebnis und Entscheidung; Nachforderungen öffnen den Einsatz wieder.
-- SEK/MEK/Hubschrauber: knapp, teuer, mit Erholungszeit; Zweckentfremdung kostet Ruf.
+Die Notrufannahme lässt sich zwischen den Schichten abschalten. Bestehende Spielstände bleiben Schema 7 und erhalten die Notrufannahme automatisch.
 
-### Neu in M3: Karriere, Loadout, Editor
-- Karriere in vier Stufen mit Freischaltung weiterer Bundesländer; Ruf muss täglich neu verdient werden.
-- Loadout mit Slots, Traglast, Kompatibilität und Wachen-Lager; jedes Teil zeigt, welche Entscheidungen es freischaltet.
-- Visueller Ketteneditor mit Verzweigungen, Timern, Funktexten, Ortswahl, Live-Prüfung und Einsatzpaket-Export/-Import.
-- Schwierigkeitsgrade; Sandbox-Regel Ausbildungspflicht.
+Nachweis: Spiel-Bot mit je 6 Schichten auf echten Hamburger Daten. Schwacher Bot Note 3,7, mittlerer 2,7, sehr guter 2,0. Die fehlerfreie Abnahme durch einen Menschen steht aus. Kein v1.0.
 
-### Neu in M4: Einstieg und Feinschliff
-- Tutorial mit drei geführten Einsätzen, danach freie Schicht.
-- Beamte samt Ablösungen zwischen Fahrzeugen versetzen; Mindestbesatzung.
-- Entprellte Audiosignale; kompakte Kartendaten (schnelleres Laden).
-- Flächenländer fair: Fristen und Kräfte wachsen mit der Landesgröße.
-- Abnahmecheckliste: `docs/ACCEPTANCE_CLAUDE_V1.md`.
-
-### Bekannte Grenzen (ehrlich)
-- Routen sind Spielnäherungen: keine Einbahnstraßen, Abbiegeverbote oder Verkehrslage. Flächenländer haben nur das Haupt-, Stadtstaaten auch das Nebenstraßennetz.
-- Keine MapLibre-Integration: Die App bleibt bewusst ohne Internetberechtigung und ohne Tile-Server; die Karte ist eine native Canvas-Vektorkarte aus gebündelten Daten.
-- Kein menschlicher Spieltest, keine Messung auf einem physischen Gerät, Querformat und Audio-Mischung nicht abgenommen – deshalb noch kein v1.0.
-- Spielgefühl und Leistung auf physischen Mittelklassegeräten sind nicht gemessen; nur Emulator.
-
-Daten: © OpenStreetMap-Mitwirkende (ODbL) · Natural Earth (gemeinfrei) · © GeoBasis-DE/BKG · Freie und Hansestadt Hamburg (LGV/BWVI). Alle Wachen, Personen und Einsätze sind fiktiv.

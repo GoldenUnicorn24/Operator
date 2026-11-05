@@ -38,6 +38,7 @@ class NativeControlRoomTest {
     }
 
     private fun reset() {
+        MainActivity.phoneDeskDefault = false
         GameStore.awaitSaves()
         instrument.targetContext.deleteFile("einsatzleitstelle-native-v1.json")
         instrument.targetContext.deleteFile("einsatzleitstelle-native-v1.json.backup")
@@ -181,6 +182,54 @@ class NativeControlRoomTest {
      * multi-unit dispatch from the map panel, vehicles driving on the routed roads, withdrawal,
      * a full 8-hour day and the shift report.
      */
+    @Test
+    fun phoneCallFromRingingToIncident() {
+        reset()
+        MainActivity.phoneDeskDefault = true
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            waitForBaseMap(scenario)
+            lateinit var call: PhoneCall
+            scenario.onActivity { a ->
+                dismiss(a)
+                val g = game(a)
+                g.state.autoCalls = false
+                g.setShift(14, 8)
+                g.startShift()
+                g.state.phones.clear()
+                g.state.paused = true
+                call = PhoneDesk.ring(g, CallScripts.find("unfall_verletzt"))!!
+            }
+            Thread.sleep(800)
+            screenshot("native-phone-ringing.png")
+            scenario.onActivity { a -> invoke(a, "answerNext") }
+            instrument.waitForIdleSync()
+            Thread.sleep(800)
+            scenario.onActivity { a ->
+                val g = game(a)
+                PhoneDesk.ask(g, call, "wo")
+                PhoneDesk.ask(g, call, "eingeklemmt")
+                val screen = MainActivity::class.java.getDeclaredField("phoneScreen").apply { isAccessible = true }.get(a) as PhoneScreen
+                assertTrue(screen.isShowing)
+                PhoneScreen::class.java.getDeclaredMethod("render").apply { isAccessible = true }.invoke(screen)
+            }
+            Thread.sleep(1600)
+            screenshot("native-phone-call.png")
+            scenario.onActivity { a ->
+                val g = game(a)
+                val screen = MainActivity::class.java.getDeclaredField("phoneScreen").apply { isAccessible = true }.get(a) as PhoneScreen
+                val finish = PhoneScreen::class.java.getDeclaredMethod("finish", PhoneCall::class.java, CallCode::class.java).apply { isAccessible = true }
+                finish.invoke(screen, call, PhoneDesk.codes(g, call).first { it.correct })
+                assertTrue(g.state.incidents.first().requiredTypes.contains("FEUERWEHR"))
+            }
+            Thread.sleep(600)
+            screenshot("native-phone-result.png")
+            scenario.onActivity { a ->
+                (MainActivity::class.java.getDeclaredField("phoneScreen").apply { isAccessible = true }.get(a) as PhoneScreen).close()
+            }
+        }
+        MainActivity.phoneDeskDefault = false
+    }
+
     @Test
     fun incidentDeskProposalAndConfirmedDispatchUseRealStreets() {
         reset()

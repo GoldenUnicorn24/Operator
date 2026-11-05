@@ -7,8 +7,8 @@ android {
         applicationId = "de.einsatzleitstelle110"
         minSdk = 26
         targetSdk = 35
-        versionCode = 113
-        versionName = "0.12.0-lagezentrum-preview"
+        versionCode = 114
+        versionName = "0.13.0-notruf-preview"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     compileOptions {
