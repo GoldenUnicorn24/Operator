@@ -179,7 +179,7 @@ class NativePhoneDeskTest {
 
     @Test fun playerAnswersAsPoliceOfTheState() {
         val (_, c) = started("gas") ?: return
-        assertTrue(c.lines.first().substringAfter('|').startsWith("Polizei Hamburg"))
+        assertTrue(c.lines.first().substringAfter('|').startsWith("Notruf, Polizei Hamburg"))
     }
 
     @Test fun hamburgCallsRingAtTheirPlace() {
@@ -188,32 +188,35 @@ class NativePhoneDeskTest {
         assertTrue(g.region().contains(GeoPoint(c.lon, c.lat)))
     }
 
-    @Test fun radioTurnsEventsIntoTraffic() {
-        val out = RadioScript.event("Einheit unterwegs", "Peter HH 4 · 6 Sim.-Min. · Sonderrechte")
-        assertEquals(2, out.size)
-        assertTrue(out[1].text.contains("Peter HH 4"))
-        assertEquals("Peter 4", RadioScript.spoken("Peter HH 4"))
-        assertTrue(RadioScript.event("Schichtende", "x").isEmpty())
+    @Test fun radioEventsOnlyUseRecordedClips() {
+        val all = RadioScript.allClips().toSet()
+        val heard = RadioScript.event("Einheit unterwegs", "Peter HH 4 · 6 Sim.-Min.") + RadioScript.event("Am Einsatzort", "Peter HH 4 · Test") +
+            RadioScript.event("Funkstatus", "Peter HH 4 an Leitstelle: Status 2")
+        assertEquals(4, heard.size)
+        assertTrue(RadioScript.event("Einheit unterwegs", "SEK HH 4 · 6").isEmpty())
         val rnd = java.util.Random(4)
-        repeat(100) { assertTrue(RadioScript.ambient({ rnd.nextDouble() }, listOf("Peter 1")).isNotEmpty()) }
+        repeat(200) { (heard + RadioScript.ambient({ rnd.nextDouble() }, listOf("Peter HH 2", "SEK HH 1"))).forEach { l -> assertTrue(l.clips.isNotEmpty() && all.containsAll(l.clips)) } }
     }
 
-    @Test fun radioDspKeepsSpeechLevelAndFrames() {
-        val samples = ShortArray(16000) { (kotlin.math.sin(it * .09) * 12000).toInt().toShort() }
-        val data = java.nio.ByteBuffer.allocate(44 + samples.size * 2).order(java.nio.ByteOrder.LITTLE_ENDIAN)
-        data.put("RIFF".toByteArray()).putInt(36 + samples.size * 2).put("WAVEfmt ".toByteArray()).putInt(16)
-            .putShort(1).putShort(1).putInt(22050).putInt(44100).putShort(2).putShort(16).put("data".toByteArray()).putInt(0)
-        samples.forEach { data.putShort(it) }
-        val pcm = RadioDsp.parseWav(data.array())!!
-        assertEquals(22050, pcm.rate)
-        assertEquals(16000, pcm.samples.size)
-        val speech = RadioDsp.resample(pcm)
-        assertEquals(11609.0, speech.size.toDouble(), 2.0)
-        val tx = RadioDsp.transmission(speech, 1)
-        assertTrue(tx.size > speech.size)
-        assertTrue(tx.maxOf { kotlin.math.abs(it.toInt()) } > 15000)
-        assertNull(RadioDsp.parseWav(ByteArray(60)))
-        assertTrue(RadioDsp.mumble(1.0, 2).maxOf { kotlin.math.abs(it.toInt()) } > 8000)
+    @Test fun spokenLinesNameTheDistrictNotTheStreet() {
+        for (s in CallScripts.all) for (q in s.questions) assertFalse(q.answer, VoiceLines.spoken(q.answer).contains("{strasse}"))
+        val c = VoiceLines.clips("m1n", "{strasse} in {ort}, Eingang B.", "Barmbek-Nord")
+        assertEquals(listOf(VoiceClip("m1n", "In"), VoiceClip("m1", "Barmbek-Nord"), VoiceClip("m1n", "Eingang B.")), c)
+        assertTrue(VoiceLines.clips("m1n", "(Rascheln.)", "").isEmpty())
+    }
+
+    /** Set VOICE_MANIFEST=write once after changing any text, then render the clips. */
+    @Test fun voiceManifestIsInStep() {
+        val states = asset("states.geojson") ?: return
+        val bin = asset("geo/roads-DE-HH.bin") ?: return
+        val region = GeoData.parseStates(states.readText()).first { it.code == "DE-HH" }
+        val places = MapData.parseBinary("DE-HH", bin.readBytes()).places
+            .filter { region.contains(GeoPoint(it.lon, it.lat)) }.map { it.name }.distinct().sorted()
+        val g = GameController(GameState(), emptyList())
+        val lines = VoiceLines.manifest(g.allTemplates(), places).map { "${it.id}\t${it.voice}\t${it.text}" }.sorted()
+        val file = listOf(File("../tools/voices/lines.tsv"), File("tools/voices/lines.tsv")).first { it.parentFile.isDirectory }
+        if (System.getenv("VOICE_MANIFEST") == "write") file.writeText(lines.joinToString("\n") + "\n")
+        assertEquals(lines, file.readLines())
     }
 
     @Test fun cprRhythmIsMeasured() {
@@ -228,7 +231,7 @@ class NativePhoneDeskTest {
         PhoneDesk.calm(g, c)
         PhoneDesk.ask(g, c, "wo")
         PhoneDesk.advise(g, c, "cpr")
-        PhoneDesk.cprDone(c, 90)
+        PhoneDesk.cprDone(g, c, 90)
         val i = PhoneDesk.classify(g, c, PhoneDesk.codes(g, c).first { it.correct }).incident!!
         assertTrue(i.riskDelta < 0)
     }
@@ -271,7 +274,7 @@ class NativePhoneDeskTest {
                 if (sc.mood == "PANISCH" && rng.nextDouble() < skill) PhoneDesk.calm(g, c)
                 for (q in sc.questions) if (rng.nextDouble() < skill) PhoneDesk.ask(g, c, q.id)
                 if (sc.vague && rng.nextDouble() < skill) PhoneDesk.locate(g, c)
-                if (sc.cpr && rng.nextDouble() < skill) { PhoneDesk.advise(g, c, "cpr"); PhoneDesk.cprDone(c, (skill * 100).toInt()) }
+                if (sc.cpr && rng.nextDouble() < skill) { PhoneDesk.advise(g, c, "cpr"); PhoneDesk.cprDone(g, c, (skill * 100).toInt()) }
                 else sc.advice.firstOrNull { it.good == (rng.nextDouble() < skill) }?.let { PhoneDesk.advise(g, c, it.id) }
                 val codes = PhoneDesk.codes(g, c)
                 PhoneDesk.classify(g, c, if (rng.nextDouble() < .4 + skill * .6) codes.first { it.correct } else codes.first { !it.correct && !it.none })

@@ -23,7 +23,8 @@ class PhoneScreen(
     private val game: GameController,
     private val onClosed: () -> Unit,
     private val onDispatch: (IncidentState) -> Unit,
-    private val speech: SpeechDesk,
+    private val voice: VoicePlayer,
+    private val speak: () -> Boolean,
 ) {
     private val ui = UiKit(activity)
     private val handler = Handler(Looper.getMainLooper())
@@ -111,12 +112,10 @@ class PhoneScreen(
 
     private fun drain(animate: Boolean = true) {
         val c = call ?: return
-        val script = PhoneDesk.script(game, c)
-        val fresh = c.lines.drop(shownLines)
-        fresh.forEachIndexed { i, line ->
-            bubble(line, animate)
-            speech.say(line, script, flush = i == 0)
-        }
+        c.lines.drop(shownLines).forEach { bubble(it, animate) }
+        val clips = c.spoken.flatMap { VoiceLines.clips(it.substringBefore('|'), it.substringAfter('|'), c.place) }
+        c.spoken.clear()
+        if (speak() && clips.isNotEmpty()) voice.play(clips, flush = true)
         shownLines = c.lines.size
         scroll.post { scroll.fullScroll(View.FOCUS_DOWN) }
     }
@@ -167,7 +166,7 @@ class PhoneScreen(
     private fun finish(c: PhoneCall, code: CallCode) {
         val result = PhoneDesk.classify(game, c, code)
         call = null
-        speech.stop()
+        voice.stop()
         // Fill the road fields now, so opening the dispatch panel does not stall.
         result.incident?.let { i ->
             val unit = game.state.units.firstOrNull { it.region == i.region }
@@ -184,7 +183,7 @@ class PhoneScreen(
         if (next != null) action("Nächsten Anruf annehmen") {
             if (PhoneDesk.answer(game, next)) {
                 dialog.dismiss()
-                val fresh = PhoneScreen(activity, game, onClosed, onDispatch, speech)
+                val fresh = PhoneScreen(activity, game, onClosed, onDispatch, voice, speak)
                 fresh.show(next)
                 onReplace?.invoke(fresh)
             }
@@ -230,7 +229,7 @@ class PhoneScreen(
             counter.text = "Tippe im Takt: ${presses.size} / $CPR_PRESSES"
             if (presses.size >= CPR_PRESSES) {
                 pad.setOnClickListener(null)
-                PhoneDesk.cprDone(c, PhoneDesk.cprQuality(presses.zipWithNext { a, b -> b - a }))
+                PhoneDesk.cprDone(game, c, PhoneDesk.cprQuality(presses.zipWithNext { a, b -> b - a }))
                 render()
             }
         }
@@ -240,7 +239,7 @@ class PhoneScreen(
     fun close() {
         if (closing) return
         closing = true
-        speech.stop()
+        voice.stop()
         handler.removeCallbacksAndMessages(null)
         if (::dialog.isInitialized) dialog.dismiss()
         onClosed()
@@ -249,7 +248,7 @@ class PhoneScreen(
     /** Leaves the screen without further callbacks, for example when another save is loaded. */
     fun abandon() {
         closing = true
-        speech.stop()
+        voice.stop()
         handler.removeCallbacksAndMessages(null)
         if (::dialog.isInitialized) dialog.dismiss()
     }

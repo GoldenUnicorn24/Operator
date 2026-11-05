@@ -65,7 +65,7 @@ class MainActivity : Activity() {
     private var ringTick = 0
     private var radioView: TextView? = null
     private lateinit var radio: RadioChannel
-    private lateinit var speech: SpeechDesk
+    private lateinit var voice: VoicePlayer
     private val SAVE = 701
     private val LOAD = 702
     private val PORTRAIT = 703
@@ -260,7 +260,7 @@ class MainActivity : Activity() {
         game.seedUnitsIfNeeded()
         audio = NativeAudio(this)
         radio = RadioChannel(this)
-        speech = SpeechDesk(this)
+        voice = VoicePlayer(this)
         audio.muted = saved.mute
         audio.setVolumes(
             saved.masterVolume,
@@ -481,6 +481,7 @@ class MainActivity : Activity() {
     private fun updateRadio() {
         if (!::radio.isInitialized) return
         radio.volume = if (game.state.mute) 0f else game.state.masterVolume * game.state.radioVolume
+        voice.volume = game.state.masterVolume
         radio.ducked = PhoneDesk.active(game.state) != null
         radio.pump { game.state.units.filter { it.region == game.state.region }.take(24).map { it.callsign } }
     }
@@ -495,8 +496,7 @@ class MainActivity : Activity() {
     }
 
     private fun openPhone(call: PhoneCall) {
-        speech.enabled = game.state.speechEnabled
-        val screen = PhoneScreen(this, game, { phoneScreen = null; save(); updateLive() }, { openCall(it) }, speech)
+        val screen = PhoneScreen(this, game, { phoneScreen = null; save(); updateLive() }, { openCall(it) }, voice, { game.state.speechEnabled && !game.state.mute })
         screen.onReplace = { phoneScreen = it; it.onReplace = screen.onReplace }
         phoneScreen = screen
         screen.show(call)
@@ -521,7 +521,7 @@ class MainActivity : Activity() {
     override fun onPause() {
         if (::audio.isInitialized) audio.pause()
         if (::radio.isInitialized) radio.stop()
-        if (::speech.isInitialized) speech.stop()
+        if (::voice.isInitialized) voice.stop()
         foreground = false
         handler.removeCallbacks(ticker)
         if (::game.isInitialized) {
@@ -548,7 +548,6 @@ class MainActivity : Activity() {
         pendingMapPoint = null
         if (::audio.isInitialized) audio.close()
         if (::radio.isInitialized) radio.close()
-        if (::speech.isInitialized) speech.close()
         if (::map.isInitialized) map.close()
         images.evictAll()
         super.onDestroy()
@@ -1865,16 +1864,6 @@ class MainActivity : Activity() {
                 showSettings()
             }
         )
-        if (!speech.available) {
-            gap(c)
-            c.addView(action("Deutsche Stimme installieren") {
-                try {
-                    startActivity(android.content.Intent(android.speech.tts.TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA))
-                } catch (_: Exception) {
-                    toast("Bitte in den Android-Einstellungen unter Sprachausgabe eine deutsche Stimme laden.")
-                }
-            })
-        }
         gap(c)
         c.addView(
             action(

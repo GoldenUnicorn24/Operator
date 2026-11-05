@@ -28,3 +28,4 @@ playwright-report/
 test-results/
 
 .kotlin/
+.voice-models/

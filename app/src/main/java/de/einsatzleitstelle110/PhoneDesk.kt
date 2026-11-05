@@ -20,6 +20,8 @@ data class PhoneCall(
     /** Second caller about a call already in progress. */
     var duplicateOf: String = "",
     var cprQuality: Int = -1,
+    /** Spoken lines not played yet, as "voice|raw text". Not saved. */
+    val spoken: MutableList<String> = mutableListOf(),
 )
 
 data class CallCode(val title: String, val correct: Boolean, val merge: Boolean = false, val none: Boolean = false)
@@ -39,6 +41,10 @@ object PhoneDesk {
     const val PATIENCE = 8
     const val SURGE_LENGTH = 100
     const val SURGE_RATE = 2.3
+    const val CALM_LINE = "Ich bin da und schicke Hilfe. Atmen Sie einmal tief durch und antworten Sie mir kurz."
+    const val CALM_REPLY = "Ja… ja. Okay. Ich versuche es."
+    const val PANIC_LINE = "Ich weiß nicht! Beeilen Sie sich doch! Bitte!"
+    const val CPR_REPLY = "Ich mache weiter. Bitte, kommen Sie schnell."
 
     val events =
         listOf(
@@ -189,8 +195,8 @@ object PhoneDesk {
         ring(g, pick(g))
     }
 
-    /** The player answers as the police of the state, "Polizei Hamburg" in Hamburg. */
-    fun greeting(g: GameController) = "Polizei ${g.region().name}, Notruf. Wo genau ist der Notfallort?"
+    /** The player answers with "Notruf, Polizei Hamburg". */
+    fun greeting(g: GameController) = "Notruf, Polizei ${g.region().name}. Wo genau ist der Notfallort?"
 
     fun answer(g: GameController, c: PhoneCall): Boolean {
         val s = g.state
@@ -200,11 +206,18 @@ object PhoneDesk {
             s.shiftAnswered++
             val sc = script(g, c)
             c.lines.add("D|${greeting(g)}")
+            c.spoken.add("${VoiceLines.DISPATCHER}|${greeting(g)}")
             c.lines.add("C|" + fill(c, if (c.duplicateOf.isNotBlank()) "Hallo? Hier ist auch etwas bei der ${c.street}! ${sc.opening}" else sc.opening))
+            c.spoken.add("${VoiceLines.callerVoice(sc)}|${sc.opening}")
             if (sc.mood == "PANISCH") c.lines.add("S|Anrufer ist in Panik. Erst beruhigen, sonst bleiben die Antworten unbrauchbar.")
             if (sc.mood == "FLUESTERND") c.lines.add("S|Anrufer flüstert.")
         }
         return true
+    }
+
+    private fun talk(g: GameController, c: PhoneCall, who: String, raw: String) {
+        c.lines.add("$who|" + fill(c, raw))
+        c.spoken.add((if (who == "D") VoiceLines.DISPATCHER else VoiceLines.callerVoice(script(g, c))) + "|" + raw)
     }
 
     /** Put the caller back into the queue, for example when a worse call comes in. */
@@ -220,24 +233,24 @@ object PhoneDesk {
     fun calm(g: GameController, c: PhoneCall) {
         if (c.calmed) return
         c.calmed = true
-        c.lines.add("D|Ich bin da und schicke Hilfe. Atmen Sie einmal tief durch und antworten Sie mir kurz.")
-        c.lines.add("C|Ja… ja. Okay. Ich versuche es.")
+        talk(g, c, "D", CALM_LINE)
+        talk(g, c, "C", CALM_REPLY)
     }
 
     fun ask(g: GameController, c: PhoneCall, id: String): Boolean {
         val sc = script(g, c)
         val q = sc.questions.firstOrNull { it.id == id } ?: return false
         if (id in c.asked) return false
-        c.lines.add("D|${q.label}")
+        talk(g, c, "D", q.label)
         if (needsCalming(g, c)) {
-            c.lines.add("C|Ich weiß nicht! Beeilen Sie sich doch! Bitte!")
+            talk(g, c, "C", PANIC_LINE)
             return true
         }
         c.asked.add(id)
-        c.lines.add("C|" + fill(c, q.answer))
+        talk(g, c, "C", q.answer)
         if (id == "wo" && !sc.vague) c.located = true
         if (id == "wo" && sc.vague) c.lines.add("S|Keine verwertbare Ortsangabe. Mobilfunkortung (AML) anfordern.")
-        sc.beats[c.asked.size]?.let { c.lines.add("C|" + fill(c, it)) }
+        sc.beats[c.asked.size]?.let { talk(g, c, "C", it) }
         return true
     }
 
@@ -252,8 +265,8 @@ object PhoneDesk {
         val a = script(g, c).advice.firstOrNull { it.id == id } ?: return null
         if (id in c.advised) return null
         c.advised.add(id)
-        c.lines.add("D|${a.label}")
-        c.lines.add("C|${a.reply}")
+        talk(g, c, "D", a.label)
+        talk(g, c, "C", a.reply)
         return a
     }
 
@@ -263,10 +276,10 @@ object PhoneDesk {
         return (intervalsMs.count { it in 470..630 } * 100.0 / intervalsMs.size).roundToInt()
     }
 
-    fun cprDone(c: PhoneCall, quality: Int) {
+    fun cprDone(g: GameController, c: PhoneCall, quality: Int) {
         c.cprQuality = quality.coerceIn(0, 100)
         c.lines.add("S|Herzdruckmassage angeleitet · Rhythmus ${c.cprQuality} %")
-        c.lines.add("C|Ich mache weiter. Bitte, kommen Sie schnell.")
+        talk(g, c, "C", CPR_REPLY)
     }
 
     /** All possible keywords in stable order for this call. */
