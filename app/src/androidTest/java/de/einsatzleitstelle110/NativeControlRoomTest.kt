@@ -244,7 +244,10 @@ class NativeControlRoomTest {
             }
             scenario.onActivity { a ->
                 val g = game(a)
-                g.advance(1)
+                val before = g.state.elapsed
+                g.state.paused = false
+                try { g.advance(1) } finally { g.state.paused = true }
+                assertEquals("The live-filter check must advance a real simulation minute",before + 1,g.state.elapsed)
                 invoke(a,"updateLive")
                 val matches = arrayListOf<View>()
                 a.window.decorView.findViewsWithText(matches,g.state.incidents.first { it.id == callId }.title,View.FIND_VIEWS_WITH_TEXT)
