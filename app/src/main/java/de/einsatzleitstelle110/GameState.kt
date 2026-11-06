@@ -2084,6 +2084,39 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         return true
     }
 
+    /**
+     * Create a configurable custom response vehicle at a user-selected location.
+     * Existing addUnit remains compatible with the current fleet screen.
+     */
+    fun addCustomVehicle(
+        callsign: String,
+        type: String,
+        location: GeoCity,
+        vehicleName: String,
+        speedKmh: Double,
+        crewSize: Int,
+    ): Boolean {
+        if (vehicleName.isBlank() || speedKmh !in 15.0..180.0 || crewSize !in 1..12) return false
+        if (state.units.any { it.callsign.equals(callsign.trim(), ignoreCase = true) }) return false
+        if (!addUnit(callsign, type, location)) return false
+        val created = state.units.last()
+        created.vehicleName = vehicleName.trim().take(80)
+        created.vehicleSpeed = speedKmh
+        created.crew = crewSize
+        ensureRoster(created)
+        return true
+    }
+
+    /** Only player-created units can be removed; active incidents must finish first. */
+    fun removeCustomVehicle(unitId: String): Boolean {
+        if (state.phase != "PLANNING") return false
+        val unit = state.units.firstOrNull { it.id == unitId && it.id.startsWith("CUSTOM-") }
+            ?: return false
+        if (unit.incidentId.isNotBlank() || unit.status in setOf("DRIVING", "WORKING", "RETURNING")) return false
+        if (state.incidents.any { unitId in it.assignedUnits || it.assignedUnit == unitId }) return false
+        return state.units.remove(unit)
+    }
+
     /** Human-readable validation for the scenario editor (empty = valid). */
     fun validateTemplate(t: IncidentTemplate, replacing: String = ""): List<String> {
         val errors = mutableListOf<String>()
