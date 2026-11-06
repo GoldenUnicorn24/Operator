@@ -435,21 +435,32 @@ class TacticalMapView(
         }
 
         val all = mutableListOf<MapClustering.Marker<Any>>()
-        // Stations: where units are based (fictional game stations at real towns).
-        val stations = units.groupBy { "%.3f:%.3f".format(it.homeLat, it.homeLon) }
-        if (filter == "ALLE" || filter == "WACHEN")
-            for ((_, group) in stations) {
-                val h = group.first()
-                if (game.state.scope != "STATE" && !overviewWholeState && !inScope(GeoPoint(h.homeLon, h.homeLat))) continue
-                val q = t.point(h.homeLon, h.homeLat)
-                val own = game.state.chief.stations.find { it.region == h.region && it.lon == h.homeLon && it.lat == h.homeLat }
-                all.add(MapClustering.Marker(q.x, q.y, Station(h.homeLon, h.homeLat, group, own?.name ?: "Spielwache")))
+        // Official Hamburg stations are actual mapped facilities, not generated town-centre markers.
+        // User-created chief stations are separate and always visible.
+        if (filter == "ALLE" || filter == "WACHEN") {
+            if (game.state.region == "DE-HH" && HamburgStations.all.isNotEmpty()) {
+                for (station in HamburgStations.all) {
+                    if (!overviewWholeState && !inScope(station.point)) continue
+                    val q = t.point(station.lon, station.lat)
+                    val onsite = units.filter { GeoData.km(GeoPoint(it.homeLon, it.homeLat), station.point) < .1 }
+                    all.add(MapClustering.Marker(q.x, q.y, Station(station.lon, station.lat, onsite, station.name, station.category, station.address)))
+                }
+            } else {
+                val stations = units.groupBy { "%.3f:%.3f".format(it.homeLat, it.homeLon) }
+                for ((_, group) in stations) {
+                    val h = group.first()
+                    if (game.state.scope != "STATE" && !overviewWholeState && !inScope(GeoPoint(h.homeLon, h.homeLat))) continue
+                    val q = t.point(h.homeLon, h.homeLat)
+                    val own = game.state.chief.stations.find { it.region == h.region && it.lon == h.homeLon && it.lat == h.homeLat }
+                    all.add(MapClustering.Marker(q.x, q.y, Station(h.homeLon, h.homeLat, group, own?.name ?: "Spielwache")))
+                }
             }
-        if (filter == "ALLE" || filter == "WACHEN") for (station in game.state.chief.stations) {
-            if (station.region != game.state.region || (!overviewWholeState && !inScope(GeoPoint(station.lon, station.lat)))) continue
-            if (units.any { it.homeLon == station.lon && it.homeLat == station.lat }) continue
-            val q = t.point(station.lon, station.lat)
-            all.add(MapClustering.Marker(q.x, q.y, Station(station.lon, station.lat, emptyList(), station.name)))
+            for (station in game.state.chief.stations) {
+                if (station.region != game.state.region || (!overviewWholeState && !inScope(GeoPoint(station.lon, station.lat)))) continue
+                val q = t.point(station.lon, station.lat)
+                val stationed = units.filter { it.homeLon == station.lon && it.homeLat == station.lat }
+                all.add(MapClustering.Marker(q.x, q.y, Station(station.lon, station.lat, stationed, station.name)))
+            }
         }
         for (u in units) {
             if (!visible(u)) continue
@@ -597,7 +608,10 @@ class TacticalMapView(
         }
     }
 
-    private class Station(val lon: Double, val lat: Double, val units: List<UnitState>, val name: String = "Spielwache")
+    private class Station(
+        val lon: Double, val lat: Double, val units: List<UnitState>,
+        val name: String = "Spielwache", val kind: String = "CUSTOM", val address: String = "",
+    )
 
     private fun drawStation(c: Canvas, x: Float, y: Float, s: Station) {
         val free = s.units.count { game.available(it) }
@@ -613,9 +627,19 @@ class TacticalMapView(
         }
         paint(0xff0f2433.toInt())
         c.drawPath(shield, p)
-        paint(if (free > 0) 0xff6ee7b7.toInt() else 0xff8aa0ad.toInt(), 1.6f, Paint.Style.STROKE)
+        paint(when (s.kind) {
+            "POLIZEI" -> 0xff79baff.toInt()
+            "BERUFSFEUERWEHR" -> 0xffff7970.toInt()
+            "FREIWILLIGE_FEUERWEHR" -> 0xffffba72.toInt()
+            else -> if (free > 0) 0xff6ee7b7.toInt() else 0xff8aa0ad.toInt()
+        }, 1.6f, Paint.Style.STROKE)
         c.drawPath(shield, p)
-        text(c, "$free/${s.units.size}", x, y + 3.5f * density, 8f, 0xffe4f2f7.toInt(), true, true)
+        text(c, if (s.units.isNotEmpty()) "$free/${s.units.size}" else when (s.kind) {
+            "POLIZEI" -> "P"
+            "BERUFSFEUERWEHR" -> "F"
+            "FREIWILLIGE_FEUERWEHR" -> "FF"
+            else -> "+"
+        }, x, y + 3.5f * density, 8f, 0xffe4f2f7.toInt(), true, true)
     }
 
     private fun typeGlyph(type: String) =
@@ -653,6 +677,7 @@ class TacticalMapView(
             c.drawCircle(x, y, 19 * density, p)
         }
         if (u.type == "HELI") drawHelicopter(c, x, y, heading, moving) else drawVehicle(c, x, y, u, heading, moving)
+        if (u.taskforceName.isNotBlank()) pill(c, "TF", x - 13 * density, y + 11 * density, 7f, 0xfff5e663.toInt(), 0xe00b1a26.toInt())
         paint(statusColor(u))
         c.drawCircle(x + 11 * density, y - 11 * density, 6.5f * density, p)
         paint(0xff081520.toInt(), 1f, Paint.Style.STROKE)
@@ -667,7 +692,7 @@ class TacticalMapView(
         val armored = u.type == "SEK"
         val van = armored || u.type in listOf("BEREITSCHAFT", "FEUERWEHR", "RETTUNG", "HUND")
         val civil = u.type in listOf("MEK", "KRIPO")
-        val s = .62f * density
+        val s = .82f * density
         c.save()
         c.translate(x, y)
         c.rotate(if (moving) heading else 0f)
@@ -700,6 +725,16 @@ class TacticalMapView(
             p.color = if (!on) 0xff4fc3ff.toInt() else 0xff1d4f7a.toInt()
             c.drawRoundRect(RectF(0f, -6f, 6f, -2f), 1f, 1f, p)
         }
+        // Distinct top-down wheels, bonnet and windscreen (not an abstract unit dot).
+        p.color = 0xff101c2a.toInt()
+        c.drawRoundRect(RectF(-halfW - 3, -halfH + 3, -halfW, -halfH + 10), 1f, 1f, p)
+        c.drawRoundRect(RectF(halfW, -halfH + 3, halfW + 3, -halfH + 10), 1f, 1f, p)
+        c.drawRoundRect(RectF(-halfW - 3, halfH - 10, -halfW, halfH - 3), 1f, 1f, p)
+        c.drawRoundRect(RectF(halfW, halfH - 10, halfW + 3, halfH - 3), 1f, 1f, p)
+        p.color = 0xff91b6c8.toInt()
+        c.drawRoundRect(RectF(-halfW + 2, -halfH + 4, halfW - 2, -halfH + 8), 1f, 1f, p)
+        p.color = if (civil) 0xffaebac2.toInt() else 0xff0c4b75.toInt()
+        c.drawRoundRect(RectF(-halfW + 2, 8f, halfW - 2, 11f), 1f, 1f, p)
         p.color = 0xfff8f5ce.toInt()
         c.drawRect(-halfW + 1, -halfH + 1, -halfW + 4, -halfH + 3, p)
         c.drawRect(halfW - 4, -halfH + 1, halfW - 1, -halfH + 3, p)
@@ -928,7 +963,8 @@ class TacticalMapView(
             is IncidentState -> onCall(value)
             is Station ->
                 AlertDialog.Builder(context)
-                    .setTitle("${value.name} · fiktiv")
+                    .setTitle(value.name + if (value.kind == "CUSTOM") " · eigene Spielwache" else " · offizieller Standort")
+                    .setMessage(value.address.ifBlank { null })
                     .setItems(value.units.map { describe(it) }.toTypedArray()) { _, i -> onUnit(value.units[i]) }
                     .setPositiveButton("Heranzoomen") { _, _ -> focus(value.lon, value.lat) }
                     .setNegativeButton("Schließen", null)
