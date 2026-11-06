@@ -631,7 +631,7 @@ class TacticalMapView(
     }
 
     private fun drawVehicle(c: Canvas, t: Transform, x: Float, y: Float, u: UnitState) {
-        if (u.type == "HELI") {
+        if (u.vehicleClass == "HELI" || (u.vehicleClass == "AUTO" && u.type == "HELI")) {
             drawHelicopter(c, x, y, u)
             return
         }
@@ -651,15 +651,17 @@ class TacticalMapView(
                 "FEUERWEHR" -> 0xfffa816e.toInt()
                 else -> 0xff68c9ff.toInt()
             }
-        val armored = u.type == "SEK" || u.type == "TASKFORCE"
-        val van = armored || u.type in listOf("BEREITSCHAFT", "FEUERWEHR", "RETTUNG")
+        val armored = u.vehicleClass == "GESCHUETZT" ||
+            (u.vehicleClass == "AUTO" && u.type in listOf("SEK", "TASKFORCE"))
+        val van = u.vehicleClass in listOf("VAN", "LKW", "GESCHUETZT", "SUV") ||
+            (u.vehicleClass == "AUTO" && (armored || u.type in listOf("BEREITSCHAFT", "FEUERWEHR", "RETTUNG")))
         c.save()
         c.translate(x, y)
         c.rotate(angle)
         paint(0x99020a10.toInt())
         c.drawOval(RectF(-13 * density, -22 * density, 14 * density, 23 * density), p)
-        val halfW = if (van) 10f else 8f
-        val halfH = if (van) 18f else 16f
+        val halfW = if (u.vehicleClass == "LKW") 12f else if (van) 10f else 8f
+        val halfH = if (u.vehicleClass == "LKW") 21f else if (van) 18f else 16f
         paint(0xff071018.toInt())
         for (side in listOf(-1, 1)) for (end in listOf(-1, 1)) c.drawRoundRect(
             RectF(
@@ -674,7 +676,8 @@ class TacticalMapView(
         )
         paint(
             if (armored) 0xff333a49.toInt()
-            else if (u.type in listOf("MEK", "KRIPO")) 0xff8a949c.toInt() else 0xffd7e2e7.toInt()
+            else if (u.vehicleClass == "ZIVIL" || u.type in listOf("MEK", "KRIPO")) 0xff8a949c.toInt()
+            else 0xffd7e2e7.toInt()
         )
         c.drawRoundRect(
             RectF(-halfW * density, -halfH * density, halfW * density, halfH * density),
@@ -689,7 +692,7 @@ class TacticalMapView(
             2 * density,
             p,
         )
-        if (u.type !in listOf("MEK", "KRIPO")) {
+        if (u.vehicleClass != "ZIVIL" && u.type !in listOf("MEK", "KRIPO")) {
             paint(tint)
             c.drawRect(-halfW * density, -3 * density, halfW * density, 4 * density, p)
             paint(0xffe3f6ff.toInt())
