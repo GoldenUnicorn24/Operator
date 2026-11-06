@@ -252,6 +252,7 @@ class MainActivity : Activity() {
         window.statusBarColor = dark
         window.navigationBarColor = dark
         val regions = GeoData.load(this)
+        HamburgStations.load(this)
         val saved = GameStore.load(this) ?: GameState(phoneEnabled = phoneDeskDefault)
         if (saved.phase == "RUNNING") saved.paused = true
         moveToHamburg(saved)
@@ -1093,6 +1094,25 @@ class MainActivity : Activity() {
             gap(c, 14)
         }
         c.addView(text("Fahrzeug: ${u.vehicleName} · Zustand ${u.vehicleCondition}%", 14f, muted))
+        if (u.taskforceName.isNotBlank()) c.addView(text("Taskforce: ${u.taskforceName} · ${u.customCapabilities.joinToString(" + ") { roleName(it) }}", 13f, mint))
+        if (u.id.startsWith("CUSTOM-")) {
+            gap(c)
+            c.addView(action("Taskforce / Fähigkeiten bearbeiten") { editTaskforce(u) })
+            gap(c)
+            c.addView(action("Eigene Einheit löschen") {
+                AlertDialog.Builder(this)
+                    .setTitle("${u.callsign} endgültig löschen?")
+                    .setMessage("Nur selbst erstellte und nicht eingesetzte Fahrzeuge können während der Planung gelöscht werden.")
+                    .setPositiveButton("Löschen") { _, _ ->
+                        if (game.removeCustomVehicle(u.id)) {
+                            sheet?.dismiss()
+                            refresh()
+                        } else toast("Einheit ist noch im Einsatz oder die Schicht läuft.")
+                    }
+                    .setNegativeButton("Abbrechen", null)
+                    .show()
+            })
+        }
         gap(c)
         c.addView(
             action("Fahrzeug warten · ${euro((100-u.vehicleCondition)*25)}") {
@@ -1664,61 +1684,100 @@ class MainActivity : Activity() {
     }
 
     private fun editUnit() {
-        if (game.state.mode != "SANDBOX") { showChief(); return }
         val c = column()
-        title(c, "Einheit einstellen")
-        val name = field("Funkrufname")
+        title(c, "Eigenes Einsatzfahrzeug", "Fahrzeug, Personal und Heimatwache selbst festlegen.")
+        gap(c)
+        val name = field("Funkrufname, z. B. Peter 24/1")
+        val vehicle = field("Fahrzeugbezeichnung, z. B. BMW 5er FuStW")
         c.addView(name)
-        val types =
-            listOf(
-                "STREIFE",
-                "SEK",
-                "MEK",
-                "KRIPO",
-                "BEREITSCHAFT",
-                "HUND",
-                "VERKEHR",
-                "HELI",
-                "RETTUNG",
-                "FEUERWEHR",
-            )
+        c.addView(vehicle)
+        val types = listOf("STREIFE", "SEK", "MEK", "KRIPO", "BEREITSCHAFT", "HUND", "VERKEHR", "HELI", "RETTUNG", "FEUERWEHR")
         val type = choices(types.map { roleName(it) })
+        c.addView(text("Primäre Einheit", 13f, muted))
         c.addView(type)
-        val cities =
-            if (game.state.scope == "STATE") game.region().cities
-            else
-                listOf(
-                    OperationsAreas.sample(game.region(), game.state.scope, java.util.Random())
-                        .let { GeoCity(scopeName(), it.lon, it.lat) }
-                )
-        val location = choices(cities.map { it.name })
-        c.addView(text("Fiktiver Heimatstandort", 13f, muted))
-        c.addView(location)
+        val speed = field("Fahrtempo in km/h", "65", true)
+        val crew = field("Besatzungsgröße (1–8)", "2", true)
+        c.addView(speed)
+        c.addView(crew)
+        val locations: List<Pair<String, GeoCity>> =
+            if (game.state.region == "DE-HH") {
+                HamburgStations.all.filter { game.inScope(it.point) }.map {
+                    it.category to GeoCity(it.name, it.lon, it.lat)
+                } + game.state.chief.stations.filter { it.region == "DE-HH" && game.inScope(GeoPoint(it.lon, it.lat)) }.map {
+                    "CUSTOM" to GeoCity(it.name + " (eigene Dienststelle)", it.lon, it.lat)
+                }
+            } else game.region().cities.map { "SIMULATION" to it }
+        val station = choices(locations.map { it.second.name })
+        c.addView(text("Heimatwache · Hamburg: amtlich geprüfte Standorte oder eigene Wache", 13f, muted))
+        c.addView(station)
+        c.addView(text("Polizei muss an eine Polizeiwache, Rettungsdienst an eine Berufsfeuerwehr, Feuerwehr an eine Feuerwehrwache. Eine selbst gegründete Wache ist frei nutzbar.", 12f, muted))
         gap(c)
-        c.addView(
-            text(
-                "Jeder neue Beamte erhält seine persönliche P99 und Grundausstattung ohne separaten Waffenkauf.",
-                13f,
-                muted,
-            )
-        )
+        c.addView(action("Eigene Dienststelle gründen") { sheet?.dismiss(); showChief() })
         gap(c)
-        c.addView(
-            action("Einheit einstellen", true) {
-                if (
-                    cities.isNotEmpty() &&
-                        game.addUnit(
-                            name.text.toString(),
-                            types[type.selectedItemPosition],
-                            cities[location.selectedItemPosition],
-                        )
-                ) {
-                    sheet?.dismiss()
-                    refresh()
-                } else toast("Name, Budget und Standort prüfen.")
+        c.addView(action("Fahrzeug und Einheit erstellen · 25.000 €", true) {
+            val location = locations.getOrNull(station.selectedItemPosition)
+            val selectedType = types[type.selectedItemPosition]
+            val selectedCrew = crew.text.toString().toIntOrNull()
+            val selectedSpeed = speed.text.toString().toDoubleOrNull()
+            if (location == null || selectedCrew == null || selectedSpeed == null) {
+                toast("Bitte alle Fahrzeugdaten und den Standort angeben.")
+                return@action
             }
-        )
-        showSheet("Personal & Fahrzeug", c)
+            val category = location.first
+            val compatible = when (selectedType) {
+                "RETTUNG" -> category == "BERUFSFEUERWEHR"
+                "FEUERWEHR" -> category in listOf("BERUFSFEUERWEHR", "FREIWILLIGE_FEUERWEHR")
+                else -> category == "POLIZEI"
+            }
+            if (category != "CUSTOM" && category != "SIMULATION" && !compatible) {
+                toast("Diese Dienststelle passt nicht zur gewählten Einheit.")
+                return@action
+            }
+            if (game.addCustomVehicle(
+                    name.text.toString(), selectedType, location.second, vehicle.text.toString(),
+                    selectedSpeed, selectedCrew,
+                )) {
+                val created = game.state.units.last()
+                save()
+                showUnit(created)
+            } else toast("Erstellung nicht möglich: Planungsphase, Personal, Werte oder Budget prüfen.")
+        })
+        showSheet("Eigene Einheit erstellen", c)
+    }
+
+    private fun editTaskforce(u: UnitState) {
+        if (!u.id.startsWith("CUSTOM-")) {
+            toast("Taskforces lassen sich nur für selbst erstellte Einheiten festlegen.")
+            return
+        }
+        val c = column()
+        title(c, "Taskforce konfigurieren", u.callsign)
+        c.addView(text("Eine kombinierte Einheit kann mehrere Einsatzarten gleichzeitig abdecken. Die gewählten Fähigkeiten beeinflussen die Alarmierung.", 13f, muted))
+        val title = field("Name der Taskforce", u.taskforceName.ifBlank { "Taskforce ${u.callsign}" })
+        c.addView(title)
+        val types = listOf("STREIFE", "SEK", "MEK", "KRIPO", "BEREITSCHAFT", "HUND", "VERKEHR", "HELI", "RETTUNG", "FEUERWEHR")
+        val checks = types.map { type ->
+            CheckBox(this).apply {
+                text = roleName(type)
+                setTextColor(ink)
+                isChecked = type in u.customCapabilities || (u.customCapabilities.isEmpty() && type == u.type)
+                minHeight = dp(44)
+                c.addView(this)
+            }
+        }
+        gap(c)
+        c.addView(action("Alle Fähigkeiten wählen") {
+            checks.forEach { it.isChecked = true }
+        })
+        gap(c)
+        c.addView(action("Taskforce speichern", true) {
+            val selected = types.filterIndexed { i, _ -> checks[i].isChecked }.toSet()
+            if (game.configureTaskforce(u.id, title.text.toString(), selected)) {
+                save()
+                showUnit(u)
+            } else toast("Taskforce kann nur während der Planung mit freier eigener Einheit geändert werden.")
+        })
+        showSheet("Taskforce", c)
     }
 
     private fun showSettings() {
