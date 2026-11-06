@@ -2132,7 +2132,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         speedKmh: Double,
         crewSize: Int,
     ): Boolean {
-        if (vehicleName.isBlank() || speedKmh !in 15.0..180.0 || crewSize !in 1..12) return false
+        if (vehicleName.isBlank() || speedKmh !in 15.0..180.0 || crewSize !in 1..8) return false
         if (state.units.any { it.callsign.equals(callsign.trim(), ignoreCase = true) }) return false
         if (!addUnit(callsign, type, location)) return false
         val created = state.units.last()
