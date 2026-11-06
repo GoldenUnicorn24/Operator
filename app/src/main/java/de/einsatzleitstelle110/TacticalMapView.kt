@@ -964,7 +964,7 @@ class TacticalMapView(
             is Station ->
                 AlertDialog.Builder(context)
                     .setTitle(value.name + if (value.kind == "CUSTOM") " · eigene Spielwache" else " · offizieller Standort")
-                    .setMessage(value.address.ifBlank { null })
+                    .setMessage(value.address.takeIf { it.isNotBlank() })
                     .setItems(value.units.map { describe(it) }.toTypedArray()) { _, i -> onUnit(value.units[i]) }
                     .setPositiveButton("Heranzoomen") { _, _ -> focus(value.lon, value.lat) }
                     .setNegativeButton("Schließen", null)
