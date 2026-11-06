@@ -362,7 +362,9 @@ class TacticalMapView(
                 c.drawCircle(q.x, q.y, 55 * density, p)
             }
         if (showCoverage)
-            for (city in t.region.cities) {
+            for (city in if (game.state.region == "DE-HH")
+                game.stations().map { GeoCity(it.name, it.lon, it.lat) }
+            else t.region.cities) {
                 val q = t.point(city.lon, city.lat)
                 paint(0x1468d9cc)
                 c.drawCircle(q.x, q.y, 58 * density, p)
@@ -409,14 +411,23 @@ class TacticalMapView(
                 val q = t.point(i.lon, i.lat)
                 all.add(MapClustering.Marker(q.x, q.y, i))
             }
-        if (filter == "ALLE" || filter == "WACHEN")
-            for (city in
-                t.region.cities.filter {
+        if (filter == "ALLE" || filter == "WACHEN") {
+            if (game.state.region == "DE-HH") {
+                for (station in game.stations().filter {
                     overviewWholeState || inScope(GeoPoint(it.lon, it.lat))
                 }) {
-                val q = t.point(city.lon, city.lat)
-                all.add(MapClustering.Marker(q.x, q.y, city))
+                    val q = t.point(station.lon, station.lat)
+                    all.add(MapClustering.Marker(q.x, q.y, station))
+                }
+            } else {
+                for (city in t.region.cities.filter {
+                    overviewWholeState || inScope(GeoPoint(it.lon, it.lat))
+                }) {
+                    val q = t.point(city.lon, city.lat)
+                    all.add(MapClustering.Marker(q.x, q.y, city))
+                }
             }
+        }
         val inside =
             all.filter {
                 it.x >= -30 * density &&
@@ -431,7 +442,8 @@ class TacticalMapView(
                 when (val value = cluster.members[0].value) {
                     is UnitState -> drawVehicle(c, t, cluster.x, cluster.y, value)
                     is IncidentState -> drawCall(c, cluster.x, cluster.y, value, now, paused)
-                    is GeoCity -> drawFacility(c, cluster.x, cluster.y)
+                    is GeoCity -> drawFacility(c, cluster.x, cluster.y, "SPIEL")
+                    is DispatchStation -> drawFacility(c, cluster.x, cluster.y, value.type)
                 }
         }
         val countUnits = all.count { it.value is UnitState }
@@ -534,15 +546,25 @@ class TacticalMapView(
         c.drawPath(roadPath, p)
     }
 
-    private fun drawFacility(c: Canvas, x: Float, y: Float) {
-        paint(0xff98aab6.toInt())
+    private fun drawFacility(c: Canvas, x: Float, y: Float, kind: String) {
+        paint(when (kind) {
+            "POLIZEI" -> 0xff75adf4.toInt()
+            "BERUFSFEUERWEHR", "FREIWILLIGE_FEUERWEHR" -> 0xfff18d7b.toInt()
+            "RETTUNG" -> 0xff94e4b4.toInt()
+            else -> 0xffb7b4e8.toInt()
+        })
         c.drawRoundRect(
             RectF(x - 9 * density, y - 9 * density, x + 9 * density, y + 9 * density),
             3 * density,
             3 * density,
             p,
         )
-        text(c, "W", x - 4 * density, y + 4 * density, 10f, 0xff10232e.toInt(), true)
+        val label = when (kind) {
+            "POLIZEI" -> "P"
+            "BERUFSFEUERWEHR", "FREIWILLIGE_FEUERWEHR" -> "F"
+            else -> "W"
+        }
+        text(c, label, x - 4 * density, y + 4 * density, 10f, 0xff10232e.toInt(), true)
     }
 
     private fun drawCall(
@@ -629,7 +651,7 @@ class TacticalMapView(
                 "FEUERWEHR" -> 0xfffa816e.toInt()
                 else -> 0xff68c9ff.toInt()
             }
-        val armored = u.type == "SEK"
+        val armored = u.type == "SEK" || u.type == "TASKFORCE"
         val van = armored || u.type in listOf("BEREITSCHAFT", "FEUERWEHR", "RETTUNG")
         c.save()
         c.translate(x, y)
@@ -773,6 +795,7 @@ class TacticalMapView(
                                     else "")
                             is IncidentState -> "P${it.priority} · ${it.title}"
                             is GeoCity -> "Spielwache ${it.name} · fiktiv"
+                            is DispatchStation -> "${it.name} · ${if (it.custom) "eigene Wache" else "amtlicher Standort"}"
                             else -> "Objekt"
                         }
                     }
@@ -786,6 +809,7 @@ class TacticalMapView(
                         is UnitState -> GeoPoint(first.lon, first.lat)
                         is IncidentState -> GeoPoint(first.lon, first.lat)
                         is GeoCity -> GeoPoint(first.lon, first.lat)
+                        is DispatchStation -> GeoPoint(first.lon, first.lat)
                         else -> null
                     }
                 geo?.let { focus(it.lon, it.lat) }
@@ -798,6 +822,15 @@ class TacticalMapView(
         when (value) {
             is UnitState -> onUnit(value)
             is IncidentState -> onCall(value)
+            is DispatchStation ->
+                AlertDialog.Builder(context)
+                    .setTitle(value.name)
+                    .setMessage(
+                        "${value.address}\n${if (value.custom) "Eigene Spielwache" else "Amtlicher Standort · Hamburger Geodaten"}"
+                    )
+                    .setPositiveButton("Auf Karte") { _, _ -> focus(value.lon, value.lat) }
+                    .setNegativeButton("Schließen", null)
+                    .show()
             is GeoCity ->
                 AlertDialog.Builder(context)
                     .setTitle("Spielwache ${value.name}")
