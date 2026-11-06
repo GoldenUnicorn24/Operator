@@ -1,368 +1,800 @@
-0000a1dac3eee3	m2n	Mir ist schon etwas schwindelig.
 000d87e3eef5c6	m2	Eilbek
 002c5ebeabc7db	m1	Nienstedten
 004026445ef456	f1	Hoheluft-West
 005cb46f7d6c6a	f3	Nienstedten
+0064ae14aede93	f5	Wohldorf-Ohlstedt
 007038b5879a52	m2	Gut Moor
 00730dcc3051e9	d	Fällt etwas Besonderes daran auf?
+0077858a6d6fb3	f9	Eimsbüttel
 0091ea2baa3b8d	d	Behalten Sie die Stelle im Blick und werfen Sie etwas Schwimmfähiges zu.
-009abe9cd4a287	m2n	Nein, ein ganz normaler blauer Rucksack.
+00a378672583fd	f7a	In
 00ac1ce96da0e4	f3	Ochsenwerder
-00ac22da69b86f	m2a	Eine gefährdete Person wird in einem großen Suchraum vermisst. Mehrere Spezialfähigkeiten müssen zusammenarbeiten.
+00b1c501e4dbde	m8	Lokstedt
+00b40618c19d9f	m5	Marienthal
 00c5be870c32fb	m2n	Eine eingerichtete Umleitung ist überlastet. Beschilderung und Verkehrslage müssen überprüft werden.
 0103cc3a5ea7e3	r0	Peter 6
+01121cb9117638	m5	Bramfeld
+013266a02ef5e4	f5	Osdorf
+0136800870e9fc	m8	Hamm
+0144899e2062b1	f7	Billstedt
 014d057a453eee	r2	auf Wache.
 0152a528816b0c	f1	Othmarschen
+015850929d64e0	m7p	Er wird ganz blau im Gesicht! Bitte, was soll ich tun?!
+0199d3e0895e13	f4	Hausbruch
+0215fcf4689661	m4	St. Georg
 0268c093ace927	r1	hat verstanden, wir fahren an.
-02aa33f4783aed	m2p	Ich mache weiter. Bitte, kommen Sie schnell.
+02a1fc11817d42	m6	Wandsbek
+02c4a72b1966c3	m4	Marmstorf
+02c4f83d5d89aa	m3	St. Pauli
+02c570c1639be9	m8	Lemsahl-Mellingstedt
+02d070266c6fb2	f5	Hoheluft-Ost
+02f1461df9fe03	m5	Francop
+02f37bc718a840	f5	Moorburg
 0318339d448583	f3	Eidelstedt
-039206ec5732fa	m2a	kurz hinter der Kreuzung.
+031ef65d35c8bb	m8	Langenhorn
+039277b0e36dab	m6a	Dicker schwarzer Rauch, er zieht schon ins Treppenhaus.
 03cc9ad19515f9	d	Fällt etwas auf daran?
-03e021751eef45	f1w	Ja, danke. Das wäre sehr nett.
+03dba1772079a6	m2a	Bin rechts, Warnblinker ist an.
 03ee0cf8b2e950	f3	Lokstedt
+0402ac887555c2	m7	Ohlsdorf
+0426d23a9c8869	m7	Langenhorn
+04428ab1e8691c	m9	Wellingsbüttel
+0446f5813f410a	f5	Neuland
+04795f0498e228	m6	Sülldorf
+049e226187e399	m5a	Mit Gewalt? Ich weiß nicht, die Tür klemmt doch…
+04a3ab838022bb	m3a	Hilfe, Polizei! Ein Alien ist in unseren Kühlschrank geflogen!
+04c3958ea9da84	m3	Bergstedt
+04c9aa044a4843	m7	Sülldorf
 04e10a3e5edf4f	r3	Nehmen den Sachverhalt auf, dauert noch zehn Minuten.
+05029af1246118	m4	Stellingen
 051307690d0547	m1	Ottensen
-059a1abdd81461	m2w	Am Sandtorkai, Block E, drittes Obergeschoss.
+056a117400f354	m9	Francop
+05741ce43337ba	f4	Rothenburgsort
 05a2422a49ef2e	m1	Eilbek
 05c67edb3f9da1	f2	Wellingsbüttel
+05fe638498b68a	m9	Wohldorf-Ohlstedt
+060cc7078af2b0	m4	Barmbek-Nord
 06329fafb62d8f	f1	Alsterdorf
-06669ce2201beb	f1n	Die Tonnen stehen immer noch draußen. Das geht doch nicht.
+06a2799ff0cacc	m6	Neuland
+06da1e3a44bd45	m4	Billstedt
 06f3b06f96938c	m2	Sasel
+0701825d7baf43	m9n	Ein geplanter Transport benötigt Verkehrskoordination. Die vereinbarten Zufahrten und Wartebereiche müssen nutzbar bleiben.
 070fdb52a0f38b	f3	Jenfeld
+071cdcb429fa28	m3a	In der Bankfiliale hält ein Mann Kunden fest, er verlangt ein Fluchtfahrzeug!
+073472fa60f7e6	f7	Bergedorf
+074bb2d18b1136	f4w	Hausnummer zwölf.
 076cc404f2df2f	d	Lassen Sie die Karte über den Sperr-Notruf 116 116 sperren.
+0774bd8c422b6a	f6	Waltershof
 077b8369c7dda1	d	Öffnen Sie die Tür und reden Sie ihm gut zu.
+07b69a7009e468	m6	Rönneburg
+07be2f8da7c6f7	f8	Veddel
+07c21036a6a637	m3a	Am Bahnsteig steht ein Rucksack, seit einer halben Stunde, keiner gehört dazu.
+07ca72f9188879	m7a	Ja… ja. Okay. Ich versuche es.
+07d6c62d03da22	m7	Neuenfelde
 08154f60476616	r3	Fußstreife Landungsbrücken beendet, frei über Funk.
+083d7f06803caf	f8	Reitbrook
+089311ba1b3af4	m7	Eidelstedt
+089aa6f92ac364	m7p	Gut, ich mache mit. Sagen Sie mir den Takt!
+089dce239326ab	m6	Barmbek-Nord
+089ff36b6ee9ec	m9	Borgfelde
+08ad22c2c265e4	f8	Sülldorf
+08b45ada89bdfe	m4	Hamburg
+08c7b3fb21de54	m7p	Warten?! Ich soll einfach nur zusehen?
 08cf5cb0ed8e45	f2	Sternschanze
-08cfdd6d366fb7	m1n	Das mache ich sofort, danke.
+08d0af1186b582	f4	Wohldorf-Ohlstedt
+08da319d15601b	m9	Ottensen
 08e76ab386beca	m1	Wandsbek
 091d59233c9fa2	m1	Sülldorf
 094a50a3c09612	m1	Spadenland
+097b191daec203	f8	Lokstedt
 09819faacef070	f1	Bahrenfeld
-0a38d257dae808	f2w	Sie kommen die Treppe hoch… ich höre Schritte!
-0a68a4c3d5bc14	m1a	Keine Ahnung, ich fahre hier schon ewig. Irgendwo vor der nächsten Ausfahrt!
+09a0bb07ff4430	f5	Gut Moor
+09aa6fb33f77e6	f8	Rahlstedt
+09e0f9eb9a00df	m3	Altona-Altstadt
+09edb47fac12b7	m9	Othmarschen
+0a1fb66591cf71	m4	Winterhude
+0a4d5055868a7f	m9	Hamburg
+0a8f2e0e9818aa	m6	Allermöhe
+0ab74038e31129	m7	Duvenstedt
 0ae7aaea43e486	f3	Othmarschen
 0b20b41ff5331d	r0	Peter 4
 0b48a484e499cf	d	Haben Sie einen Schlüssel?
-0b8bf2efdc0dd7	f1a	Im Club am Spielbudenplatz, Damentoilette, erste Etage.
-0bb48f16f650ae	m1a	Am Volksparkstadion, Vorplatz Nord, Parkplatz Blau.
+0b4da9c96232c1	m6a	Völlig verwirrt. Er redet mit sich selbst.
+0b551546acb7bd	m4	Uhlenhorst
+0b6df091da0032	m7	Sasel
+0b7222112c0389	m5	Groß Flottbek
+0b7d1ba2b70c73	m9	Jenfeld
+0bb42df2768cc8	f8	Hausbruch
 0bb557a0f5c35e	f3	Hoheluft-West
+0bb559fbc7c5fd	f7	Bergstedt
 0bbd0d372d30e7	f1	Farmsen-Berne
+0be88ee928d797	f8	Lohbrügge
+0c05ba9ba41c93	m5	Reitbrook
 0c108c12264700	f2	Moorfleet
-0c22f72c1f4c49	f1n	Rote Jacke, Bolzenschneider im Rucksack.
+0c269d3c08a78f	f4	Barmbek-Nord
+0c2cef6dde339c	m7a	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
+0c53add388b87c	f5	Blankenese
 0c5d026306e1c3	f3	Eilbek
+0c5d0b5ae85661	m6	Fuhlsbüttel
 0c881c5e0ad978	m1	Hamburg
+0ca4bc6c20e5e4	f9a	. Sie wohnt im Erdgeschoss.
+0cb5f4f3b953b3	f4	Tatenberg
 0d2127f5e17fe4	m1	Gut Moor
-0e1461dc3b1b58	m1n	Ein geplanter Transport benötigt Verkehrskoordination. Die vereinbarten Zufahrten und Wartebereiche müssen nutzbar bleiben.
+0d27df1b38b52c	m8n	Vor mir fährt einer in Schlangenlinien über die Elbbrücken.
+0d2e8bd47f1ed0	m9n	Ein Baum liegt quer über der Landstraße, ich habe gerade noch bremsen können!
+0d7ddc708e97b9	f4	Billbrook
+0d88d98399ffec	m7	Hoheluft-West
+0d8ef441f2fbac	f6	Heimfeld
+0dae7ee2ad3a6c	m3n	Eine Wandergruppe hat ein Mitglied aus den Augen verloren. Suchbereiche müssen verteilt und Hinweise gesammelt werden.
+0df6b217513b01	m5n	Vor der Kneipe prügeln sich vier, fünf Leute! Einer liegt am Boden!
+0e026663f6b2b5	m3	Bramfeld
 0e170038d7a73a	f2	HafenCity
+0e18117fd8454c	m5	Jenfeld
+0e309e722d284d	m4	Lokstedt
 0e47a3f0eab1a5	f2	Altona-Nord
 0e6bf791ea241b	r1	Fahren jetzt die Stresemannstraße ab.
 0e6d08c98d514f	f1	Billwerder
-0f4709563e3aed	f3p	Ja, ein Mann schwimmt hin, die Strömung zieht aber stark!
+0eaad0f865689d	m8a	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
+0f199675bf5512	m7n	Ein weiträumiges Ereignis erfordert ein gemeinsames Lagebild. Luftbeobachtung und Ansprechpartner am Boden werden koordiniert.
+0f2970d3ebe052	m7	Nettelnburg
+0f39c1409e3d54	m4	Lürade
+0f4b6ddd3be082	m6n	Nein, akut nicht, soweit ich das sehe.
+0f6b0445698b36	f5n	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
 0f6b9882094c8b	d	Haben Sie das Kennzeichen gesehen?
 0f7b045f4fc913	m1	Steinwerder
-0f9cc9b32a905d	m2p	Warten?! Ich soll einfach nur zusehen?
+0faaa9d4fd07a5	m8n	Am Stadtparksee, Weg zur Freilichtbühne.
 0fcd6fc4539c68	f3	Francop
+0ff4203213fbf6	f4	Othmarschen
+1007bdd34ca080	f7	Langenbek
 100fcc2eccc446	f1	Hohenfelde
-101628609cbb2e	m2p	Gut, ich mache mit. Sagen Sie mir den Takt!
 102dd652d44de0	m2	Neuenfelde
-10a31991be94f1	m1n	Eine Zeugin meldet ein beschädigtes Fahrzeug und hat ein Teilkennzeichen notiert.
-113c7c61d97a2a	m2n	Seit Stunden dröhnt Bass aus der Wohnung über mir. Ich muss um fünf zur Arbeit.
+105646b16100ac	f4n	Ich klingle bei den Nachbarn.
+1060ca5d17adcb	m6	Altona-Nord
+107d7a3f829297	m4n	Mehrere Geschädigte melden denselben Online-Anbieter. Anzeigen und Belege sollen gebündelt werden.
+1082cd4c89c89c	f9	HafenCity
+109e209e435d67	m8	Altona-Altstadt
+10b62c8c9d8fd9	f8	Rönneburg
+10dd8978450fa7	m4	Hohenfelde
+1118f81f24e75d	m9	Winterhude
+11519df70d8a0d	m4	Tonndorf
+1166c9496fcb8b	m9n	Im Hamburger Hafenumfeld kam es zu einem Zusammenstoß. Zufahrten und Aufnahme brauchen getrennte Kräfte.
+1189db4bc22298	f7	Dulsberg
 119a1c0b007e23	m1	Eimsbüttel
 11b7ed3b6f8aef	m2	Altenwerder
+11db6536201ad3	f4	Lürade
+11fc9738c920b0	m6	Lokstedt
+12160f65d542b9	f9	Curslack
+125e208711591f	m7	Bahrenfeld
+126182d03c4cc7	m3	Neuallermöhe
 1262f6dabe844f	d	Was hat sie zu sich genommen?
 128a9aced07713	m1	Rönneburg
-136b7a97018735	f1a	Das bringt doch nichts, oder?
+12ca12187af112	m7	Marienthal
+12d409263099b8	f5	Ohlsdorf
+12d4780a9ee58a	m8n	Ein aktueller Hinweis soll überprüft werden. Beobachtung und reguläre Aufnahme müssen getrennt koordiniert werden.
+12f8b6d5d257b5	f4	Steinwerder
+130842f929592e	m6n	Ich sage dem Mitarbeiter am Schalter Bescheid.
+1310799cbd589c	f3p	Mein Mann läuft zum Eiswagen, ich bleibe hier.
+133f05cb922ee0	f4	Waltershof
+134f29189ceaba	m4	Ottensen
+136b1cd627ddd1	f7	Schnelsen
+1382c0cb0906c0	m9	Hoheluft-Ost
 13bed711a1bea2	f2	Rothenburgsort
+13c64b5f58cfe5	f4	Volksdorf
+1407299ad99424	m8n	Nein, verletzt ist keiner.
+14230485118af1	f8	Harvestehude
+145815f9d8a31d	f8	Tatenberg
+1479172318e3eb	m6a	Ja… ja. Okay. Ich versuche es.
 149c75e837c689	r2	Fußstreife Landungsbrücken beendet, frei über Funk.
 14a2585e7b1589	m1	Winterhude
-14a7a9b053b259	m1n	Rauschen. Eine Frauenstimme flüstert etwas, dann wird aufgelegt.
-14f30cd873c150	f3a	Ausschlafen? Das sieht aber gar nicht gut aus.
-152ffdb33a6b0f	f1n	Ich soll den aufmachen?
+14ba67886146e1	f9	Wellingsbüttel
+14c5bdbfd2f963	m4	Barmbek-Süd
+14cca6e3995645	m7n	Moin. Hier am Fischmarkt ist ein Lieferwagen in einen Stand gefahren.
+14df69d82a9d20	m7	Wilstorf
+1500d0eb0ad327	f6	Eilbek
+1538fff1ce6d8e	f9	Neuallermöhe
 15430894a9f649	r1	Peter 21
+154c55929deb68	f5	Eppendorf
 15550de57e2c39	m2	Billstedt
+155df0f4bc6681	f5p	Am Ufer, beim Weg… ich bin hier nur spazieren, ich kenne mich nicht aus!
+15707b5d80f6c2	m8	Eißendorf
 15795c7b1e305e	f3	Finkenwerder
-15bd87cb297a48	f1a	In
 15c1e0520fe40a	r1	Peter 6
 15ea85a4f6bcce	f2	Lurup
+15f17ffc21cfd7	f4	Finkenwerder
 1603a012c05de9	f1	Eimsbüttel
+1611043d6c92fb	f6	Horn
 164a4a0a00809e	r3	am Einsatzort.
+165774e39f2b6d	m6n	Flughafen, Terminal 1, Ankunft, an den Sitzbänken.
+167cdb8eabc695	m6	Reitbrook
 1697cfd16187a9	f3	Schnelsen
 16a7f0e46693a0	d	Das ist die Notrufnummer. Bitte wenden Sie sich an die Stadtverwaltung.
 16ac520544a2af	r2	wieder frei über Funk.
+16fc2756da38e0	m8n	Wir haben hier jemanden im Büro, der hat Elektronik eingesteckt.
 170200458a88d4	m1p	Auf dem Dom! Meine Tochter ist weg, zwischen all den Leuten!
+17047efd98e5dd	m4	Altona
+1708b39d601b22	f4	Blankenese
+173d29c674b66c	f5	Waltershof
 173d5f53700f38	d	Bleiben Sie außer Sicht und merken Sie sich das Kennzeichen.
+174e2f8971d4d3	m4n	. Zweites Obergeschoss, das hört man schon von der Straße.
+1757de50ac6ea3	f4	Francop
 175b20af1862df	m2	Moorburg
-176333719c94ad	f1w	Mit… mit Messer. Also ohne Pilze, meine ich. Bitte schnell.
-178013cc622004	m2a	Es riecht nach Benzin, unter dem Auto läuft etwas aus.
-1792626a8821a7	f1n	Weißer Transporter, ein Kennzeichen von außerhalb. Beide in dunklen Jacken.
+175fc6ba19ace5	m6n	Ja… ja. Okay. Ich versuche es.
+1762b3b60a7b83	m7	Jenfeld
+17731118bd10ad	m9	Osdorf
+1795b13025fae5	m9	St. Georg
 17a3b790ef0ad8	f2n	Einige fahren einfach. Es hätte eben fast gekracht.
+17b69a382e7a93	m4	Fuhlsbüttel
+17bdea75d5fac4	m8n	Aufs Rad? Der kann kaum die Augen offenhalten.
+17be798ab056e8	m5	Wilstorf
+17cdf3a631ab5e	f6	Tatenberg
+17ec0e489aa619	m9	Sülldorf
+180c495021678a	m6	Nettelnburg
+180e19e82340ea	f8	Neuland
+18228335d42b4e	f5	Kirchwerder
+1840f782f74316	m7	Altona-Nord
+184ff6e7f8d638	m6n	Hier sind zwei Autos zusammengestoßen, mitten auf der Kreuzung!
+18540a32fa1815	f9	Allermöhe
 1854af30a4fee3	m2	HafenCity
+185d5b6c956937	m7	Hamburg
+1886118a0b5104	m6	Hamm
 188913b2c989cd	f1	Groß Flottbek
-188f8a4bb87036	m2p	Er saß am Tisch, hat sich an die Brust gefasst und ist vom Stuhl gerutscht.
 18a0c83aceb3bb	d	Hallo, hier ist der Notruf. Können Sie mich hören?
-18d8f2b5569d8e	m2n	Eine Familie vermisst eine betreuungsbedürftige Person. Die Suche soll strukturiert koordiniert werden.
+1913254a148950	f7	Hoheluft-Ost
 1935001b9be4df	f3	Sternschanze
+196acc5b68db0a	f4	Curslack
+19c6132635d49a	f5w	Ich habe nichts gesehen. Einer hat was von „Stemmeisen“ gesagt.
+19e281cbd1e2ad	f4n	Schulterblatt, Ecke Susannenstraße, im Hinterhof.
 1a144b6ef952d4	m2	Ochsenwerder
 1a20fb140c0ba0	d	Schließen Sie sich ein, bleiben Sie leise am Telefon.
+1a27d902d57b03	m8n	Er will jetzt gehen und wird laut.
 1a2b32dbb5e0ab	d	Sind deine Eltern da? Gib sie mir bitte mal.
-1a9ed7f5093e2f	m1p	Dem mit der Pistole?!
+1a653538786a60	f7	Rönneburg
+1a9ebec556fbcc	m9	Eimsbüttel
 1aa163e9e918f4	f1n	Nein, der ist diese Woche bei der Tochter.
 1abe7edd0c827a	r0	Peter 14
-1b0f711076cd26	m2n	Landungsbrücken, Brücke 4, auf den Bänken.
-1b355f8805edb6	m2n	Da hängt auch eine Stromleitung mit drin, glaube ich.
-1b6cec61b6215c	m2p	erster Stock, Sander steht am Klingelschild.
-1b6d18a2aad85c	m2n	Dichte Besucherströme belasten die Zugänge. Präsenz und Besucherbetreuung werden parallel benötigt.
+1afaf3ebd80f96	f7a	Einer hat eine Flasche in der Hand. Kaputt, glaube ich.
+1b4a54c8864c26	f4	Marmstorf
+1b4e9e96aa4b79	m6	Spadenland
+1b6536b7088093	f4	Nienstedten
+1b706836d9c0c7	f5	Stellingen
+1b76bec1aacf81	m6	Curslack
+1b7ac89529f264	f7	Allermöhe
 1b7b406ae509cf	m1	Moorfleet
+1b93fc5819aaf1	m3	Sasel
 1bbb570e9ca26f	d	Besteht Gefahr, Waffen, Feuer?
 1bc25dbeaf19fd	r0	Peter 2
+1bc7aa693abca9	f9	Wandsbek
 1be6e688e5c4da	m1	Volksdorf
 1bfd693e478996	r0	Peter 7
 1c160ba2b81cf2	d	Notruf, Polizei Hamburg. Wo genau ist der Notfallort?
-1c6304d8554ea6	m1a	Am Hauptbahnhof läuft ein Mann unten im Gleis herum!
+1c879e95b82ea7	f4	Veddel
+1cab8fe1c597a1	m5a	Hier hat es richtig gekracht! Ein Auto steht quer auf der Straße!
+1cadd34f2b26b5	f4p	Elbstrand Övelgönne, Höhe Strandperle.
+1cb320d24ed124	f9	Francop
+1cb688c910f942	m6	Moorburg
+1cc3ab4be53a0d	f5p	Ja, sie treibt ab, mit der Strömung nach links!
+1cc7f43c6e6ebe	f6	Duvenstedt
 1ceeb062279f50	f3	Osdorf
+1d14acf6bd8392	m8	Hamburg
+1d1560d0429240	f4	Neuenfelde
 1d18378b52ee95	f2n	Wandsbek Markt, an der Kreuzung Wandsbeker Chaussee.
+1d1cad75e22463	f5	Hammerbrook
 1d1f13d43e116a	f2	Lemsahl-Mellingstedt
 1d329388399149	r2	Hafenstraße überprüft, nichts festgestellt.
 1d337f2a5a5821	m2	Barmbek-Nord
 1d41c14240073c	f1a	Ja… ja. Okay. Ich versuche es.
 1d5cc962cb88a8	r2	Personenüberprüfung am Hauptbahnhof, kommen.
+1d6287f33c7291	m8n	Ja… ja. Okay. Ich versuche es.
+1d90ede7305c5f	f7	Reitbrook
+1d91a6b9c00003	m7	HafenCity
+1d924f30e99114	f5	Nienstedten
 1da2fe4627d126	f1	Waltershof
-1dac0c257afb9c	m1a	Eine gefährdete Zeugin benötigt besonderen Schutz und eine koordinierte Betreuung. Der Fall bleibt auf strategischer Ebene.
-1dc44e275c32c5	m1a	Die Anzeige sagt: in zwei Minuten!
-1df93f202e6ca5	f1n	Hier am Jungfernstieg knackt gerade jemand ganz dreist ein Fahrradschloss.
+1df6755b990409	f6n	Hier am Jungfernstieg knackt gerade jemand ganz dreist ein Fahrradschloss.
+1e0409321240bb	f7	Neugraben-Fischbek
+1e145aa4328544	f7	Steinwerder
+1e41e147ee330a	m3	Francop
+1e4dce6f35c1cd	m3w	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
+1e4f9a10db7f35	f7	Eidelstedt
+1e5d46520a9e9c	m8	Hausbruch
+1e5ea8173da23a	m8w	Wir sind im Schlafzimmer.
 1e5fb57e2180ce	d	Halten Sie Abstand zur Leitung und warnen Sie andere Fahrer.
+1e774fcfc95391	m3	Waltershof
+1e85b8fbb5d1b2	m6	Hamburg
+1eabb43dda5231	m5a	Ja, das sieht wirklich gefährlich aus. Bitte beeilen Sie sich.
+1ec051cc272a6c	f8	Rotherbaum
 1ec65b41ec61da	d	Sind Sie allein im Haus?
-1edd25d99133da	m1w	Wir sind im Schlafzimmer.
 1ee5f9f2af1e2b	f1	Winterhude
+1f019006c95211	f4	Kleiner Grasbrook
+1f0fdf78c9f7b2	f8	Francop
+1f2ec2aad0e80e	m8a	Ja, das sieht wirklich gefährlich aus. Bitte beeilen Sie sich.
 1fa463162e8d78	m2	Stellingen
-1fd9896417e1de	f2w	Das… das traue ich mich nicht. Muss ich das?
-1ff0affb3b8dcd	m1n	Nach Spielende treffen Fußverkehr und Reisebusse aufeinander. Die Abreise muss organisiert werden.
+1fbc774c8b2ab3	m9	Altona
+1fdbbba8b1e35b	m3n	Ein Hinweis muss über größere Entfernung überprüft werden. Die Anfahrt bindet eine spezialisierte Einheit längerfristig.
+1fe709bed5af47	m7	Eimsbüttel
+1ffca625be9e79	m7	Niendorf
 20077fa1999f71	d	Schütten Sie ihr kaltes Wasser ins Gesicht.
+203cf9d643f6f9	f4	Borgfelde
 20744c5d5446f6	m1n	Nein, akut nicht, soweit ich das sehe.
+207f84a53ece19	f5	Allermöhe
+2093bdcb5b436d	f9	Tatenberg
+20967b291bccce	f7	Wilstorf
+2097a43f30f6e2	f9	Jenfeld
+20b10fa043f2d8	f7	Jenfeld
 20b842ecd09c5c	f1	Kleiner Grasbrook
-217d07f49a521e	f1p	Auf dem Spielplatz an der In
+20befc4e0e2390	m3a	Eine gefährdete Person wird in einem großen Suchraum vermisst. Mehrere Spezialfähigkeiten müssen zusammenarbeiten.
+20e4d06477a43c	m4	Billbrook
+210c23610158bd	m4	Francop
+211588470f593c	f6n	Es warten bestimmt fünfzig Leute am Gleis.
+211e94db5170a2	m5a	Warten Sie… nein! Die Tür geht nicht auf, sie sitzt fest!
+213e36109ba8a5	f7	Altona-Altstadt
+215ef822a32347	f1a	Höhe
+2190add35add53	f5	Hamm
+21a71b2e521679	m4	Poppenbüttel
+21aeb7c4def204	m8	Neuengamme
 21b2d0864d1190	d	Bleiben Sie ruhig. Geben Sie ihm im Zweifel das Geld.
+21d435d8f4cd2a	m4	Eppendorf
 21ecdf760266af	d	Fahren Sie dem Täter hinterher.
+21efd81af397ea	m5	Allermöhe
+2219e2cfc3ce95	f4	Sinstorf
+2229be090f2ec6	m8w	Das mache ich auf keinen Fall.
 222a5e028678ed	f1	Billstedt
-222ad1d1ba79d4	m2n	Ein Tatort ist gesichert. Die kriminalpolizeiliche Dokumentation und Aufnahme der Hinweise stehen an.
-223a8dfb4beb3d	m1p	Ich bin allein. Verletzt bin ich nicht, nur meine Hände zittern.
+224024f985dc7c	f9	Blankenese
 226ea941eaa90f	f3	Hausbruch
-229187e9bb7800	f1n	Da hängen Kabel aus der Seitentasche. Vielleicht vom Ladegerät.
+22a418425ef25e	m3	Altona-Nord
 22a61fca3772f4	f2	Eidelstedt
 22a77dab8ab600	m2	Rissen
 22a7bf941b0db0	f2	Billbrook
+22ab3077e3c49e	f8	Othmarschen
+22ab4d150f8dda	m8	Steilshoop
 22ace980c8f6dc	m1	Othmarschen
+22ba5b0c6a7e8a	m8	Bramfeld
+22bb2a42845a97	m9	Eißendorf
+22e2944db63bf1	m6a	Am Hauptbahnhof läuft ein Mann unten im Gleis herum!
+22e52eb7a54b68	m9	Bergedorf
+22f9cbdc227ef5	f7	Stellingen
 2319f227281097	f1	Lohbrügge
-235f22dc8ade1c	m2n	Ich sage dem Mitarbeiter am Schalter Bescheid.
-23627ef7376fbd	m2n	Mamaaa! Der Polizist will dich…
-236d464491a2ae	f1n	Parkplatz am Einkaufszentrum in
-242c0f8b6304cf	f2n	Oh, sorry! Thank you!
+236d1aa11af574	m8w	In
+239fae845f6bcd	f9	Finkenwerder
+23a45683370a7c	f4	Langenhorn
+23b0a2c9ed2027	m4	Gut Moor
+23c2238e93cc88	f5	Schnelsen
+243c9b7a156a71	m9	Blankenese
+2442d29a245ced	f4	HafenCity
 2472477af4f60c	m2a	Auf der Außenalster ist ein Segelboot gekentert! Zwei Leute hängen am Rumpf.
 24822ef390b82c	f1	St. Pauli
-2488f5fc90bf2a	f2p	Da treibt jemand im Wasser! Da ruft jemand um Hilfe!
+248af66a25b3e4	m3n	Unser Sohn, 15, ist nach einem Streit mit dem Fahrrad in den Wald gefahren. Sein Handy ist aus.
+248c50ca7d072c	f4	Allermöhe
+24ae92226e161f	m4a	Nee, das lass ich schön bleiben.
+24af0796a1a978	f4	Lurup
+24bb8c8cf3154d	f8	Wellingsbüttel
+24ea42d24de715	f7	Winterhude
+24fe722d10fd3e	m1n	Veranstaltungsleitung hier: Der Einlass staut sich bis auf die Straße, es wird gedrängelt.
+250e633515cc84	m3	Hummelsbüttel
+251d46dad01182	m9	Poppenbüttel
+251f5aad80b6c9	m3	Farmsen-Berne
 253aaffc0d6c2c	d	Was ist passiert?
 256390daa8ab29	f3	Reitbrook
+2565b382380a6f	m7	Wohldorf-Ohlstedt
+25cbd6b249f211	m6	Altenwerder
 260327c1c2dc1f	f1	Hamm
 261689c25754f6	f3	Stellingen
-263a1b4c834cea	f2p	Ja, sie treibt ab, mit der Strömung nach links!
 2642bb0bf0addb	f1	Steinwerder
-2658671245ddf3	f3a	In
 2663e4558361e5	f1n	Ganz leise ein Rufen, glaube ich.
 267b837becb95d	r0	Peter 24
 26c5c1b956d8a6	r3	Peter 14
-26d99f0ec80a49	m2n	An den Landungsbrücken grölt eine Gruppe seit zwei Stunden mit voller Musikbox.
+26da4a9d8cdb2c	f8	Langenhorn
 26ddc45f9e9e02	r2	Sprechwunsch.
+26e3451fde2f9e	m7	Bergedorf
+26f18cba56ee91	m3	Hoheluft-Ost
 27187af537efcb	f2	Jenfeld
-27615a198559eb	f1a	Ja, ganz ruhig. Sie stöhnt, wenn ich sie anfasse.
+272f997fc93eb6	m4n	Nein, ich habe gar nichts bemerkt. Sie war einfach weg.
+2730ca0db2bf13	m5a	In
 2770c2758b2eb5	m2	Wohldorf-Ohlstedt
+2780d62821b316	m8	Neustadt
+278322b4e5ee8a	m1n	Unten am Keller. Beim Hausmeister macht keiner auf.
+2783280e2845db	m7	Altona-Altstadt
+2799de10210772	m7	Hausbruch
+27dc1bf3849c09	m5	Eidelstedt
 27f7caefcff5f4	f1	Uhlenhorst
+285eab91927860	m5	Harvestehude
 2872598581fa80	f3	Groß Flottbek
+28952585959685	m5	Billwerder
+289b317aa2e36b	m4	Neugraben-Fischbek
 28babbd4bf5508	f1	Poppenbüttel
-28e8ff4aafa9f7	f3n	Hallo Helga, ich bin's! Wegen Sonntag…
+28c59ddd79a224	m7	Heimfeld
 28f192aaf7dd18	f2	Osdorf
 2907850ee90838	m2	Nienstedten
+290eaacd75efe7	f5	Steilshoop
+2912924d067d9d	m3	Reitbrook
+29141c84c2e911	m8w	Eingang B.
+29210a2ef2f674	m5p	Die Tankstelle in
+292563b54c4f0b	f5w	das Reihenendhaus mit dem weißen Zaun.
+29330fedd35357	m7n	Hier wurde schon wieder eingebrochen – das ist der dritte Keller in der Straße diese Woche!
 29349caaf3ee3a	f1	Sinstorf
-295e0fe33f6183	m2w	Ja… ja. Okay. Ich versuche es.
-2962056d2631b5	m2a	Hilfe, Polizei! Ein Alien ist in unseren Kühlschrank geflogen!
+293d1c8eaeb8ea	f5	Marmstorf
 296406da98dede	f3	Barmbek-Süd
+2965dc3960fdc0	m5	Wilhelmsburg
+2967ac862dc6b3	m3w	Ja… ja. Okay. Ich versuche es.
 29750a49ab3721	r3	Kontrolle Wandsbek Markt beendet.
-29906ce1c18e9f	m1w	Das ist der Nachbar aus dem vierten Stock. Er hatte heute Ärger mit seiner Frau.
 29912f88615ec6	f2	Poppenbüttel
 29a2ee2139ff19	f3	Lurup
-29a873c53c5089	f3p	Das ist doch viel zu gefährlich, die Strömung!
-29ad64ad41e257	f2p	Hier ist ein Rettungsring am Pfosten!
 29c61588e83641	m1	Barmbek-Süd
-29c856132b0308	f3n	Ich klingle bei den Nachbarn.
+29e14051325565	f9	Kleiner Grasbrook
 29e4e98936c8e1	f3	Heimfeld
-2a2cd0843c3faa	f2w	Die Tür ist abgeschlossen.
-2a35a90c5a7406	m2n	Hinweisgeber: Der gesuchte Mann soll heute bei seiner Freundin übernachten.
+29fd2d1e5389d4	f5	Hamburg
+2a04c4af6c368e	f9	Billstedt
+2a5e2971e1424b	f8	Wandsbek
+2a74b2aa7bbfaf	m8	Reitbrook
+2a7b4f03254327	m5	Billstedt
+2a9630aa651048	f6	Barmbek-Süd
+2ab72207c621de	m5n	Endhaltestelle in
+2ac32ecc91140f	m3	Bergedorf
+2acafd8cfee4e0	m7	Neugraben-Fischbek
 2aed72878f9faa	f1n	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
 2afe5b918c7679	d	Waren Karten im Portemonnaie?
+2b0d5da452d4f0	m5p	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
+2b0f0cb1b45bba	m9	Hummelsbüttel
+2b0f4ad12376c7	m3	Eilbek
+2b74daa21a5d79	m5	Nettelnburg
 2b7a9a1ada0c6d	d	Wenden Sie und fahren Sie dem Wagen nach.
+2b8b8d4e108791	f7	Lurup
+2b8f83c9fb8e3d	m7p	Nein… nur so ein seltsames Schnappen, ganz selten. Das ist doch nicht normal, oder?
+2ba1b3dd562b3a	f5w	Die Tür ist abgeschlossen.
+2bbbb820e46a12	m6	Steilshoop
 2bea4e8e6ed60c	f2	Bahrenfeld
+2bef057a7adfd2	m8n	Silberner Golf, Hamburger Kennzeichen, HH-K irgendwas.
 2bf903f9b99ff9	f3	Bergstedt
+2c0965d83fdd2a	f5	Sasel
 2c0de203ddd119	m1	Neuallermöhe
 2c2c4d43f9a304	f1	Horn
+2c3fdaaa6d41f9	f7	Billwerder
+2c53454a1c3204	m4n	Guten Abend. Mein Nachbar feiert schon wieder. Ich kann so nicht schlafen.
+2c5aec51c75c8b	m8n	In
+2c74dd5274ac35	m6	Wilhelmsburg
 2cb618c13f8f31	m2	Neuallermöhe
 2cb65a52f1e28e	m2	Steilshoop
-2cca9b4fd272fb	m2n	Mein Vater ist dement und seit einer Stunde nicht vom Spaziergang zurück. Es wird bald dunkel.
 2ce25c8f90cf96	m1n	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
+2cea9456f6da30	f7	Rothenburgsort
+2cebb45898cef5	m7	St. Pauli
+2d2a2f0b819f41	m8	Billstedt
+2d356ab935b4bb	f8	Niendorf
 2d47c6817dc79c	d	Kommt gerade ein Zug?
 2d56c55a8e4dec	m2	Othmarschen
-2de84324ca671b	m1n	Vor mir fährt einer in Schlangenlinien über die Elbbrücken.
+2d9ad140c3f347	f4	Rönneburg
 2e021054a351ce	f2	Sülldorf
 2e1afbc081663c	d	Hier ist der Notruf 110. Brauchen Sie Hilfe?
 2e2175b19fc143	f1	Eppendorf
-2e6b7a1290a2bb	m1n	Ein Restaurantbesitzer zahlt angeblich Schutzgeld. Er hat Angst, selbst anzurufen.
+2e337e7a87bfaa	f9	Neuland
+2e5599e48a5609	f8	Neuengamme
+2e851bb1f151c6	m9	Schnelsen
+2e8b53d67795f2	m3	Neuengamme
+2e9408c52a6f24	m1n	Mir ist schon etwas schwindelig.
 2ea190e78720ca	m1	Bahrenfeld
 2eb6ea5f357f16	f2	Nienstedten
-2ee209d595a541	f3n	Zwei Personen sind weggerannt.
+2ee212e8cfddec	m7	Poppenbüttel
+2ef19924501ccc	m5	Rotherbaum
 2ef298f0c73c92	d	Haben Sie jemanden gesehen?
 2f144c88e3776c	m1	Lemsahl-Mellingstedt
 2f17409bf006b7	f2	Lohbrügge
+2f44b38433b372	f8n	Hauptbahnhof, Wandelhalle, Ausgang Kirchenallee.
+2f4b4bd0224d69	f9	Moorfleet
+2f98bc647f6489	f8n	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
 2fc6557995786b	m2a	Das sind doch vierhundert Meter!
+2fc7831a22480b	m9	Cranz
+2fc85d5cf72444	m9	Volksdorf
+2fd8f9fb0f8260	m9	Moorfleet
+3013948c9793ef	f5	Neustadt
+303aac42e7b249	f7	Altengamme
 303be09a1d2f20	d	Halten Sie Abstand und weisen Sie die Einsatzkräfte ein.
-304299870aab23	m1n	Stadionordnungsdienst: Gästefans ohne Karten drängen an den Eingang.
+30485ed478e1fa	f9	Hoheluft-West
+305c7b828e293a	m3	Cranz
+305cc9dd978474	m3	Tatenberg
+3069e54abc64de	m3	Heimfeld
+307fa04e302fa7	m4	Eilbek
 308b55c2102586	f1	Harvestehude
+30acbba4fa0b60	f4	Rotherbaum
 30c803c385b6c9	f1	Rotherbaum
 30d5a11d538990	m2	Hammerbrook
-30ede44c5f2e44	m1n	Unser Sohn, 15, ist nach einem Streit mit dem Fahrrad in den Wald gefahren. Sein Handy ist aus.
+30f8cf57f8aeb8	m6	Marienthal
+30fa89c5f7d097	f5	Finkenwerder
+31008573cd1c10	m9	Curslack
+3113a0f9f09fa7	m8	Curslack
+3128da154dfc47	f5	Marienthal
 313d7000e98ede	d	Springen Sie sofort hinterher.
+315f89790816a8	m7p	erster Stock, Sander steht am Klingelschild.
 3160e0ba180e1f	r2	Fahren jetzt die Stresemannstraße ab.
+316caf82ed01f5	m8a	Machen wir, wir gehen an den Zaun zurück.
 317bb31d0d7372	m2	Groß Flottbek
-317e2fac364453	f1n	Jungfernstieg, an den Fahrradbügeln vor dem Alsterhaus.
 317fb5c8815f9f	f1	Altenwerder
-3181cc64dfff00	m1n	Nachbarbehörde: Ein gesuchtes Fahrzeug ist Richtung eures Gebiets unterwegs.
-3186d524ca588f	m1n	Ein Mitglied einer Reisegruppe wird im Bereich der Landungsbrücken vermisst. Hinweise und Betreuung müssen koordiniert werden.
+31a47db9d6f8cd	f9	Spadenland
+31af8dda002c84	m3	Gut Moor
+31c1b59a3d05a5	m4	Langenbek
 31dbbb4159a336	m2	Niendorf
+31f0da97619ced	f7a	Ich? Das sind zehn Männer!
 31f5691caa8031	f3	Wohldorf-Ohlstedt
+32225396dadd61	f5	Billwerder
+323721e4d072ba	f9n	Gefahr? Nein, aber es riecht schon etwas.
 3239c78b0d2abf	d	Das ist kein Notfall. Klären Sie das bitte mit dem Paketdienst.
 32484a38f55907	r3	Peter 5
 324c5bb4948209	m2	Ohlsdorf
 32602692f70af3	f1	Nettelnburg
-3288d08b830da3	m2a	Acht, neun Leute. Einer blutet am Kopf.
-32892e3eb538b0	m2n	Ja, aber er weiß nicht, welcher Tag ist. Kein Helm.
-328c2b4c01998b	m2w	Ich stehe hinter der Brücke.
+327e987b2d1441	f9	Harvestehude
 328f8cad93e23d	m1	Eidelstedt
 32b9d0274aa88b	d	Ziehen Sie die Fahrerin sofort aus dem Wagen.
 32d904fc5c55b6	f3	Billbrook
+3302f06b7cb4c9	m7	Iserbrook
+3324d75904146e	f5	Steinwerder
+33396c7a8081a7	m8	Veddel
+33399536d97654	m6	Othmarschen
+333c465fc48d8b	f4	Lokstedt
 3350c10b9282e3	m2	Hohenfelde
+3353d7a5a243ee	f9	Sasel
 33551e109ea62a	f2	Kleiner Grasbrook
+33684746d6848a	m7n	Mach ich. Wir sperren hier ab.
+339022dd7f9f1e	m3	Hamburg
+33c908e1428d7b	m5	Finkenwerder
+33cd62081d9580	m4	Kirchwerder
+342948daaff51f	m4	Steinwerder
+342f65ae263225	m6	Tatenberg
 343c79a2cde5b1	r1	Streifenfahrt Jungfernstieg, keine Besonderheiten.
+3447a5fe0a482c	m5n	Nein, akut nicht, soweit ich das sehe.
+3455d698543926	f6	Harvestehude
 345a37fdae9ca0	r0	Peter 15
+3486eec57da165	f1a	direkt an der Ampel.
+3496a603493b83	m7	Rothenburgsort
 34cdd22b4587f0	f1	Bramfeld
 34e4dacd4fff7b	d	Kennen Sie den Mann?
 34e50e24abbaee	r0	Einsatz abgebrochen, rücken Sie ein.
-352ef21b98180d	m1n	Bundesbahn-Sicherheit: Fünf Taschendiebstähle in einer Stunde, immer am gleichen Bahnsteig.
+34f464dd9290e8	m8n	Mal zwanzig, mal achtzig.
+350c80c463c700	m5	Langenbek
+3518865576168a	f7	Veddel
 353475a0d07abe	m2	Eidelstedt
-3559f0b00cf4ab	f3n	Noch nicht. Die Fassade wird aber schon schwarz.
+353da2a65fbb54	f5n	Notfall? Nein, ich dachte, das ist die Touristen-Info!
+3541a4349b2fd0	f9	Hoheluft-Ost
+3557b1440aee57	f9a	Meine Mutter redet plötzlich so komisch. Ich verstehe sie gar nicht mehr.
+3562e00c1ceb55	m5	Winterhude
 3565701a82cffa	m1	Curslack
+357e504ca7b0eb	m9	Lohbrügge
 3591a2b666c05a	m2a	Ja… ja. Okay. Ich versuche es.
-35cd154fb0d95e	f2p	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
+3596b9b4629860	m7a	Ich habe mich eingeschlossen.
+35aa718817eafe	m6n	Nein, ein ganz normaler blauer Rucksack.
+35af1700eb8e30	f7	Hummelsbüttel
 35e6f8cea6a8a6	f1a	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
+35f3b89dde8c05	m6	Harvestehude
+35f519b0582d48	f4p	Ja… ja. Okay. Ich versuche es.
+3601d518077ae9	m6	Lemsahl-Mellingstedt
 362bc6d34cd073	r0	Peter 3
 3630474b7f7ae5	f1	Barmbek-Nord
+3636999f138318	f8	Hummelsbüttel
+36549c1efe4eb1	f8	Altona
+36596816fa5e48	f9	Niendorf
 365c987d0e3832	m1	Fuhlsbüttel
 3676389873c12d	f1	Sülldorf
-36a151ba0a7769	m1w	Ja… ja. Okay. Ich versuche es.
+368e6902944f96	m6	Barmbek-Süd
 36a64a73ef55a1	m2	St. Georg
 36c2348fa089a0	f2	Neuland
 36cbab483da849	m1	Eißendorf
+36cc32ca8aece7	f9	Marienthal
 36d02862c477b3	r2	Verkehrskontrolle Reeperbahn, zwei Personen, kommen.
+36eb26085ddbfb	f4	Ohlsdorf
+36fc770cdcc0fb	f7	Farmsen-Berne
+3709f71eb2b796	m6	Ohlsdorf
 370c50bf249ce7	m1p	Seit fünf Minuten etwa.
+37218e321dd7db	m2a	Dunkler Kombi, sehr schnell, ohne Licht!
+3743aa68ae7f77	f6	Sinstorf
+3747a353f46df9	f5	Borgfelde
 375d83f699c34b	d	Sprechen Sie bitte lauter, ich verstehe Sie nicht.
+377866342e18eb	f6	Poppenbüttel
+37a736261d8824	m5a	Ja… ja. Okay. Ich versuche es.
 37bf50c797dfa8	m2	Lemsahl-Mellingstedt
+37c00556bee589	m9n	Ich stelle mein Warndreieck auf.
+37c0691dc84079	m8	Francop
+37dd2c98b86f8b	m6	Lürade
+37e393853a93bf	m7	Sinstorf
+37e95e9f248330	f6	Neustadt
 37fe1c74f529ab	f2	Neuenfelde
 38246ed8ff6a6b	m1	Horn
 3838baee3e5a6b	d	Nicht anfassen, Flughafenpersonal informieren, Abstand halten.
+3852daf66983e9	m6	Poppenbüttel
+3865fcb10397b0	m8	Ochsenwerder
 386a4994bd4ae4	f1	Neustadt
-389fa0ee16d74e	f2n	Ich bin gestürzt, mein Arm tut weh.
+388c6cfbf3ba90	m9n	Eine Veranstaltung im Alsterumfeld zieht viele Besucher an. Sichere Wege und Ansprechstellen werden organisiert.
+38ad9fe3ec7b09	m3	Billwerder
+38af402e06b4b2	f8	Bergedorf
+38b005d9bebd43	f6	Wilstorf
+38b744bea61b0c	m8	Hammerbrook
+38bdd7b8801887	m5	Moorburg
+38cf26785398a7	m7	Bergstedt
 38d7f566a80e56	r1	Verkehrskontrolle Reeperbahn, zwei Personen, kommen.
+38d7fe91137e4d	f7	Othmarschen
+38e58780c233fc	f4	Tonndorf
+390d1644060ddf	f8	Barmbek-Süd
+395d13135ea2a1	m5	Barmbek-Süd
 396b37b23a0110	m1n	Hier Kripo-Dauerdienst: Wir brauchen Augen auf einen Lagerhof, heute Nacht soll dort Ware umgeschlagen werden.
-3987410d2082ae	f3n	Nein, Strom ist aus dem Keller raus, da ist nur Gerümpel. Es ist nur ärgerlich.
+396e9c2b701308	m3	Altona
+39a018e08a7add	m6a	Mache ich, ich stelle mich an die Straße.
+39a58dd0779d24	m6	Finkenwerder
 39aa7143411948	f2	Altona-Altstadt
-39dd926fac9152	f1n	Am Bahnhof
+3a16cdd07cd86f	m8	St. Pauli
+3a2d1e5160a13a	m5	Bergstedt
+3a3cba7f7bc939	m8	Bergstedt
+3a55ce4f114e05	m3	Ohlsdorf
+3a63c2a68ef27c	m7	Fuhlsbüttel
 3a87d5babc919e	m2	Hummelsbüttel
+3a90174be3da3b	f9	Altenwerder
+3a9053b786e880	f1n	Nein, Strom ist aus dem Keller raus, da ist nur Gerümpel. Es ist nur ärgerlich.
 3a90724b437d52	f3	Neugraben-Fischbek
+3aa4d6870f7562	f9	Lemsahl-Mellingstedt
+3aede0c01e3c4f	m5	Neuallermöhe
+3aefb1dd433063	f9	Schnelsen
+3b092daae6bf58	f7	Marmstorf
+3b0ad96e20b969	f9a	Vor zwanzig Minuten war noch alles normal.
+3b165c8433820d	f6	Hohenfelde
 3b1717137b8627	f2n	Die große Ampelkreuzung ist komplett ausgefallen. Es wird gefährlich.
-3b4a61757c0387	f2n	Hauptbahnhof, Wandelhalle, Ausgang Kirchenallee.
-3b852136a19174	f2n	Hello? Excuse me, ich suche die Elbphilharmonie, ist das weit?
+3b651bc8ba7c8b	f8	Neugraben-Fischbek
+3b7ccbf9535c92	f6	Rönneburg
+3b917fdc47cfa2	f5p	Da treibt jemand im Wasser! Da ruft jemand um Hilfe!
+3c07b157587118	m4n	Eine betroffene Person legt bedrohliche Nachrichten vor. Ermittlungen und Informationsgewinnung werden abgestimmt.
+3c15657f436b8d	f6	Billbrook
 3c1e9e52f0f7b8	f2	Bramfeld
-3c9096c2f4621a	f3n	Der Notruf? Oh je, ach du liebe Zeit! Nein, ich wollte die 1101 wählen. Entschuldigung!
+3c50c5ce6be0df	m6	Eilbek
+3c57370684bd38	m7	Billbrook
+3c70c27863a1fe	f9	Ottensen
 3ca30cb38bfc9c	f1	Altona-Nord
 3cb03debcf200a	m1	St. Pauli
-3cb0b1b63ed831	m2n	Im Treppenhaus riecht es stark nach Gas. Schon den ganzen Vormittag.
 3ce1bc9e8e6d82	m2	Hamburg
-3d27fb3b38384f	m1a	Rund fünfzig Leute. Verletzte sehe ich noch keine.
+3ce4bff405d9b6	f4	Hummelsbüttel
+3d1be8b19af31c	m5	Tatenberg
+3d220631f9ce1d	m8w	Das ist der Nachbar aus dem vierten Stock. Er hatte heute Ärger mit seiner Frau.
 3d308450cb1439	f3	Tatenberg
+3d517d3f7f8666	m9	Groß Flottbek
+3d55a32f56038c	m4n	Ein Mitglied einer Reisegruppe wird im Bereich der Landungsbrücken vermisst. Hinweise und Betreuung müssen koordiniert werden.
 3d64af4c64c834	d	Bleiben Sie ruhig in der Leitung. Sie müssen nichts sagen.
+3d8351357ccc6e	f6	Uhlenhorst
+3d9d625bbf76a8	m6n	Eine Familie vermisst eine betreuungsbedürftige Person. Die Suche soll strukturiert koordiniert werden.
+3d9df4c3c2a192	f5	Horn
+3df9636ba52336	m6	Wellingsbüttel
 3e03235e4e67e0	m1	Neuland
-3e56d7d74df70a	m2n	Veranstaltungsleitung hier: Der Einlass staut sich bis auf die Straße, es wird gedrängelt.
+3e10ee9115545e	m5	Blankenese
+3e2c85a5957068	f6	Hammerbrook
+3eac2f9e193573	f1a	Darf ich das denn?
 3eeb37257a2207	r2	Streifenfahrt Jungfernstieg, keine Besonderheiten.
 3f16161c090f2c	r3	Halterabfrage bitte, Hamburg Anton Berta 412, kommen.
-3f16a85faefbb8	f1w	Ja. Er steht gleich neben mir.
-3fabdbcfcb8a67	m1n	vor dem Drogeriemarkt.
+3f1e23a42e529a	f6n	Nein, der hat mich nicht bemerkt.
+3f4c72458b99ab	m4	Hoheluft-West
+3f5f29d0c37678	m4	Curslack
+3f8b3f6582ce4b	m4	Nettelnburg
+3fbc1b229263dd	m3	Bahrenfeld
+3fd11a5975c2d6	m6	Alsterdorf
+3fd500d6021eae	m7	Neuallermöhe
+40334e7c2f33d3	f8	Hammerbrook
+4053ba107e65b2	f8	Schnelsen
 408de0b87c086b	m1	Lurup
+408ee9ba52a9ee	f1n	Verstehe. Ich versuche es mit dem Nachbarn.
+408ffb8e5ccaea	m6a	Da rein? In den Rauch?!
 4096295245b6e7	m2	Moorfleet
-409c0b85c8e56f	f1n	Guten Tag. Die Müllabfuhr war heute nicht da. An wen wende ich mich da?
+40a1aa2e8c1cf6	m1n	Hier liegt ein älterer Herr auf der Bank, er weiß nicht, wo er ist.
+40fa19c754b19e	f5	Langenbek
+411063b7bd8272	f6	Ochsenwerder
+4130ba6d0dca63	m3	Hamm
 414026468e6b76	m2	Lurup
 41447eaa6274ec	d	Wie geht es ihm? Ist er ansprechbar?
+416da84fe23625	f5p	Hier ist ein Rettungsring am Pfosten!
 417bc6bdb66232	f2	Neuallermöhe
-4186ed0af4866e	m2n	Hier warten viele Reisende.
-41a36b4579f045	m2n	Am Stadtparksee, Weg zur Freilichtbühne.
+417ccba713bcfc	f4	Altona-Nord
+41acfbf0407852	m5n	Der Paketbote hat mein Paket beim falschen Nachbarn abgegeben. Kann die Polizei das holen?
 41b8e5b72f0264	r0	Peter 8
+41d6052c262e82	m2a	Mir kommt ein Auto entgegen! Auf der Autobahn, auf meiner Spur!
+41f5574324e1a8	f9	Volksdorf
+41f5b9711603ca	f5	Altona-Nord
 4209d675b0a637	r0	Verstanden, Fahrzeug liegt nichts vor.
 4222754368648d	m2	Lohbrügge
+422807a23e2829	m3a	Unsere Zeugin im Prozess wurde bedroht und will nicht mehr aus dem Haus.
+422949de4f40ae	m7	Blankenese
+42478f472f272b	m9	Reitbrook
+425eaa677c15eb	m6	Langenhorn
+42677a95b4d687	f9	Neuenfelde
 4282cf1b7aad4c	m2	Bahrenfeld
 4292c67cbbdf84	f2	Ochsenwerder
-42b7920b6b478a	m1n	Ein Zeuge hat es aufgeschrieben. Der wartet noch hier.
+42a22efd81b13c	m5n	Nein. Nur unfassbar laut.
 42c9d736629da3	f2	Hoheluft-Ost
 42fbb29d17e73a	m2	Neustadt
-42fe8e2a04f3d1	m2n	Mache ich vom Gehweg aus.
+4333fd94447363	m9	Hausbruch
+4335d2c25e0a32	m9	Hoheluft-West
 433dff1e4fa4dc	r3	wieder frei über Funk.
-439c712947194c	m2a	Ich sage es den anderen, wir winken den Verkehr vorbei.
-43cecef72bb5f8	m1a	Da vorne ist die Aufsicht, ich laufe hin!
-43f4dca3f5cbc0	f3a	Vor zwanzig Minuten war noch alles normal.
+4365fe8223bad4	f4	Groß Flottbek
+43d8adfe1961a1	m4n	Mamaaa! Der Polizist will dich…
 440b29e25aaf94	f2	Steilshoop
 4419185f39e93d	r1	Person angetroffen, geht es ihr gut, kein Einsatz nötig.
 441d9b7f369d6c	d	Gehen Sie rein und stellen Sie die Täter.
+442c7fec7d8c7f	f6	Moorfleet
+4436531a17b95c	f9	Hammerbrook
+4439d4f4648f96	f6	Kirchwerder
+445475eef30b0b	f5p	Ja… ja. Okay. Ich versuche es.
+4458f402c188e1	m4	Ohlsdorf
+4467da74c472ad	m2a	Keine Ahnung, ich fahre hier schon ewig. Irgendwo vor der nächsten Ausfahrt!
 449a5a0f1e9de9	d	Fahren Sie erst einmal nach Hause und warten Sie.
+44a7b7f930a039	m8	Waltershof
+44c9523dcf5676	m4	Iserbrook
+44ce8ab2ef227c	f7	Ohlsdorf
 44d8ab6cb629ec	m2	Farmsen-Berne
 44dbee92bd4692	f2	Tatenberg
+44f4892e75a19d	f4	Eilbek
+44fbd824f91a53	m5n	Er ist freundlich, aber völlig verwirrt und friert.
+45257ec151351b	m7	Rotherbaum
 45301914cee0fa	f2	Niendorf
 454fb6b6094821	d	Wann soll das Geld abgeholt werden?
-455cefcae80f02	f2w	Ja… ja. Okay. Ich versuche es.
 458c3024529acb	d	Bleiben Sie auf Abstand und sagen Sie mir, wohin er geht.
+4596252215a8fd	m4	Othmarschen
+45a0e1b18575d3	f8	Blankenese
+45a41d34a60bce	f7	Neuenfelde
 45b15d57859498	f3	Wilhelmsburg
 45e9feb5ba63ed	f1	Cranz
-46031d61cdce70	m1n	Na gut, nichts für ungut.
+45ea06827e5da3	f8	Dulsberg
+45f293d5c31c66	m5n	Nach einem Raub treffen neue Hinweise ein. Zeugengespräche und Tatortdokumentation laufen parallel.
+464caa88a2cf38	m7	Lemsahl-Mellingstedt
 4657b297f804c8	d	Was für ein Fahrzeug?
 465ee7c13263c1	f1	Steilshoop
 46625d5f809c9b	d	Seit wann ist das so?
-46a22963ffe668	m2n	Mehrere Beteiligte streiten lautstark. Die Situation soll beruhigt und die Aussagen getrennt aufgenommen werden.
+4677470aaf155b	m8	HafenCity
+468ca2dba936b8	f9	Sülldorf
+469ebd1f0d6015	m4a	Ja… ja. Okay. Ich versuche es.
+46a537f0358219	m8n	Mehrere Tiere laufen nahe einer vielbefahrenen Straße. Verkehrssicherung und Tierbetreuung werden koordiniert.
 46aa5bbd431828	r1	Halterabfrage bitte, Hamburg Anton Berta 412, kommen.
 46bd7653a37960	f1	Nienstedten
 46c00f0d96ea9c	f3	Eißendorf
 46cfecca2f3adb	f1	Dulsberg
-476f474fc4a6e5	m2n	. Zweites Obergeschoss, das hört man schon von der Straße.
+46f1e64668b2ed	f6	Billstedt
+46ff269a2f9994	m8	Dulsberg
+47195edbb896cf	m6	Borgfelde
+471c7eca559f6a	f7	Duvenstedt
+472fc8d0e18a6b	m7a	Ja, das sieht wirklich gefährlich aus. Bitte beeilen Sie sich.
+4735135491750d	f8	Tonndorf
+474718f3246707	m7n	Der Nachbar hat schon wieder seinen Müll auf mein Grundstück geworfen. Jetzt reicht es!
+474fcf980cb878	m6	Eidelstedt
+477d8d92e831cd	f5	Sülldorf
+47873aa502ad8f	m4	Farmsen-Berne
 47b1fcc794de89	m1	Eppendorf
-485e6ce9762520	m2n	Ein Baum blockiert eine Landstraße. Absicherung und Abstimmung mit den Räumkräften sind notwendig.
+47bea362ef5540	f7	Sülldorf
+47c3a8d4726e86	m4	Alsterdorf
+47d2fb4117fca7	m6	Billwerder
+47de523560b0f4	m8	Iserbrook
+47fb9819b4113c	f3p	Mein Sohn ist weg! Eben war er noch da! Er ist doch erst sechs!
+485e97b19731fd	m3	Wandsbek
+4898428b5dd0a9	m5	Cranz
+48adc45d1c89d9	m7	Hoheluft-Ost
+48c24362656f49	m6	Rahlstedt
 48c411ca117ca0	f3	Lürade
 48c7dc86ea7f95	f2	Fuhlsbüttel
+490170def47bba	f4w	Mit… mit Messer. Also ohne Pilze, meine ich. Bitte schnell.
 49290ac746dbce	r3	hat verstanden, wir fahren an.
+493b2427e05956	m5	Farmsen-Berne
 49490999814a5f	f1	Neuland
+4952eee16c7360	f6	St. Georg
+498f01475f3ede	m7	Marmstorf
+498f93b7d2f284	f7	Neuallermöhe
+499b71d09b8319	m6n	Soll ich da wirklich reingucken?
+49a7170a17c557	m8	Rotherbaum
+49b1b78dfc6639	f9	Nienstedten
 49b28c8d92a0d7	f3	Moorburg
-49bc6b3c28fa9b	m2n	Ich stelle mein Warndreieck auf.
+49c7e0e26a1dea	f4	Steilshoop
 49c85cb7fcd0fb	f1	Curslack
+49fd2ca86100e4	f4p	Am Elbstrand! Ein Kind ist ins Wasser, die Welle vom Containerschiff hat es mitgenommen!
 4a13102df3b262	m2a	Er hat die Hand in der Jacke. Er sagt, er hat ein Messer.
-4a5f81583c63b0	m1n	Nein, nein, alles gut bei mir. Reine Neugier.
+4a36c51d828d49	m8n	Hinweisgeber: Der gesuchte Mann soll heute bei seiner Freundin übernachten.
+4a648363214fbb	m8	Heimfeld
 4a65ea62e25f45	f3	Neuland
+4a67598ff1e458	m7	Curslack
+4a8ed29ff0e954	m6n	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
 4ab1448931ec90	f2	Sasel
+4ab3fdc0fa85b5	f3p	Zehn Minuten vielleicht. Er wollte zum Eiswagen.
 4ab67af6e438bf	d	Wie viele Personen, wer ist verletzt?
 4ac3cde19ba302	f2	Hamm
 4adc95eef354bb	f2	Kirchwerder
-4b51efd1f64e97	m1n	Der Paketbote hat mein Paket beim falschen Nachbarn abgegeben. Kann die Polizei das holen?
-4b61ba9283341e	f1p	Nach Hause?! Mein Kind ist weg!
+4af07d94f3ea32	m7	Harburg
+4b0a80fc176a79	f7	Borgfelde
+4b4a54d53be7aa	m3a	Eine akute Gefahrenlage bindet Spezialkräfte. Schutz, Betreuung und zentrale Koordination haben Vorrang.
+4b64d2aabda5b9	f8	Duvenstedt
 4b725ae4806b55	f3	Rahlstedt
 4bb8e5d6852334	f1	Ohlsdorf
 4bbb07352e238a	r0	Peter 11
@@ -371,800 +803,1806 @@
 4bd5db7a9b7c94	f1n	Blankeneser Hauptstraße, das weiße Haus am Treppenviertel.
 4bda9cb49acd47	m1	Bramfeld
 4be3702ad155d9	f2	Rissen
+4c150ee0f4bfa7	m4n	Reiseleitung: Acht Senioren unserer Gruppe sind nach der Hafenrundfahrt nicht am Bus.
 4c7f6a4028d267	m2	Langenhorn
 4c8922e680d0a2	d	Können Sie die Person noch sehen?
+4ca80ffa8482d7	m8	St. Georg
+4d0df094a2bc6e	m3	Tonndorf
+4d373cc056925b	m8	Hohenfelde
+4d58de5b563d02	f5p	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
+4d6ab3a93df897	f6n	hinten am Fahrstuhl.
+4d6eab9534953e	m7	Lürade
+4d72d5c520a76b	f8	Fuhlsbüttel
 4d84ce53d807e0	m2	Schnelsen
-4e6267df5ec810	m2n	Vor der Kneipe prügeln sich vier, fünf Leute! Einer liegt am Boden!
-4eaf9b19636339	f1n	Am Bahnhof steht seit einer Stunde ein Koffer ganz allein am Gleis.
+4de0a67739e2e0	f6	Lurup
+4de31a1b237295	m4	Blankenese
+4df1aad24786ea	m5p	Dem mit der Pistole?!
+4e2b6d991241af	m7	Rönneburg
+4e2bc511eb3ad4	f7	Nienstedten
+4e6c5552c36b76	m3a	An einem belebten Platz wartet ein aufgelöstes Kind. Betreuung und das Auffinden der Begleitperson sind dringend.
+4e6eb43d9b70d7	f8	Moorfleet
+4e71d1d9b3956c	m8	Altona
+4e93399db4d77d	f4	Harburg
+4ea3f0c449ae16	f7a	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
+4ead54d7c350a9	m3	Moorburg
+4ec5cc3afd542e	m5n	Rund fünf junge Leute.
 4ec8ecb82d7206	f3	Billstedt
+4ecefaf363f1bd	m3a	Er hat den ganzen Käse gegessen!
 4ed4e2572269ea	m1	Barmbek-Nord
+4f26cb8790266c	m6	Schnelsen
+4f39fbd3eafb02	f7	Sternschanze
 4f43aa2a60c7fa	m1	Rahlstedt
+4f521d8fc1ee76	f8	Moorburg
+4f522c3a52f1d9	f8	Nienstedten
+4f639e30c66b73	m4	Neuenfelde
 4f73ebfb548c32	f3	St. Pauli
+4f75d4a7aa7779	f8	Kleiner Grasbrook
+4f90c8237c5fbd	m8	Sinstorf
+4fa179b899fae6	m5p	Ich bin allein. Verletzt bin ich nicht, nur meine Hände zittern.
+4fa296b2bde7c4	m5	Hohenfelde
 4fa76d727ece88	r0	Leitstelle für
+4fb0f5fb9402c1	m4	Sternschanze
 4fb5574d30e441	m1	Uhlenhorst
 4fb838e531a588	m1	Waltershof
+4fc43c6cd261f8	f5w	Ja… ja. Okay. Ich versuche es.
 4fc8afe49dc0fb	f3a	Ja… ja. Okay. Ich versuche es.
-5040cbbe329930	f1n	Nein, die haben mich nicht bemerkt.
-505ce82a79ffba	m1p	Motorroller, schwarz, Richtung Stadt. Eben gerade!
-522eb26f62740d	m2a	Ein Gegenstand führt zu Verunsicherung an einem öffentlichen Ort. Absicherung und Fachbewertung werden organisiert.
-532b219ce61135	m2a	Äh… in der Hauptstraße. Oder so. Hihi.
+4fdceefe70fff4	m9	Altona-Nord
+4feffd0ddff015	m3	St. Georg
+4ff3f13f7af1b8	f8	Cranz
+4ff40e4f6ef180	m7	Neuland
+50021045002dbb	m8	Niendorf
+5003f9aad25c15	f6	St. Pauli
+500a82dcb2c1e1	m7	Spadenland
+50968525155201	f7	Marienthal
+51079bf0468ab9	m9	Tonndorf
+51334cf4831521	f4	Neuengamme
+5155e9cc61c61f	m7	Altengamme
+51a6c1d31583e4	m4	Duvenstedt
+51bff559cf2b9c	f4	Billstedt
+51d57ab9f86516	m8	Harburg
+51f799ac316798	m9	Neuallermöhe
+5209c30aba18be	m4	Altona-Altstadt
+522aeaf0c4e601	m8	Stellingen
+5248697edf80d2	m6a	Ins Gleis? Da kommt doch gleich ein Zug!
+52a1a4d6190391	f5	Iserbrook
+52bcc02c418bd7	f6	Hausbruch
+52bf902e56d294	m6	Tonndorf
+52d549e02cf316	m6	Horn
+52d8cc2c61ed65	f6	Lürade
+53119e5b7ce9d3	m9n	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
+532cefb8d80a02	f6	Steinwerder
+535d7ad4dc3dbc	m5n	An den Landungsbrücken grölt eine Gruppe seit zwei Stunden mit voller Musikbox.
 538861f3a89860	d	Gehen Sie dazwischen und trennen Sie die Leute.
 53a403d742a32c	m2	Veddel
+53cf575afe4ec7	m3n	In
+542d09eba6273a	m7a	In
 543aef0bb31f1f	m1	Bergstedt
 544c5f7beda105	m2	Blankenese
-54aae3bdc9fe26	m1n	Er hat vorhin nach mir geschlagen, aber wir halten ihn fest.
+5458c3d98b4485	f9	Altona
 54bf32d197bb17	r1	Hafenstraße überprüft, nichts festgestellt.
-554e8a6eb9d639	m2a	Moin, hier geht's gleich rund! Vor unserem Laden auf dem Kiez kloppen sich zwei Gruppen.
+54c285c7ead41c	m7n	Mehrere Einbrüche zeigen ein gemeinsames Muster. Hinweise müssen zusammengeführt und Betroffene befragt werden.
+54d0a6789e6fb8	m5a	kurz hinter der Kreuzung.
+54dd7936098aa1	m5	Hoheluft-West
+54ecbcbf0dedba	m8	Harvestehude
+54f101d1d4a335	m8	Altenwerder
+54f45138d5c1ea	m3	Horn
+55653575c49e39	f5	Billbrook
+556f6b24c53d41	f6n	Da hängen Kabel aus der Seitentasche. Vielleicht vom Ladegerät.
+5575b2c5be7f01	f7	Rahlstedt
+55bab8d8a25125	f6	Billwerder
+55c3a8d1497b97	m3	Osdorf
+55e04765eb81b5	f4	Schnelsen
 55e33c3ae8b410	f3	Ottensen
 55e9af956b193e	m2	Spadenland
+5626ece19a1016	m5	Ochsenwerder
+56274f8a6ea208	f4	Wandsbek
 5631f70293dd30	f1	Hoheluft-Ost
 5638c0e1eaf0d3	m2	Lürade
+5654c93c2c8d72	f3n	Nein, die haben mich nicht bemerkt.
+5659233222c50c	f4	Lemsahl-Mellingstedt
+56613aa3b6f5ef	m7	Eppendorf
 56648d0b6e8249	f1	Rönneburg
-56722e72b0ce4a	m2a	Reeperbahn, Ecke Große Freiheit. Direkt vor der Tür.
 5676e120c3ee80	m2n	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
 56882ec3a9b6cd	f1	Langenbek
-56d4c953a39b9a	f3a	Alles klar, mache ich sofort.
+56a20e72bd9482	f9	Rothenburgsort
+56a28e060de910	f4	Duvenstedt
+56e326dc5f4a9e	f6	Sternschanze
+57079d923dd33d	m8	Ohlsdorf
+572183d8733ae2	m5	Billbrook
+57428b4bc02e6b	m5p	Motorroller, schwarz, Richtung Stadt. Eben gerade!
+5768fac783869e	m5	Neuland
 5799669c8d28da	f1	Sasel
 57a208907cb402	f1	Altona
 57a97526db4ee1	d	Bleiben Sie sitzen, ich schicke Hilfe. Zeugen sollen warten.
+57dbe171fd8ed9	m4	Wilhelmsburg
+57e0b4568d98c6	f8	St. Georg
+57ebc3bd0e8bd9	m4a	Moin, hier geht's gleich rund! Vor unserem Laden auf dem Kiez kloppen sich zwei Gruppen.
+580fe94c0e1193	f8	Finkenwerder
 5822fb5cad9553	r3	Peter 20
 583f69bf8a08ec	d	Fenster schließen, Bewohner warnen, nicht selbst löschen.
 585e6dfae6ae74	d	Schwimmen Sie zu den beiden hinüber.
 5861a63dda6d21	r0	Peter 18
+5863eb6693de3d	f5	Hausbruch
+5875f0eeaa8709	f9n	Ja… ja. Okay. Ich versuche es.
 58ac861ef6b47d	d	Bringen Sie sie in die stabile Seitenlage und bleiben Sie bei ihr.
+58c631da14d5be	m7	Harvestehude
 58cfb21bcd8663	f2	Tonndorf
 58e939079408ec	f3	Neuallermöhe
+58ea9821d648e9	m4	Eißendorf
 58f364a21111d6	f3	Allermöhe
+58ff59bbb03315	f4	Altengamme
+590d565a52bc71	m5	Hoheluft-Ost
+59160235c3a562	m9	Finkenwerder
+592704e6314b0a	f8	Billstedt
+59297d7381d07c	f8	Lemsahl-Mellingstedt
+593fbb10f044cb	f6	Ohlsdorf
 597dab3f5224b5	f1	Heimfeld
+599998d836366d	f9	Lohbrügge
 59b9f21b0061a8	f1	Marienthal
 59dda66946a2ec	f2	Lokstedt
+59ed55e11ee71e	m8	Billbrook
+5a2a72dfcb6435	m5	Sülldorf
 5a311ec7d4359c	d	Warten Sie, bis der Rettungsdienst da ist
 5a370ca7b92717	r0	Peter 19
+5a3bb7522daca0	m7	Kirchwerder
+5a8d3c8c1d4a8b	m8	Sasel
+5abc96b17b31e1	m8n	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
 5b0a539ce5f9e8	m1p	Wie bitte? Das meinen Sie nicht ernst!
 5b2d44823d6eb2	d	Halten Sie den Mann mit dem Messer selbst fest.
-5bb19af7807908	m2n	Ein aktueller Hinweis soll überprüft werden. Beobachtung und reguläre Aufnahme müssen getrennt koordiniert werden.
+5b3d69ee02c0a3	m8	Moorburg
+5b440f525a0a88	m3	Rönneburg
+5b4aee83b700c0	m4	Volksdorf
+5bc0dbfffa7c25	m9	Nienstedten
 5bc98e0ce4689d	m1	Groß Flottbek
-5bf8bfb7e2cb20	m1a	Feuerwehr-Einsatzleitung: Gasaustritt, wir räumen zwei Straßenzüge. Bitte Unterstützung!
+5be2c6f3603b15	m9	Altengamme
+5be3fdcae35126	m3w	Am Sandtorkai, Block E, drittes Obergeschoss.
+5bf2097fc89c55	m7p	Er saß am Tisch, hat sich an die Brust gefasst und ist vom Stuhl gerutscht.
+5c045e1ec167ff	f7	Billbrook
+5c13711398d456	m6n	Mein Vater ist dement und seit einer Stunde nicht vom Spaziergang zurück. Es wird bald dunkel.
 5c184637806c8e	f2	Hausbruch
+5c3ae1bbe213fb	m8	Rönneburg
 5c4bb3cd2f777d	f3	Hohenfelde
-5c87949e40c3ed	m2a	Massenunfall! Fünf, sechs Autos ineinander, Rauch aus einem Motor!
+5c717eff88c382	m6a	Auf der Autobahn liegt eine Palette auf der linken Spur, Autos weichen in letzter Sekunde aus!
 5c8cfc84134a0f	m1	Harvestehude
-5caad74ddcd909	m1a	Dicker schwarzer Rauch, er zieht schon ins Treppenhaus.
+5ca8ae84513347	f5	Othmarschen
+5cbd3c06efe541	f6	Altona-Altstadt
+5cdb2550607462	f5w	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
 5ce57da0187860	m2n	Nein, akut nicht, soweit ich das sehe.
-5d2a9758da36bf	m1n	„…und zwei Brötchen, bitte.“
+5cf0837314ac93	f7	St. Pauli
 5d440cbddb6ccf	f1	Wohldorf-Ohlstedt
-5db9009e350bb3	m1a	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
-5dd77e0df2b7fa	f2w	Ich habe nichts gesehen. Einer hat was von „Stemmeisen“ gesagt.
+5d5c9262d592ef	f6	Veddel
+5d78e8e7256fcd	f7	Barmbek-Süd
+5db43c57885ab0	m5	Waltershof
+5dd778f6de3f6d	m4	Eidelstedt
+5df19d7c09a158	m9	Altona-Altstadt
 5dfe357d107641	d	Seit wann ist er verschwunden?
 5e0aae557ed0f6	m2a	Bitte was? Er hat ein Messer!
-5e2bd40c445562	m2p	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
 5e58a1d79d46b5	f3	Curslack
+5e5efd0b9afcce	m5	Hummelsbüttel
 5e6de581ed0bf0	f3	Horn
 5e83e8a31cc3d6	m2	Horn
 5ec488d8756637	d	Telefonreanimation anleiten
 5ec810ed92227a	d	Haben Sie einen Notfall?
+5edd66909a03b8	m5	Lemsahl-Mellingstedt
+5eebd590405f6f	m7	Veddel
+5efe483a0846b3	m4	Sasel
 5f0c6c3edcfd28	m2	Steinwerder
-5f5ef8bb217cf3	m1p	Ich schließe zu. Die Kasse rühre ich nicht an.
+5f176523893191	f9a	Gut, sie sitzt jetzt im Sessel.
+5f22cc40042d9f	m6a	Bewohner berichten von einer bedrohlichen Situation. Spezialkräfte, Schutz und Betreuung müssen abgestimmt werden.
+5f29d638850aa6	f5	Bergedorf
+5f864a3f570bfb	m7	Horn
+5fa12e2185e7be	m3	Wellingsbüttel
 5fa732215e1d55	m1	Lokstedt
-5fff36cef7e32b	f2n	Notfall? Nein, ich dachte, das ist die Touristen-Info!
-6064af462462d7	m1n	Eine große Kreuzung ist ausgefallen. Der Verkehr und die Reparaturmaßnahmen müssen abgestimmt werden.
+5ff2d3641a5999	m4	Neustadt
+603180fa0a7dd4	f8	Groß Borstel
 6077f5c53a72e7	f2	Winterhude
 6094a6235acbe9	f3	Langenhorn
+60a2788576c8f5	m4	Hammerbrook
+60fd4c2ba10431	f7	Fuhlsbüttel
+60fea35066bd4c	m3	Neugraben-Fischbek
 611c9a5b7187ff	f2	Horn
-612ef8dad8a7ee	m1a	Hauptbahnhof, Gleis 13, Südende.
-61557dd29bceb1	f3a	Gut, sie sitzt jetzt im Sessel.
+6126beefb7835c	m8	Neuland
+61359cb1672650	m4a	Acht, neun Leute. Einer blutet am Kopf.
+614d41994f6f8b	m8a	In
+6156fe43cfd33e	m8n	Mache ich. Ich habe Freisprechen.
+615cb79c5655e4	m5	Osdorf
+615d31e1930ff7	f8	Alsterdorf
+6165e222266d05	f7	Barmbek-Nord
 617f631359bb8f	f3	Hammerbrook
 61ba7de37e4167	f2	Othmarschen
 61cb43627bc5b0	r1	Kontrolle Wandsbek Markt beendet.
 61da4ccb55cafd	f3	Altona-Altstadt
+61da963de2b02e	f8n	Eine Dame hält schon meinen Arm.
+61f404d207ac30	f8	Borgfelde
 61f9408790208b	m2a	Böig, das Wasser ist richtig kalt.
+61fc886cd19f63	m6n	An der Bahnstrecke irrt ein großer Hund über die Straße. Die Autos müssen bremsen.
+6205efaf8c5c07	f7	Eimsbüttel
+620b559e9d1901	m7	Eißendorf
+622680a892a251	m6	Volksdorf
+627c9548e25401	m7n	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
+6284111a1a9633	f3p	Nach Hause?! Mein Kind ist weg!
 62e45213489a7f	d	Springen Sie runter und ziehen Sie ihn heraus.
+62ed2fbb437040	m9	Hammerbrook
+62f6b080e367f9	m8	Marienthal
+6303461bec3a79	m8	Groß Flottbek
 633e8699e9de91	d	Alle sofort hinterher ins Wasser!
 63543630d65fff	f2	Groß Borstel
+635b28ffe9c683	m6a	Eine gefährdete Person wird in weitläufigem Gelände vermisst. Luftlagebild und Bodenkräfte arbeiten zusammen.
+636a063b1d9109	f6	Volksdorf
+636c0364de7bc7	f4	Bramfeld
 63c58e36f62447	f1	Iserbrook
+63ddf70414715b	m6	Wohldorf-Ohlstedt
+63e48d7cc6f002	m5	Wellingsbüttel
+64173fc19c5d3f	f4	Ottensen
 6422b3714283b7	f1	Neuallermöhe
-6442999eda85af	f2w	Da ist jemand in meinem Haus. Ich habe Glas splittern hören. Ich bin oben im Bad.
+6422ef96140352	m6n	Er knurrt nicht, er hat nur Angst.
+642ed0ba333fc1	m3w	Unten steht ein Transporter mit laufendem Motor.
 6460219d9fa7e4	f2n	Ja… ja. Okay. Ich versuche es.
 6461757e93495c	r1	am Einsatzort.
+6481fb46e4d0f9	f6	Ottensen
+6484a7ecb5385c	f8	Ohlsdorf
+64b764ee4e9cdc	m7n	Ein Tatort ist gesichert. Die kriminalpolizeiliche Dokumentation und Aufnahme der Hinweise stehen an.
+64d4c0c836154a	m3a	Ähm… Tschüss!
+64e8a93aed1b0d	f1a	Ja, die rechte Spur ist blockiert.
 64f5a8d52714fb	m2	Nettelnburg
 65329263ca92f0	f1	Marmstorf
 653a325cec8844	r0	Peter 17
 658cb0f9f4dcf4	m1	Sternschanze
+658d828f4ab2cb	m7	Othmarschen
 65975ef78bf9e8	m1	Hausbruch
 65b30f6d943817	f3	St. Georg
-667b593058d281	f3p	Wir haben eine Luftmatratze!
-669bf3a4986566	m1a	In der Bankfiliale hält ein Mann Kunden fest, er verlangt ein Fluchtfahrzeug!
+65bc4747b71cd0	m8n	Ist gut. Ich halte seine Hand.
+65c05d66e754e9	f4	Langenbek
+65d501266d652e	m6a	Mein Ex steht vor der Tür und sagt, er bringt mich um. Er hat ein Messer!
+65da219fc76cda	m8	Altona-Nord
+662e55f1ca3903	f3n	Hier sind zwei Männer auf dem Parkplatz, die seit Stunden Autos abklappern.
+664a7ff7ed0651	f5	Ochsenwerder
+6678c4a4ebd828	m4	Tatenberg
+66959c4ecb1753	m6	Hohenfelde
+669ec0dcb93ee9	f4	Moorfleet
 66b7c0f3c6b1f6	f3	HafenCity
-674da7ceea6db5	m1a	Da rein? In den Rauch?!
+66c57350184fb9	m3a	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
+66e3dfa35b091b	f8	Lurup
+66e4fe3f611b98	f4	Horn
+66e7ded2c893ff	f5	St. Pauli
+66e838b877f8cd	f5	Nettelnburg
+66f322373b8b85	f6	Neuengamme
+671c6dfe2ecb2f	m8	Neuallermöhe
+672b416dba3f4f	m9	Ochsenwerder
+6746a19e5006c4	f9	Altona-Altstadt
+6754e8e871a3c3	m4	Bergstedt
 676663d4bfbd02	m1	Ohlsdorf
-67ffe85e15bae7	m1n	Ein abgestelltes Fahrzeug fällt seit mehreren Tagen auf. Standort und Halterhinweise müssen geprüft werden.
-68004451412284	m1a	Mache ich, ich stelle mich an die Straße.
+6778b1d2869e74	f4	Alsterdorf
+67a8c9a87b1f89	m3n	Nein, akut nicht, soweit ich das sehe.
+67c31acb12ffb3	m7	Altenwerder
+67e5e8d336169f	m6	Hummelsbüttel
 680ad11d3771b4	f2n	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
+6815d6bb11536c	m5n	Na gut. Dann eben so.
 6820244b940d93	f1	Sternschanze
+68232e9004eeb7	f5	Niendorf
+682d7782dc3812	m8	Steinwerder
+683f0af2020f1c	m8	Wohldorf-Ohlstedt
+6840a3c9ec54b5	m3	Rothenburgsort
 686ad760c44585	f3	Spadenland
+688e2011ff4f83	m4	Ochsenwerder
+6890ac84564fa1	f5	Volksdorf
+68ae14c8a1a426	f6	Niendorf
+68c30f81dcf2f0	m8	Lürade
+68dd7cca0bc5be	m3	Jenfeld
+68e86a8dad4324	m4	Hausbruch
 692aa23c370f86	f1	Lürade
+692f352822c2ce	f8	Horn
 693e756d1a6d41	m1	Duvenstedt
-694343fe3ff07e	m1n	Hier sind zwei Autos zusammengestoßen, mitten auf der Kreuzung!
+695937765420c6	f9	Steilshoop
+6965fd40605cbb	m6	Farmsen-Berne
 69686dcc30f9c2	f3	Alsterdorf
+696f1774dd198c	m7	Steilshoop
+698597f32558ef	m7	Lohbrügge
+6988a40fccb5c9	m8	Hoheluft-West
 6997d38780173e	m2	Altona
+699e585e4b8b2f	m3	Veddel
+69c34ba8fd49f7	f5n	Ja… ja. Okay. Ich versuche es.
+69e6a26d127544	f8	Ottensen
+69f8f317d6e6d3	f9	Neuengamme
 6a0060d3f2684e	f3	Eimsbüttel
-6a0af519ce2644	m1a	Verlorene Ladung gefährdet den Verkehr. Der Abschnitt muss gesichert und die Räumung abgestimmt werden.
+6a03a786ccb71d	f6	Blankenese
+6a095b4d51e0aa	f5	HafenCity
+6a434ca2af4e6a	m8	Hoheluft-Ost
+6a4887815bfbec	m9	Steinwerder
 6a4a1a7332c2c2	r1	wieder frei über Funk.
 6a81e5570dc0ca	f2	Eimsbüttel
 6a827e194905af	d	Stehen die Fahrzeuge auf der Fahrbahn?
+6a97d05c4daba4	m9	Rissen
+6aab7dcd29e30f	f9	Rotherbaum
+6ab065bbb9be47	f4	Hamburg
 6ab6cf23d6c1a2	f3	Bahrenfeld
+6af712ab386602	f7	Sasel
 6afa5f0a0bcc3c	r2	Peter 22
+6afeb70098f4cd	f4	Wilstorf
 6b10b0b739d855	f1	Ochsenwerder
 6b581b07b1db25	f3	Sinstorf
 6b5dcffe1d5b20	f1	Volksdorf
-6b7589aa2c8b26	m1a	Machen wir, wir gehen an den Zaun zurück.
 6b897f6b835e1a	r0	Für alle Wagen Barmbek: Hilflose Person gemeldet, Augen offen halten.
 6b94b0a2faa57b	f3	Neuenfelde
 6b9d25bf4e0327	m2	Cranz
+6bc527e59db0c5	f9	Hamm
+6bca2f57313f97	f8	Altona-Nord
+6bce438d7badea	m3a	Ja, das sieht wirklich gefährlich aus. Bitte beeilen Sie sich.
 6bd23bc9e04682	f2	Neugraben-Fischbek
+6beb3a3d514028	m6	Lohbrügge
+6bfa894bf1bdff	m6a	Bergwacht/Feuerwehr: Wir haben eine Person am Hang verloren, bitte Unterstützung aus der Luft.
 6c30faeabbeee3	f1	Hausbruch
+6c4aca350a1f52	f7a	vor der Eckkneipe.
 6c5ecb2d0482cc	r2	Peter 1
 6c7274f1cbb234	m1	Neuenfelde
+6ca7de3531dd76	m7n	Ein lange schwelender Streit ist erneut eskaliert. Eine ruhige Aufnahme und Vermittlung sind gefragt.
 6ccd2344321b90	d	Hören Sie etwas aus der Wohnung?
+6ccee8d4016bb3	f4	Hoheluft-West
+6cd64e39bf6d4b	m9	Groß Borstel
+6d029a63c542a2	f5	Wilstorf
+6d06d905abe350	f8	Hamm
 6d07307b7c9275	f3	Winterhude
 6d312cdac4ae99	m2	Bergedorf
+6d33190fee7a0d	m9	Sinstorf
+6d3c0b4f7000c9	m8n	Nein, akut nicht, soweit ich das sehe.
+6d477a6f436f2b	f6	Altona
+6d477b9f7b0add	m8a	Feuerwehr-Einsatzleitung: Gasaustritt, wir räumen zwei Straßenzüge. Bitte Unterstützung!
 6d4851e2e75490	r2	Peter 19
 6d5c0bc49da726	m2	Ottensen
-6dc0b1a8ec7069	m1n	Eine betroffene Person legt bedrohliche Nachrichten vor. Ermittlungen und Informationsgewinnung werden abgestimmt.
+6d76ea45b38b8c	m3	Allermöhe
+6d81cd758da6f0	m3	Billstedt
+6d8baf899c7bd4	m9n	In
+6dbf6ce96609b0	m5	Borgfelde
+6de037272b47d9	f7	Altona
+6de14be6fabb78	f5	Lokstedt
+6deb7df0c3090c	m6	Ochsenwerder
+6decb2fb6ce619	f8	Hoheluft-West
 6dece8bb2597e5	f1	Eißendorf
+6e41d5b4983e4b	f4	Eidelstedt
+6e84c9dd717f33	f7	Spadenland
 6e933c89316a19	f3	Nettelnburg
-6ec21609c7261e	f3a	Darf ich das denn?
-6ef6feb47ad6db	m1a	Ins Gleis? Da kommt doch gleich ein Zug!
+6e9a2230bd5556	f4	Rahlstedt
+6ec88068723c73	m6	Sinstorf
+6ee36cf9c3361d	f4	Poppenbüttel
+6ef79e328f16da	m6	Rothenburgsort
+6f5b6e808cca98	f7	Tatenberg
+6f68ad7a958716	m3	Lürade
+6f82f9847b9ed3	m8	Eidelstedt
+6f859f4814c956	f5	Jenfeld
+6fa42be2013941	f9	Sternschanze
 6fa7ae6bcdef9b	m1	Altona-Nord
-6faa93f0080e7f	f1a	Bestimmt zehn Leute. Einer liegt am Boden und steht nicht auf.
 6feeaeffdf5497	f2	Finkenwerder
+6ff01efdf70f49	m5	Bergedorf
 706cbdcd7a99df	d	Dies ist der Notruf. Fragen Sie bitte in der Touristeninformation.
 706cc2f33c2448	m1	Marmstorf
 7074b2ea983dc2	r1	Peter 12
-70e172b07df69f	f1n	Gefahr? Nein, aber es riecht schon etwas.
 70e217e4a47ad4	r0	Sprechen Sie, kommen.
+7102b062fcb644	m6	Lurup
 713a158c2828db	m1	Groß Borstel
 71717abd462079	f3	Duvenstedt
-71789fa738ee30	f3n	Bei mir steht ein bisschen Wasser im Keller, zwei Zentimeter. Kommt da jemand zum Aufwischen?
+71addedf4da150	f4	Altenwerder
+71b02207c5ac8d	f4	Bergedorf
+71b474d581efa3	m9	Heimfeld
+71b806131e3686	m4	Wilstorf
+71cd2d725f109d	m5	Wandsbek
+71ebc44e629452	f9	Marmstorf
+71eefcfd47d266	f8	Marmstorf
 71ffbcaa53b425	f3	Sasel
+722b2f3f6f7ea3	f4	Hammerbrook
 722f18713cd604	d	Wie alt, was trägt sie?
+723cb072c9ddf3	m8w	Ja… ja. Okay. Ich versuche es.
 723fa099eefc78	f2	Blankenese
+72719f1260817d	f4p	Ja, ein Mann schwimmt hin, die Strömung zieht aber stark!
+728899e492da5f	f8	Steilshoop
+729f1a03e3503e	m3	Lokstedt
 72b838d5dba35f	f1n	Ich stehe vor der Tür einer Patientin, sie macht nicht auf. Sonst ist sie immer da.
 72ba30df65e61b	m1	Tonndorf
-72dbcd092d0b71	f1w	Ja, Pizza, ich sag doch!
+72cd4676d9f600	f6	Eimsbüttel
+72d36feba9ca5e	m3	Curslack
 72fb864dd20369	m2	Volksdorf
-7335743e8c1ed0	m2a	Einer hat ein Messer gezeigt und ist in die Seitengasse!
-73388ec22ac2db	f1p	Mein Mann läuft zum Eiswagen, ich bleibe hier.
-73402993efc957	m1n	Elbbrücken stadtauswärts, gerade auf der Mitte.
+72fcceaf21c6d4	m7	Stellingen
+731497e2ab9a7e	m4	Jenfeld
+734552c5e64132	f4	Dulsberg
+7349fc8b7fd4ba	m9n	Mehrere Personen melden auffällige Abbuchungen. Der Bereich und die Aussagen müssen dokumentiert werden.
+7386598aedfa4b	f9	Kirchwerder
 738b57af02c1f1	m1	Tatenberg
+73c54f568f6396	m3a	Meine Tochter, vier Jahre, war eben noch neben mir am Markt – jetzt ist sie weg!
+73c887d4ceb004	m3	Stellingen
 73d0d2c1d2d188	m2	Rothenburgsort
 73d74d3366dcf2	m1	Veddel
+73d9ea54d22a0a	m3	Eidelstedt
 73f0ae41408966	f2	Uhlenhorst
 73fb95aafa8bbc	f1	Lemsahl-Mellingstedt
+7404b63e91e4c7	m3	Lurup
 740a08f0a4436e	f3	Wilstorf
-741c9de472c330	f1n	Es warten bestimmt fünfzig Leute am Gleis.
 747746b504f8a9	m2	Eppendorf
-74880a50aee9f5	f3n	Nein, es ist niemand in Gefahr.
+747fc3e3bb0a64	m3	Harburg
+74961e4bbb679e	m6	Neustadt
+74afdbae25540f	f6	Dulsberg
 74c653a19bd1ad	f3	Lohbrügge
-74f2af47299b5b	m2n	Niemand verletzt. Aber ein Auto hat's knapp erwischt.
+753a68229c69cd	f7	Hoheluft-West
 759359c9a34eda	f2	Curslack
-759e2a8f73543a	m1p	Er hatte eine Pistole. Ich weiß nicht, ob die echt war.
 75a07f962db944	m2	St. Pauli
+75b92934775ae2	m9	Wandsbek
 75ce00b702f269	d	Kommen alle aus dem Fahrzeug heraus?
+75dca34ba19187	f9	St. Pauli
+76056e5c593037	f7a	Ja. Ich stehe auf der anderen Straßenseite.
+76242184ae4280	f5	Alsterdorf
+767e0b6efb2133	m9	Farmsen-Berne
+768713903e8230	f8	St. Pauli
 769f28027899f4	m2	Tatenberg
-76bb45acc0b35f	m2a	Warten Sie… nein! Die Tür geht nicht auf, sie sitzt fest!
+76bd28da35b260	m3	Rissen
 76cd9e7f7c749f	d	Sichern Sie die Stelle ab, nicht rauchen, Abstand zum Fahrzeug.
 76e0bc747933cd	f2	Sinstorf
+76eb79195fbd0c	m5n	Gefahr? Nee. Aber da sind neue Schuhe drin!
+77015a4488569d	f5	Winterhude
+771d7fbaea7c4f	m5	Volksdorf
+77246b00e6acc8	m9	Dulsberg
+772a0e3852d609	m3n	Die Hausverwaltung meldet beschädigte Fenster. Zeugen warten auf die Aufnahme.
+77449087e45c4a	f7	Waltershof
+7746cd187e6ab5	f6	Neugraben-Fischbek
+77633f0980dc3c	f9	Neustadt
+776f0b2d0d7614	m4n	Ja… ja. Okay. Ich versuche es.
 7797c85ba31f1c	f1	Eidelstedt
-779b30a244ed93	m1n	Gefahr? Nee. Aber da sind neue Schuhe drin!
-7847f51a8e7981	m2a	Drei, glaube ich. Die Fahrerin blutet am Kopf und ist ganz benommen.
+77a3d6ebc356ad	f8	Allermöhe
+77bd20f404e46b	m5	Nienstedten
+780eab7b686dbd	f4n	Zwei Personen sind weggerannt.
+784ca86165c222	f3a	Im Club am Spielbudenplatz, Damentoilette, erste Etage.
 7862979280665c	m2	Wilstorf
+7891e8a228694a	m8	Wilstorf
 78b5b7e0a1778d	m2	Barmbek-Süd
 78bf164b0eec0c	d	Ist er ansprechbar?
-7935dbd30d40df	m1n	Kaufhausdetektiv hier. Ich habe einen Ladendieb im Büro, er wird aber langsam laut.
+78faba7503a9c5	f7	Gut Moor
 793cbbee4daeb6	f3	Sülldorf
+795a41120ba6fb	f4	Kirchwerder
 796d414d8e2c37	m1	Harburg
-7997427aef246b	m2n	Endhaltestelle in
+7973f9772972eb	m3	Niendorf
+79899b7a809a33	m6	Neuengamme
+79d28df2a95b59	m4n	Mir wurde gerade die Geldbörse geklaut, in der Einkaufsstraße.
+79d4b2fac99a34	m1n	Licht einschalten? Bei Gas? Sind Sie sicher?
 79e010083fe707	f1	Neugraben-Fischbek
-7a041d40b20aa2	f1p	Rote Jacke, blaue Mütze, Dinosaurier-Rucksack.
-7a1bf36c7d0ca6	f2w	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
-7ad1da4b1e0e32	m2n	Geklopft habe ich schon – da macht keiner auf.
+79eb8e6e7e528b	f4w	Ja, Pizza, ich sag doch!
+79f422476b9271	f4	Fuhlsbüttel
+79faf0cd8de3dd	m8	Rothenburgsort
+79fb049f0cb682	m6	Stellingen
+7a04e57d9afaf8	f8n	Mir wurde in der Wandelhalle die Handtasche weggerissen, er ist die Treppe hoch!
+7a1d2f32c21add	f9	Wilstorf
+7a2c65184800cb	f6	Gut Moor
+7a672074c53ff0	f8	Bramfeld
+7a8333ffbbea23	f5	Hoheluft-West
+7a96c7a41573f2	f9a	Ja… ja. Okay. Ich versuche es.
+7a99b6fd6068b4	f4w	Ja. Genau. Eine große, bitte.
+7aa6f1aa140937	m5	Lohbrügge
+7ab399ddea3b2f	f4n	In der Schanze brennen Müllcontainer direkt an einer Hauswand.
 7ae47f12e8a07e	m1	Poppenbüttel
+7b0ea996b10a8c	m4n	Nein, nein. Nur laut. Ich will bloß meine Ruhe.
+7b1a3c198c7aca	m3	Spadenland
+7b3853508fc25d	m5	Neugraben-Fischbek
 7b544e8008537e	m2	Curslack
+7b564eeb50b03b	f4	Sternschanze
+7b58375609af4f	f7	Langenhorn
 7b65d95078ecfe	m2n	Ja… ja. Okay. Ich versuche es.
+7b6ec1263492f0	m5	St. Pauli
+7bb182aae39ee2	m5n	In
+7bc5eda929bc73	m7n	Machen wir.
 7bc8d62f5c1d0c	m1	Finkenwerder
-7be7cdf3a15b78	m1p	Die Tankstelle in
+7be5349794b099	f6	Groß Borstel
+7beeea18b05d7e	m5	Fuhlsbüttel
+7c0d50e40af825	m7n	Seit drei Tagen steht ein Transporter mit laufendem Motor vor der Schule. Jeden Morgen.
+7c0ecd6bb32460	m3	Neustadt
+7c1521da1102b1	f6	Bahrenfeld
+7c244e70f99c74	m3	Kleiner Grasbrook
 7c267b94521a64	f2	Francop
+7c455fde6a0ae3	m9	Neustadt
+7c4db1b51552e8	f6n	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
 7ca40a63a758d8	m2	Kleiner Grasbrook
-7cb2903c1a7c01	m2n	Klar, ich warte mit ihm hier.
+7cbc78072c07f2	m8	Tonndorf
 7cd68213ecc6ed	f2	Stellingen
-7d0dc2671c9957	m2a	Hier hat es richtig gekracht! Ein Auto steht quer auf der Straße!
+7cde9bee32f71b	m2n	Bundesbahn-Sicherheit: Fünf Taschendiebstähle in einer Stunde, immer am gleichen Bahnsteig.
+7d261f95cf1b4a	m3	Winterhude
+7d2b226b3cf6bb	m7	Allermöhe
+7d2c6572d11148	m5n	Versammlungsbehörde: Heute 300 Teilnehmende angemeldet, eine Gegenkundgebung ist angekündigt.
 7d4bf4babde707	m1	Langenhorn
-7db8e850786b87	m2a	Mein Nachbar steht mit etwas Langem im Treppenhaus und schreit, er macht alle fertig!
-7e2c822653779a	m1n	Parkplatz in
-7e76c546278b1b	f3a	direkt an der Ampel.
+7d6bd8f3240240	f7	Moorfleet
+7dc3b7acf0f882	m8	Moorfleet
+7dcf2a41eeb311	f6	Rothenburgsort
+7dd5218c719437	m9n	Der Sturm hat einen Baum auf die Straße geworfen. Da kommt keiner mehr durch.
+7df19593d47bfd	m6	Rissen
+7e09e12f994873	m4	Niendorf
+7e24778821c000	m6	Altona-Altstadt
+7e708fb5d9600b	m6	Bahrenfeld
+7eb00b29f512f2	m9n	Ja… ja. Okay. Ich versuche es.
 7eb710f3c50784	r1	Peter 15
+7ec0545e77d1ee	m4	Billwerder
 7ec501d197fa01	r1	Peter 18
-7f9094f7a907cc	m2n	Bergedorfer Straße, Höhe Bahnhof.
+7ece0443ce5daf	m8n	„…und zwei Brötchen, bitte.“
+7ee3cffc8a3c45	m6n	Bergedorfer Straße, Höhe Bahnhof.
+7ee8e632d7292b	m2n	Eine Zeugin meldet ein beschädigtes Fahrzeug und hat ein Teilkennzeichen notiert.
+7f101cf155dc1f	m8	Hummelsbüttel
+7f53d4bb12ce29	f5	Groß Borstel
 7f9784df3e8336	f1	Langenhorn
+7fb2fc621c624d	f6	Fuhlsbüttel
+7fb9763939973a	f5w	Sie kommen die Treppe hoch… ich höre Schritte!
+7fe07ada4e1814	m8	Spadenland
 801d08701f1d65	f2	Hoheluft-West
+80462e28c05f63	m3	Duvenstedt
+80507009acbea0	f8	Gut Moor
+80591c935d36e5	m8	Bahrenfeld
 806d518a8cd515	d	Ziehen Sie die Ordner zurück und halten Sie Rettungswege frei.
 807f9530e57863	r2	Nehmen den Sachverhalt auf, dauert noch zehn Minuten.
-80bbf594f4f308	m1n	Mein geparktes Auto wurde angefahren, und der ist einfach weg.
+80a236cd5b13bc	f9	Barmbek-Süd
 80c71512b5b105	m2	Osdorf
+811b6e5116b36f	m8	Kirchwerder
 813516dc23dd24	f3	Fuhlsbüttel
+81416a7ae75753	m6a	Jetzt ist eine Scheibe geplatzt! Das wird immer mehr!
 81435b0df31a41	r3	Peter 11
+8150a4ea29ba2e	f5	Rotherbaum
+815c4b0886f94c	m6	Blankenese
 81604c4b25596d	f2	Eilbek
+81691d2dfe89b4	f4	Rissen
+8189e795588a37	f7a	Bestimmt zehn Leute. Einer liegt am Boden und steht nicht auf.
+81abccb5611e29	f8	Neustadt
 82226f019ff341	r3	auf Wache.
-82286fc1adde27	m2a	In
+823694d92bd45e	f8n	Ich bin gestürzt, mein Arm tut weh.
+826fd8073652d5	f4	Cranz
 82953382407ea8	f2	Farmsen-Berne
-835b3ae3cb46f5	m2n	Ein lange schwelender Streit ist erneut eskaliert. Eine ruhige Aufnahme und Vermittlung sind gefragt.
+82d086f873080a	m4a	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
+82eb88feedfc3c	m3	Blankenese
+82faeabcc58266	f7	Eilbek
+831757a542286e	m5	Neustadt
+831a7fef923825	m8	Winterhude
+831cb7084d9833	m9	Barmbek-Nord
 835fee53795fd9	m1	Steilshoop
 8374c832e70fe3	m2	Wilhelmsburg
 839dc7ee409727	f2	Rahlstedt
+83a4bfc8e20120	f9	Groß Borstel
 83d0ca561414f5	r0	Peter 10
+84064c438adb2a	f7	Moorburg
+8471220cbcc334	f4	Altona-Altstadt
+8481732949a7fb	m9	Barmbek-Süd
+8484ef77610056	m9n	Ein Baum blockiert eine Landstraße. Absicherung und Abstimmung mit den Räumkräften sind notwendig.
+84b2b43eb57551	m9	Gut Moor
 84bce778321b24	m2a	Mitten auf der Außenalster, ich stehe an der Schönen Aussicht.
-84d59399230bed	m2a	Nee, das lass ich schön bleiben.
+84d12efe668e50	m6	Niendorf
 84e265c003de2b	f3	Steilshoop
+84eed2d9bcc54b	f9	Tonndorf
+850f3e13470399	m3	Hohenfelde
+850f6d843dca0a	m3	Lemsahl-Mellingstedt
+85241d2b1fe968	m9	Allermöhe
+85268725ea37fa	m9	Moorburg
+852775998fb0a6	m1n	Haus mit acht Parteien.
+8536fbb9ffb0c9	f5	Duvenstedt
 853df16bebba4b	f3n	Ja… ja. Okay. Ich versuche es.
 85403659cc767d	f2	Billwerder
+8545e193137ae0	m7	Finkenwerder
+856ad308a5ceb5	f7	Bahrenfeld
+858439eca7cd4b	f8	Rissen
+858cf3b28b77e6	m4	Reitbrook
+85d2a682abdcab	f5	Heimfeld
 85dfed418057e5	d	Atmet sie normal?
-867a2638b0e5d5	m2n	Nein, nein. Nur laut. Ich will bloß meine Ruhe.
-872c382e2f0cd1	m2n	Er ist freundlich, aber völlig verwirrt und friert.
+8609506a29b6de	f9	Veddel
+8649b3b584777a	f6	Langenhorn
+8656c1e7a2d842	m3	Langenhorn
+8663db191d3dff	m4n	Bei mir brennt der Mond!
+868a88f74495e7	m6	Neuallermöhe
+868f0d8932281d	m3w	Ich stehe hinter der Brücke.
+86a8e575e7727a	f5	Altona-Altstadt
+86cf7e0fb33e69	m8a	Rund fünfzig Leute. Verletzte sehe ich noch keine.
+86eb365b3fbcaf	f8	Winterhude
+87410c23d92a6b	m5	Tonndorf
 877406bdfe8500	f3	Harvestehude
-87d352bda7df27	m1p	Ich bin überfallen worden! Ich arbeite an der Tankstelle, er ist gerade raus!
+87dd4553f1b073	m9	Langenbek
 87e92527baf76f	m1p	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
+87f2d0a124f2a8	m6n	Einer hält sich den Nacken, sonst steht man nur rum.
+881b000f4dceda	f7	Osdorf
 881d86dbf216a5	m1	Wellingsbüttel
-882a301015387f	m2p	Er wird ganz blau im Gesicht! Bitte, was soll ich tun?!
+883fe8fabf0c28	m9	Neuengamme
 8841a5f465ebd5	f3	Altengamme
-889b5de54f7c9e	m1n	Hier wurde schon wieder eingebrochen – das ist der dritte Keller in der Straße diese Woche!
-88b25f1f0af42d	f1p	Zehn Minuten vielleicht. Er wollte zum Eiswagen.
+8870528eeaa629	m7	Langenbek
+887d0a1743f258	f6n	Ich soll den aufmachen?
+88a8832efd17ea	f4	St. Pauli
+88a96f8c799e28	m4n	Nein, akut nicht, soweit ich das sehe.
+88ca9951f5d29a	m3	Groß Flottbek
+88ef7ed6d22a21	f6	Cranz
 88f317cd609a5c	m1	Altenwerder
+891ab6bce4ef77	f4	Neuallermöhe
 891ad3a3bd473a	f2	Lürade
 8920f1b0328d06	m2	Neuland
-899255ddf18eea	m1n	Ein Hinweis muss über größere Entfernung überprüft werden. Die Anfahrt bindet eine spezialisierte Einheit längerfristig.
+892f2503dfc78c	m4	Horn
+893300b34f6799	f8	Eimsbüttel
+895c871668a78d	m7	Wilhelmsburg
+89657b30468427	m7n	Kaufhausdetektiv hier. Ich habe einen Ladendieb im Büro, er wird aber langsam laut.
+896f369d9fcc44	m8	Kleiner Grasbrook
+89745f288205a4	m4	Lohbrügge
+898537252fccda	m4n	Bass ohne Ende, seit Stunden, und dann gegrölt.
+89e7e319b9b8fa	f3p	Auf dem Spielplatz an der In
+89f3bfca9b3f8f	m9	Ohlsdorf
+8a06509ba2886c	m6	Cranz
+8a174e1d31f102	m4	Rissen
+8a2804a82d1d35	f5	Lohbrügge
+8a313e3591d3e5	m7p	Mein Vater! Er ist einfach umgefallen, er rührt sich nicht mehr!
+8a3b8af9523fec	m8	Eppendorf
+8a43b70c902e99	m7	Ochsenwerder
+8a468bef048ae4	f4	Niendorf
 8a4c8b6785b552	f1	Blankenese
 8a5bc8122b124f	m1p	Ja… ja. Okay. Ich versuche es.
 8a69c8686c81e6	f2	Groß Flottbek
-8b190a159ac260	m2w	Ich sehe zwei Taschenlampen.
+8a6a8b788a93cc	m4n	Stadionordnungsdienst: Gästefans ohne Karten drängen an den Eingang.
+8adc4896b20ef9	m3	Nettelnburg
+8ae18262719509	m5	Stellingen
+8af1417e65bd8d	m7	Uhlenhorst
+8b03f04f93df9c	f6	Osdorf
+8b0546e63f6892	m4	HafenCity
+8b33f39b26cb19	m4	Rotherbaum
+8b44d88ec5f185	m9	Iserbrook
+8bc59aa68cd8c6	f4w	Ja. Er steht gleich neben mir.
 8be9822ad76980	m1	Francop
 8bef1e2786bfcb	m1	Hoheluft-Ost
 8c041d733d821c	f3	Cranz
-8c1c621b13f9a7	m1n	Reiseleitung: Acht Senioren unserer Gruppe sind nach der Hafenrundfahrt nicht am Bus.
+8c5cbef5086276	f5	Eilbek
+8c61bcbc3d5193	m6	Bramfeld
 8c99155337c7bf	r3	Tankstopp, zehn Minuten nicht einsatzbereit.
+8cb80052c1be9e	m5	Hamburg
 8cdb0193f5ef62	f3	Harburg
+8cdf801e2067eb	m4	Neuallermöhe
+8d02582709886e	f4	Uhlenhorst
 8d0aea6a7e7149	f1	Harburg
-8d2207927f5355	m2w	Sicherheitsdienst Speicherstadt. In einem Kontor ist Licht, das darf nicht sein.
+8d15ce3330984c	m6a	In
+8d185de63bed25	m8	Gut Moor
+8d2e5f5d198188	m3	HafenCity
+8d431de11cb24e	m3a	Eine gefährdete Zeugin benötigt besonderen Schutz und eine koordinierte Betreuung. Der Fall bleibt auf strategischer Ebene.
+8d5a938e21c232	m7	Rissen
+8d5bbda03a0e19	f9	Dulsberg
 8d603c3e661546	f1	Altona-Altstadt
-8d8efd5a4d5be5	m1n	Nein, ich habe gar nichts bemerkt. Sie war einfach weg.
+8d8c91d169ea84	m9	Rothenburgsort
+8db7b20c779b0b	f4n	Noch nicht. Die Fassade wird aber schon schwarz.
+8ddd6e1b3d5217	f7	Hohenfelde
+8de132fa4620bf	f5	Poppenbüttel
 8e0fad262b209d	d	Machen Sie, was der Kommissar sagt.
 8e1ade3fc28cc7	f3	Ohlsdorf
+8e31d8dfa0cb40	f6	Marienthal
+8e469a7a309706	f6n	Am Bahnhof steht seit einer Stunde ein Koffer ganz allein am Gleis.
 8e5a92e1bdb28e	f1	Hamburg
+8e8db854d6ea74	f6	Hamburg
+8e9338125fd0a1	m4n	In
 8eeca3e7f2cfa2	m2	Finkenwerder
-8f04e66b52617c	m2n	Der Nachbar hat schon wieder seinen Müll auf mein Grundstück geworfen. Jetzt reicht es!
+8f0b972db3a21c	f6	Spadenland
 8f26c43e16ef1f	f1	St. Georg
+8f28f114f04762	m3w	Allein? Das ist nicht mein Auftrag.
+8f49948eeabd7e	f6	Farmsen-Berne
+8f653aef8d74c1	m1n	Eine orientierungslose Person bittet um Hilfe. Angehörige und weitere Betreuung müssen verständigt werden.
 8f9530d59b4906	f2	Schnelsen
 8f9be9f1d20aaa	f2	Barmbek-Süd
+8fa393787d4619	f4	Lohbrügge
+8ffa70d70bf9e1	f9a	In
+900487ead03c05	m5n	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
+901ccbdbc32a73	m7	Tonndorf
 9028684dbb809e	d	Fahren Sie einfach weiter nach Hause.
+902bbd1ed1e723	f6	Hoheluft-West
+9045b53495835b	m3	Wohldorf-Ohlstedt
+906045f953c8b6	f6	Stellingen
+907477c8de4c59	f7	Hammerbrook
+9075783dfa0791	m8	Nettelnburg
+90841d1fe4b9db	m7p	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
 90b537cc28b685	d	Beschreiben Sie Personen und Fahrzeug.
-91088cdfd66067	f1p	Ja… ja. Okay. Ich versuche es.
-9154c7af6729f4	f1n	Oh, entschuldigen Sie. Danke!
-91ddb35c99a639	m1n	Sagen Sie mal, wird das heute noch mit dem Sturm? Ich will grillen.
+90dc83a6b73794	m9	Billstedt
+90dfe97b503e34	f6	Schnelsen
+90e7e49310487a	m5p	Ja… ja. Okay. Ich versuche es.
+9101c0d186c73d	m7p	In
+911c2a4971c2cf	m3	Finkenwerder
+912f65e3323ca5	m5	Rahlstedt
+916ef2a4c0ef1d	m3a	Ein Gegenstand führt zu Verunsicherung an einem öffentlichen Ort. Absicherung und Fachbewertung werden organisiert.
+9191e69aef9613	f5	Wilhelmsburg
 91f1d4a45583d5	m2	Uhlenhorst
 91f96928f18175	m2	Altona-Nord
-920374fa7c61a2	f2n	Graue Kapuzenjacke, Richtung Steintorwall.
-922aa9dc0e7035	f3a	Ich hatte gerade einen Unfall. Mir ist jemand hinten draufgefahren.
+920c4627def5e4	m6	Osdorf
+926b5e13fe3c44	m8	Barmbek-Nord
+9276bf1ffd4bff	f6	Hoheluft-Ost
+927e8188eb1037	f4	Hoheluft-Ost
+92af2c5a1ff561	m6	HafenCity
 92f42a9b6ca5ea	m1	Heimfeld
 93006438531d86	f2	Marienthal
+930c0681fa9ccb	f8	Poppenbüttel
+9321f621a50c9e	m8	Tatenberg
+93313dbd5287e7	m5n	Kripo: Nach dem Raub am Kiosk brauchen wir Zeugen und Kamerabilder aus der Straße.
+93d38f5af285e2	m4n	Ja, die EC-Karte. Ach herrje.
 940237b60b8b10	f2	Reitbrook
+9421fe4d86698b	f6	Borgfelde
+948c0e120ec1d1	m9	Harburg
+948d8ab1f99146	f8	Iserbrook
+94969a9ad8060e	f9	Lurup
 94b2744e7ba980	m1	Wilstorf
+94f9fc5c03b198	f7	Eißendorf
 95029a74560dda	m2	Hamm
-95034ff60441d5	m1a	Auf der Autobahn liegt eine Palette auf der linken Spur, Autos weichen in letzter Sekunde aus!
+95034ccb8c7071	m8	Neuenfelde
+952334f70c8106	m3	Billbrook
+953402be8dc78c	f4	Billwerder
 953b39cd4af767	f1	Tonndorf
+953b8af0511a6a	m7n	Ein abgestelltes Fahrzeug fällt seit mehreren Tagen auf. Standort und Halterhinweise müssen geprüft werden.
 95414d30874508	r1	Peter 9
-957d60ec2c14ee	m2n	Im Hamburger Hafenumfeld kam es zu einem Zusammenstoß. Zufahrten und Aufnahme brauchen getrennte Kräfte.
+9561df6fe61e83	f7	Wilhelmsburg
+9571e7f8916efd	f6n	Er schiebt das Rad Richtung Rathaus.
+957dea2dd46952	f8	Altengamme
+95a310b385a525	f5	Neuallermöhe
 95fe81b6fe02c9	f3	Gut Moor
+9603a6ececc60d	m7	Lokstedt
 9603d5b9294c9f	r0	Peter 22
+9611ee3eb95956	f7	Eppendorf
+961b6e1b30ffa3	f5n	Oh, sorry! Thank you!
+964f1380ffb303	f4	Sasel
+9665870725814d	m6	Francop
 96a0c70b42777e	m1	Altengamme
-96b3622a860717	f1a	Ja. Ich stehe auf der anderen Straßenseite.
+96bd9b56cb0a63	f5	Curslack
+96d235f4d2cd9c	f9	Nettelnburg
 96da03475cb7bd	f2	Eppendorf
+96f59888c98f08	f6	Wellingsbüttel
+973daa38296a95	m7n	Mönckebergstraße, Personaleingang Rückseite, zweiter Stock.
 9761093035e9b8	m2	Marmstorf
 977095d867df3e	f3	Altenwerder
+9777c2e9cb73f2	f9	Rissen
 97b6ee5ad3a207	m2	Hausbruch
 97d0efba9917c5	m2	Winterhude
+97d9e5b3291bd1	m6	Bergstedt
+97e2bb4681e469	f8n	Ja… ja. Okay. Ich versuche es.
 97fdefaccd04bd	r2	Halterabfrage bitte, Hamburg Anton Berta 412, kommen.
-9841cccbf32fc9	f1n	Er schiebt das Rad Richtung Rathaus.
+97fea144e9c72e	m3	Borgfelde
+9801f2be5621d4	f7	Ochsenwerder
+982005eab715b7	f5	St. Georg
 98553d333c6ad6	f2	Altengamme
+9862bfff55ff72	f7	Alsterdorf
+9864257bba6796	f8	Wilhelmsburg
 987f8c380371b2	f1	Borgfelde
+988487644ee779	m6	Groß Flottbek
+98bc9372e72cb2	m7	Hamm
 98c1fcb451730a	d	Kein Licht, keine Klingel, Fenster auf, alle ruhig nach draußen.
+98ded224d821a2	f5	Tatenberg
 9908e1c14f9f6e	f3	Bergedorf
+99417699d39870	f9	Hohenfelde
 994c5d2b4fb17b	f2	Waltershof
-99aee6410b49d0	m2a	Pflegeheim: Ein Bewohner mit Herzproblemen fehlt seit dem Mittag, ohne Medikamente.
+9953c357c839e5	m9	Rönneburg
+9957ab703840c0	m6	Bergedorf
+99653805dd26f3	f8	Curslack
+99b51e9f9b68b2	f4	Harvestehude
+9a18fa4e30c245	f6n	Jungfernstieg, an den Fahrradbügeln vor dem Alsterhaus.
+9a2ee605cb6eb7	m7n	In
 9a30bc32c5023a	d	Halten Sie Leute von der Gasflasche fern, nicht bewegen.
 9a35a16ccc405c	f3	Marmstorf
 9a472dc34916a1	f2	Veddel
-9a79be3746d692	m2a	Mit Gewalt? Ich weiß nicht, die Tür klemmt doch…
-9b26f9a4f056ad	m1n	Zwei Kunden sind verletzt. Einer hält sich das Bein.
+9a494618f4aefa	f1a	Alles klar, mache ich sofort.
+9a8cda23537bf1	m1n	Ich klopfe an die Türen und gehe raus.
+9ab053c6348360	m5	Sasel
+9ab61145458d88	m3n	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
+9ac1cf90f9cc58	f5	Neugraben-Fischbek
+9ac233bf30982a	m5n	Geklopft habe ich schon – da macht keiner auf.
+9ae164c6669b7d	m9	Sasel
+9b062ed8f2db61	f5	Tonndorf
 9b32e491ed02eb	f1	Rahlstedt
 9b4d0826e4202e	f1n	Ein Kommissar sagt, Einbrecher wären in der Gegend. Mein Schmuck wäre nicht sicher.
 9b5e5bbb38a7c0	f3	Rönneburg
+9b671b0de092da	m9	Steilshoop
 9b8b3dc072235d	d	Wenn Sie nicht sprechen können, drücken Sie eine Taste.
 9b8d17f554081e	r1	auf Wache.
+9bb1730679fa02	f9	Waltershof
+9bbfb47764980b	m5	Eilbek
 9bc8069d578d9b	d	Greift das Feuer aufs Haus über?
 9bcb9450f1c5a2	f3	Tonndorf
-9be32ef410a043	f3a	Der Mund hängt rechts, und den rechten Arm bekommt sie nicht hoch!
+9be2c3f5a5e88c	m5	Poppenbüttel
 9bf24723b006ab	d	Gehen Sie nachsehen, ob wirklich jemand da ist.
 9c2720490f741f	m1	Rotherbaum
+9c41191dd2f680	f6	Sasel
+9c71292d07bb93	f7	Altona-Nord
+9c9485c8d9ec26	m9	Uhlenhorst
+9cc6cda180cf15	f7	Lohbrügge
 9cd1c28a1759be	f1	Ottensen
 9ce9199e866602	m2	Eißendorf
 9ced7d17a40cf8	m1	Neugraben-Fischbek
+9d0ed6d06c7e33	m4a	Reeperbahn, Ecke Große Freiheit. Direkt vor der Tür.
+9d221da2d8f761	f7	Neuengamme
+9d288997c184c7	m6	Groß Borstel
+9d2aecae3a336a	m4	Eimsbüttel
 9d3166bdb20f51	r3	Streifenfahrt Jungfernstieg, keine Besonderheiten.
-9d84d87aa5dd4f	m2a	Am Bahnsteig steht ein Rucksack, seit einer halben Stunde, keiner gehört dazu.
+9d458340e75901	m3	Kirchwerder
+9d7713ece5788d	f8	Sinstorf
+9d7b7480433276	m5	Moorfleet
+9d7ed91fc20232	m5	Heimfeld
 9d919e0401ec4e	f3	Iserbrook
 9d984264307a7d	f3	Rotherbaum
+9d9c19cd9085de	m9	Horn
+9e1b86bd6d4b02	f7	Niendorf
 9e2b09f9d77bf2	m1	Lohbrügge
-9e70f1f75a78ee	f1w	Ich… das kann ich gerade nicht…
+9e4213d4ccaf16	m6n	Terminal 1 am Flughafen: Da liegt seit einer halben Stunde ein Rucksack ohne Besitzer.
+9e6976acec8503	f7	Lürade
+9e711be02fb627	f5w	In
+9ea4947285e76f	f4	Heimfeld
+9eb63153fb332c	f4w	Ich… das kann ich gerade nicht…
 9eb98fcc62a239	f2	Marmstorf
-9f1fd428190f19	m2n	Mehrere Geschädigte melden denselben Online-Anbieter. Anzeigen und Belege sollen gebündelt werden.
-9fa472fa3c5cd0	m1a	Völlig verwirrt. Er redet mit sich selbst.
+9ef87d98aae1f4	f4	Groß Borstel
+9f5d3a6efb64d9	f9n	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
+9f7e185d3607b2	f5	Bahrenfeld
 9fafe927b6754c	r3	Peter 23
 9fb921ce98c25f	r0	Peter 12
-a0a3ea29b5f4b9	f3p	Ein Junge, vielleicht acht.
+9fbe575bb083b7	m7	Moorfleet
+9fe97e5a060778	m3n	Eine Zugangssperre im Hafenumfeld ist beschädigt. Betreiber und Zeugen warten auf eine Überprüfung.
+a0058d4b50a4ef	f8	Kirchwerder
+a0245c0a6699ac	f6n	Rote Jacke, Bolzenschneider im Rucksack.
+a027ce98bea445	f8	Ochsenwerder
+a03cd25b33deb3	m3	Langenbek
+a07e683faac439	m6	Uhlenhorst
+a086c17b3518de	f6	Reitbrook
+a0b156bc0d84ca	m9	Stellingen
 a0ce2b6fadf38c	r0	Peter 16
 a0f6f6439185d9	r0	An alle Wagen im Bereich Reeperbahn: Hinweis auf dunklen Transporter, Ausschau halten.
-a11fbcb27653dd	m1n	Mir wurde gerade die Geldbörse geklaut, in der Einkaufsstraße.
+a0ff8b17fbbd9d	m7n	Ja… ja. Okay. Ich versuche es.
 a13db0864fc2f2	r1	Fußstreife Landungsbrücken beendet, frei über Funk.
+a141c17d934aae	f4	Nettelnburg
 a16a9582630781	m1	Alsterdorf
 a1852af85e4aad	f1n	Wandsbeker Marktstraße, drittes Obergeschoss, Name Gerdes.
 a18d71095a4aee	r0	Einsatz für Sie, kommen.
-a18ffd75f578ea	m1a	Wenden? Auf der Autobahn?!
 a1b6d31b6437e7	d	Warnen Sie den Verkehr, aber laufen Sie nicht auf die Fahrbahn.
 a1b7b873b2f2d9	f2	Barmbek-Nord
 a1bd8a1fc81925	f2	Cranz
-a1fcd18146c3e4	f3a	Ja, die rechte Spur ist blockiert.
+a1c65587716c71	f6n	Ja… ja. Okay. Ich versuche es.
+a1e24de9478076	m9	HafenCity
+a1f14e9361b460	f9	Ohlsdorf
+a1fabf87128441	m5	Altona-Nord
+a213a3637bf722	m4	Harburg
+a22dd85359c62e	m6	Langenbek
+a254260d15dff9	f6	Harburg
+a255619b02b74c	f8	Neuenfelde
 a25c276644f555	m1	Jenfeld
+a2734b37d38881	f6	Eidelstedt
+a28d847761801e	f6	Steilshoop
+a294d0edc839a1	m6a	Ja! Am Fenster daneben steht eine alte Frau und winkt!
+a2bf6c46e6d6db	m7n	Zwei Kunden sind verletzt. Einer hält sich das Bein.
+a2d3560a40d379	f8n	Graue Kapuzenjacke, Richtung Steintorwall.
 a2e546aa067665	m2	Altona-Altstadt
+a2fb3bb9e54041	f4	Osdorf
 a3138999b0d6e5	f1n	Ja… ja. Okay. Ich versuche es.
-a39d7b6ae54922	m1n	Mehrere ähnliche Diebstähle wurden gemeldet. Hinweise und unauffällige Informationsgewinnung sollen zusammengeführt werden.
-a3b171946ad019	m1a	Bin rechts, Warnblinker ist an.
+a31ba8fff5d70b	f7	Hamburg
+a345c6a2523600	m7	Rahlstedt
+a3687eedb1b9aa	m9	Waltershof
+a37628334126f0	m9	Billwerder
+a381d4ae43b577	f4	Bergstedt
+a39beac2e6a581	m5	Langenhorn
 a3e4050f85e073	f3	Kirchwerder
+a4030a3a646e20	m3a	Pflegeheim: Ein Bewohner mit Herzproblemen fehlt seit dem Mittag, ohne Medikamente.
 a407dde5000548	r2	Peter 10
+a412ae8d67be9c	m9	Wilhelmsburg
+a4222c0ac0b98b	m3n	Ja… ja. Okay. Ich versuche es.
 a4249b534d8d4c	m2	Sinstorf
+a42688e1be7908	m6n	Hier warten viele Reisende.
 a450a0d28dc4cc	d	Wie sind Wellen und Wind?
+a4630ec9e8554f	m5n	Ja… ja. Okay. Ich versuche es.
+a47e3cb96b3d61	f6	Tonndorf
+a481e879fb42fd	f7	Horn
+a496237d3a165f	m8	Poppenbüttel
 a49f95396b3f44	d	Wie wirkt der Mann?
 a4a8c9fc9569ba	d	Hier ist der Notruf. Brauchen Sie Hilfe?
-a4cc10e6ee83f5	f1w	Hausnummer zwölf.
+a4b64b5d63f88b	f8	Uhlenhorst
 a4ceeb86e40a0d	f2	Neustadt
+a4df783d0d8891	m5	Hammerbrook
+a4e0dd233faa8f	m9n	Nein, akut nicht, soweit ich das sehe.
 a5085d1add4313	d	Bleiben Sie in der Wohnung, Türen zu, weg von Tür und Fenstern.
-a519af825f65eb	f1w	Hallo… ich möchte eine große Pizza bestellen.
+a532a1637bd328	m4	Wohldorf-Ohlstedt
+a5350fcc72e78d	f9	Sinstorf
+a57f2d4f88fc9f	m6	Veddel
+a58a6662d6290a	m9	Billbrook
+a59170d7fde1b2	f3a	Hab ich. Der Sicherheitsdienst ist jetzt da.
 a594bde7d3df05	f3	Poppenbüttel
+a59632044a2166	m8	Allermöhe
+a5a92081d9066c	f6	Iserbrook
+a5ae77ae57fb49	f8	Hohenfelde
+a5aeeda3a916d7	f6	Neuland
+a5c82d5e772732	m7p	Ja… ja. Okay. Ich versuche es.
 a5cb083dcda9de	r2	Peter 4
 a5cfd1e646a179	r0	Peter 1
+a5d05f7379e4cb	m5	Kirchwerder
+a5fca23f12008c	m4	Schnelsen
 a6091e765ddb1b	r2	Wir stehen an den Elbbrücken, kommen.
-a6108a823dfd28	f3a	Zwei Autos. Keiner verletzt, nur ein Schreck.
-a637488594b708	f1a	Meine Freundin ist in der Toilette umgekippt. Wir sind auf dem Kiez, die wacht nicht richtig auf!
-a645214fb4a4ee	m2a	Ich habe mich eingeschlossen.
+a62152b83c759a	f6	Bergedorf
+a62b66cf7eef5d	f7	Kirchwerder
+a63b0ed4aecc3e	m9	Eilbek
 a662cdc728ddfd	m2	Rahlstedt
-a6ee7fa67f515c	f2w	Ja. Nur mein Hund, und der ist bei mir.
+a6d5f9abfccc1e	f6	Lokstedt
+a70c9d656e45ef	f7	Sinstorf
+a714fc778380e5	f7	Harburg
 a718ca3f63d6b6	f2	St. Georg
-a790ea9603564b	m2n	Ich klopfe an die Türen und gehe raus.
+a752f45b4653c9	f4n	Der Notruf? Oh je, ach du liebe Zeit! Nein, ich wollte die 1101 wählen. Entschuldigung!
+a7699681bc5e35	m8	Lohbrügge
+a77e644cca1bb1	f9	Steinwerder
 a7b603183338a8	f2	Bergstedt
 a7caf79bac9d78	f2	Ottensen
 a7f6a15b7161cc	f2	Altona
-a8301270692b25	f3p	Elbstrand Övelgönne, Höhe Strandperle.
+a817cea20012d3	f8	Hoheluft-Ost
+a82c33f7eac1b0	f5	Billstedt
 a8357b140dd15d	f3	Lemsahl-Mellingstedt
-a85b75129eb6ae	m1n	Versammlungsbehörde: Heute 300 Teilnehmende angemeldet, eine Gegenkundgebung ist angekündigt.
+a879ac47ab970f	f7a	Ja… ja. Okay. Ich versuche es.
 a87aa5b098ab4e	d	Bleiben Sie am letzten Ort, jemand sucht die Umgebung ab.
-a89eb952a62a32	m2n	Terminal 1 am Flughafen: Da liegt seit einer halben Stunde ein Rucksack ohne Besitzer.
+a88cff01777726	m3	Eißendorf
+a8d8c33ad10057	m8n	Parkplatz in
 a8e6382357edc0	f3	Groß Borstel
-a8fc4b83637953	m2a	Bergwacht/Feuerwehr: Wir haben eine Person am Hang verloren, bitte Unterstützung aus der Luft.
-a95c91a51bbd8a	m1w	Eingang B.
-a99188aefebd0d	m2a	Tür ist zu, wir bleiben drinnen.
+a8ffed947e3d89	m6n	Hilfe? Ich brauch ein Taxi! Ach, ist das nicht die Taxizentrale? Na, denn nicht.
+a93b8fcb815a2d	f4	Iserbrook
 a99c93cc6a6dad	m2	Marienthal
 a9d4bb277afeae	f3	Rissen
+a9da00061bdfcc	f4	Gut Moor
+a9daf9974f57de	m3	Barmbek-Nord
+a9e2610222553c	m8	Rissen
+a9ebc7b8c26f89	m5a	Massenunfall! Fünf, sechs Autos ineinander, Rauch aus einem Motor!
+a9fb7b4c65caa4	f9a	Der Mund hängt rechts, und den rechten Arm bekommt sie nicht hoch!
+aa11b705765930	f4	Ochsenwerder
 aa18e990d727d2	m1p	Heiligengeistfeld, beim Riesenrad.
+aa23b22c24df80	m4	Lemsahl-Mellingstedt
 aa371ec2611018	f1	Schnelsen
-aa3a0090cb6c6d	m1n	Eine Veranstaltung im Alsterumfeld zieht viele Besucher an. Sichere Wege und Ansprechstellen werden organisiert.
+aa497f03ba79d6	f8	Wilstorf
+aa4ef626da965e	m6	Neuenfelde
 aa64d834fd62e7	f1	Lurup
 aa7615705d3fa4	d	Rufen Sie durch die Tür, dass Hilfe kommt.
+aa7be78030794a	m4n	Sagen Sie mal, wird das heute noch mit dem Sturm? Ich will grillen.
+aab151985d0878	f5p	Ich kann doch gar nicht gut schwimmen!
 aab2734269a1f5	m2a	Ja. Er ist schon an der Kasse.
+aad0fabee71389	m8	Blankenese
+aadef377e46853	f6n	Ich sage dem Personal Bescheid und gehe auf Abstand.
+aae18b5b72a5ef	f9	Bahrenfeld
 aae1d20a23cd77	f1	Bergstedt
-ab8486ad713915	m1a	Ja… ja. Okay. Ich versuche es.
+aaf66b90a35d7f	m1n	Im Treppenhaus riecht es stark nach Gas. Schon den ganzen Vormittag.
+ab6a8544eb901c	f9	Wilhelmsburg
+ab7377f3a43b7c	f5	Altenwerder
 abc9fd98747459	m1n	Ja… ja. Okay. Ich versuche es.
+abd9ca9617ef84	f9	Hummelsbüttel
 abdfa9574895de	m2a	Zwei Erwachsene. Eine Person hat wohl keine Schwimmweste.
-abf42def6c8c93	m1w	Bei uns im Haus läuft ein Mann mit einer Waffe durchs Treppenhaus. Er schreit herum.
 abfb2d9917f78d	f3	Kleiner Grasbrook
+ac16f93a912510	m7	Cranz
+ac22928a8c112e	f9	Harburg
+ac52b35183b94a	m5n	Mehrere Beteiligte streiten lautstark. Die Situation soll beruhigt und die Aussagen getrennt aufgenommen werden.
 ac773e4a1b5edb	r3	Personenüberprüfung am Hauptbahnhof, kommen.
+ac862e4e0e62fa	m4n	Eine große Kreuzung ist ausgefallen. Der Verkehr und die Reparaturmaßnahmen müssen abgestimmt werden.
 ac8950864d1787	f2	Harburg
-acc209bde8b609	m1w	In
+ac972df427a3aa	m5	Neuengamme
+ac9cde6ef29a4e	m9	Kirchwerder
+acb0143df5a956	f5	Spadenland
+acb9d43a1550f1	f6	Lemsahl-Mellingstedt
 acf64472cc0577	m1	Schnelsen
-ad032913499063	m2n	gleich hinter der Kurve.
-ad0d44aa7647aa	m1w	Sieht aus wie ein Gewehr. Ich habe es durch den Türspion gesehen.
+ad23aad1a25430	f5	Dulsberg
+ad24a7447673a1	f5	Reitbrook
 ad2d2a2f3eb2b1	d	Bei Unwetter gehen Notlagen vor. Wir können hier leider nicht helfen.
+ad304dc2c67e50	m3	Neuenfelde
+ad7e91fdde20d8	m8a	Am Volksparkstadion, Vorplatz Nord, Parkplatz Blau.
+ad85163fbfbe02	m5	Steilshoop
 ad8f594c424974	m1	Niendorf
 ada7d782187eff	r3	Peter 17
+adaa2385ca4211	m9	Nettelnburg
 adab025a5b4dd4	d	Die echte Polizei fragt nie nach Geld. Bitte nichts herausgeben.
+add489b3f24a85	m9	Lürade
 ade2bafa3a550c	f2	Wohldorf-Ohlstedt
+ae108ff8470d50	m9	Bahrenfeld
 ae51216a478bb5	r3	Fahren jetzt die Stresemannstraße ab.
 ae6578ce39a6a1	r3	Wir stehen an den Elbbrücken, kommen.
-aeee9efd2a2fed	m1n	Wir haben hier jemanden im Büro, der hat Elektronik eingesteckt.
+aeb6851dfd0737	m4	St. Pauli
+aec12be29ad74e	f5	Bergstedt
+aed18a1e63d1db	m3	Uhlenhorst
 aef0f407b6e01a	f2	Duvenstedt
 aef57c44ae0fbe	m1	Reitbrook
-af247a3f8f33e5	f2n	Eine Dame hält schon meinen Arm.
-af3649a6df771f	m1n	Ich soll den ausbremsen?
-af641703219481	f1n	Hier sind zwei Männer auf dem Parkplatz, die seit Stunden Autos abklappern.
+aefbd72ac7e65f	m1n	Dichte Besucherströme belasten die Zugänge. Präsenz und Besucherbetreuung werden parallel benötigt.
+af06eff1a824c7	m3a	Äh… in der Hauptstraße. Oder so. Hihi.
+af2f306d76b03a	m3	Wilhelmsburg
+af3bad30c65e44	m4n	Nach Spielende treffen Fußverkehr und Reisebusse aufeinander. Die Abreise muss organisiert werden.
+af46017c70a79f	m3	Groß Borstel
+af537f079c9276	f8	Barmbek-Nord
+af61600d3e8b44	f8	Eilbek
 af67c2aaf5e668	f1	Lokstedt
 af779998697494	m2	Waltershof
 af7889f3fb23a7	f2	Spadenland
 af9f155cc46bff	m2	Altengamme
+afa00399208aa5	m5	Altona
+afa41705cc3d46	f9	Billwerder
+afacb69578e61c	m3	Marmstorf
+afb06052745b5d	f7	Wellingsbüttel
+afce844e201207	m7	Wellingsbüttel
+afcf417df61bbd	f6	Wohldorf-Ohlstedt
 b00302dc73db49	m1	Wohldorf-Ohlstedt
+b0139e211902fc	f4	Wellingsbüttel
+b01a0b611b28c0	f5	Cranz
+b03a30f3fc479d	m7	Nienstedten
+b03a3aaed2191a	f9	Barmbek-Nord
 b045bf26e6e243	d	Bleiben Sie auf Abstand und beschreiben Sie, was Sie sehen.
+b04a3a583bb35b	f9	Altona-Nord
+b07da7a1a98376	f4	Hamm
+b08e9febb4bc95	f9	Borgfelde
 b09473fdc24d7a	f2	Wilstorf
+b09a2f1fb1f1ef	f5	Wellingsbüttel
 b0bdae945c5154	m1	Neuengamme
+b0c4a2ff3382bc	m5a	Es riecht nach Benzin, unter dem Auto läuft etwas aus.
+b0ee3399ded5f2	m7a	Mein Nachbar steht mit etwas Langem im Treppenhaus und schreit, er macht alle fertig!
+b0ff9bf905b0c1	f4w	Hallo… ich möchte eine große Pizza bestellen.
+b110143c62f1fc	f8	Langenbek
 b117415e841e37	f2	Wandsbek
 b11b327bebee0e	d	Nichts essen und trinken lassen, Oberkörper leicht hoch lagern.
-b1455bce4a33fa	m1a	Jetzt ist eine Scheibe geplatzt! Das wird immer mehr!
-b178372df1b204	f1a	Einer hat eine Flasche in der Hand. Kaputt, glaube ich.
+b12b1aecc6b321	f6	HafenCity
+b1be3e3e7263c5	f9	Wohldorf-Ohlstedt
+b1e6f1965434f2	f8	Marienthal
+b20faad9994524	f5	Eißendorf
+b2195ad79d2f46	m8	Langenbek
 b21d0e16b20352	f1	Tatenberg
+b21d3aa04d77a8	m8	Groß Borstel
+b21ef75d6bc4bd	f6	Moorburg
 b22019f43f1c30	f1	Rissen
-b229bd74a4be3e	f2w	In
+b224d304621b8a	f5	Rissen
 b235ea98709040	f1	Moorfleet
-b2394a760988c9	f2w	das Reihenendhaus mit dem weißen Zaun.
+b2573376bc1173	m5a	Drei, glaube ich. Die Fahrerin blutet am Kopf und ist ganz benommen.
 b264cb91c8819a	f2	Altenwerder
+b269fb0be8e4d1	f6	Finkenwerder
+b26f4d1799d3d8	f4n	Ja… ja. Okay. Ich versuche es.
+b28a25c1f21d16	m8	Jenfeld
+b2944494385fd8	f6	Sülldorf
+b2db3158417980	m3	Alsterdorf
 b2e2f90e1174a2	d	Werfen Sie etwas Schwimmfähiges und rufen Sie weitere Helfer.
 b2fb26dcf50e21	m1	Dulsberg
+b313a47af567b2	m7	Reitbrook
+b318170de1409c	m4	Steilshoop
+b3268aa5549fc7	f5	Moorfleet
 b32bdc380f970c	r2	am Einsatzort.
+b34fb9b7d74286	m3	Harvestehude
+b38b5259e8e6ed	m8	Wilhelmsburg
+b38e393af88ce1	m8n	Mein geparktes Auto wurde angefahren, und der ist einfach weg.
+b38ec702e9ce66	m2a	Wenden? Auf der Autobahn?!
+b39478921a6ca0	m6	Hausbruch
 b3d7da7b3243b4	r2	Peter 16
 b41f138162aa10	f2	Langenhorn
-b476a50f229f4f	m1n	Ja, die EC-Karte. Ach herrje.
+b42765921ea32c	f8	Rothenburgsort
+b47342e21c9658	f4	Neugraben-Fischbek
+b4766c1d56860b	m8	Altengamme
 b47e9b6e4f1c49	m1	Billwerder
-b49bb5a6759f44	m2n	Haus mit acht Parteien.
-b49f6352412f33	f2w	Zwei Stimmen, glaube ich. Unten im Wohnzimmer.
-b4b9ab6241ded0	m2a	Ja, das sieht wirklich gefährlich aus. Bitte beeilen Sie sich.
-b4bb5fae3460a6	f1a	Vor der Kneipe prügeln sie sich! Das sind ganz viele!
+b48a094cac7796	f4	Moorburg
+b49bbef5d30254	m8n	Ein Zeuge hat es aufgeschrieben. Der wartet noch hier.
+b52972fbe1d52b	m9	Lemsahl-Mellingstedt
+b5343e63e565b2	m6n	Tachchen. Einmal Taxi nach Barmbek, bitte. Aber fix.
 b546d44a129efd	r2	Peter 13
 b5531731811c31	m2	Poppenbüttel
+b5723a70df281a	f9n	Guten Tag. Die Müllabfuhr war heute nicht da. An wen wende ich mich da?
+b57a398467b740	m6	Eißendorf
+b596a47ce26fb0	m4	Altenwerder
+b59e574d062908	m7	Alsterdorf
+b6102989ec0eb7	f6	Rotherbaum
 b615e52827d2fb	m2a	Ich bleibe am Steg und winke.
+b618be214ccff7	f4	St. Georg
+b61b8a8a4494e0	m6	Jenfeld
+b61c08e24e658f	f5	Uhlenhorst
+b65b5a326585c0	m5	Marmstorf
+b662c75089221a	m5	Rissen
+b667f459aaf6ac	m5a	Ich sage es den anderen, wir winken den Verkehr vorbei.
 b6c322183d1f6e	m1	Marienthal
-b6d1f80b5a0ef1	m2a	Mehrere Fahrzeuge sind beteiligt. Rettungsdienst und Räumung brauchen eine koordinierte Absicherung.
+b6d6acf8a5b167	m7	Waltershof
+b6e0b1510a983a	m8	Sternschanze
 b6ecc04e0ebbfc	d	Wohin ist der Täter geflüchtet, womit?
-b73c69686aac30	f3n	Verstehe. Ich versuche es mit dem Nachbarn.
+b6ef2ae6b606f0	m5	Gut Moor
+b7020eb650d351	f9	Uhlenhorst
+b71362f25e387b	f5n	Hello? Excuse me, ich suche die Elbphilharmonie, ist das weit?
+b71e2de7a05976	m5	Groß Borstel
+b72251c5463158	m3	Sülldorf
+b77ea9537d3541	m5	Horn
 b78c40f930077b	f2	Ohlsdorf
 b78ebcbec45215	r3	Verkehrskontrolle Reeperbahn, zwei Personen, kommen.
+b7af203c6bf69c	f4	Winterhude
+b7b70eddb85e2d	m8	Ottensen
 b7bcd9484c5591	r2	Tankstopp, zehn Minuten nicht einsatzbereit.
+b7c02506168d35	m5	Spadenland
+b7c71eca05a6f1	m7	Moorburg
+b7cc545a634f85	m5	Steinwerder
+b7e3e2cb360460	f6	Eppendorf
 b81e56f57f4d91	f1	Reitbrook
 b8320d87238932	f2	Allermöhe
 b85321b80c354c	f1	Duvenstedt
+b856aea6299e83	m4	Wellingsbüttel
+b85fc1293376a7	m5	Altengamme
+b865b26c363c0f	m7	Tatenberg
+b88f86b828833a	m4	Bergedorf
+b892af7fed7a50	m4	Waltershof
+b89a09b73f0bdd	f5	Barmbek-Nord
+b89f47196389cf	m6	Marmstorf
+b8a0c89b52c432	m5	Kleiner Grasbrook
+b8a4ad6b23b618	m4a	Tür ist zu, wir bleiben drinnen.
+b8acc347dc24e0	m9	Niendorf
 b8b2050f341d3a	r3	Sind im Bereich Altona, alles ruhig.
-b8c987dc7392bc	f3p	Am Elbstrand! Ein Kind ist ins Wasser, die Welle vom Containerschiff hat es mitgenommen!
 b8e0e1e85a885b	m2n	In
+b8e1d6febf2bf3	m6n	In
+b8e9752548cbb3	m5n	Ein Hinweis auf eine vermisste Person soll mit spezialisierter Unterstützung überprüft werden.
 b9047ccfb99dc6	m2	Harvestehude
-b93e5ad5c90a71	f1a	Hab ich. Der Sicherheitsdienst ist jetzt da.
+b91a9ac0d6c600	m7	Borgfelde
+b93b37fef02985	f5	Eidelstedt
+b9414bbe4b2831	m7	Gut Moor
 b94fa83de3e2ea	f2	Hamburg
+b96b8c0687793c	f5	Harvestehude
+b996eb7763cf25	m5	Ohlsdorf
+b999c66a1dd182	f9	Billbrook
+b9bc93d5771a4c	f7	Rissen
 ba13e0f35a7dbe	r0	Peter 13
 ba30d8b170ca4d	f3	Borgfelde
+ba3591f61731fb	m4	Nienstedten
+ba730da1c3d4d9	f9	Heimfeld
 ba782d11bbaaae	m1	Osdorf
 ba81af183410a9	f3	Altona
-bab09090615819	f2p	Am Ufer, beim Weg… ich bin hier nur spazieren, ich kenne mich nicht aus!
+baa522e3b5a25b	f5	Fuhlsbüttel
+bacacdf660bc0c	m8	Wandsbek
 bad2227d1be882	m2	Alsterdorf
 bad4b6f583a87a	r1	Personenüberprüfung am Hauptbahnhof, kommen.
 badc980b52bd51	m1	Kirchwerder
-bafe065229032d	m2a	Eine gefährdete Person wird in weitläufigem Gelände vermisst. Luftlagebild und Bodenkräfte arbeiten zusammen.
-bb29d2adf669c8	m1a	Mir kommt ein Auto entgegen! Auf der Autobahn, auf meiner Spur!
-bb796ffce80aad	m1a	Bewohner berichten von einer bedrohlichen Situation. Spezialkräfte, Schutz und Betreuung müssen abgestimmt werden.
-bb844bbb14631e	m2n	Bass ohne Ende, seit Stunden, und dann gegrölt.
+bae84af6a9b17c	m8	Nienstedten
+bb7ab8faec544d	m5	Harburg
+bb8e812cbfff06	m3	Rotherbaum
 bb9a9b523a08c7	d	Gehen Sie heim, Kinder tauchen meistens wieder auf.
+bbb8c2ef5f96d0	m7	Hohenfelde
 bbc2209950c4e4	m1	Bergedorf
+bbc7c1d5448edc	f1n	Nein, es ist niemand in Gefahr.
+bbcc73033277b4	f9	Othmarschen
+bbd029f28196d6	m5	Duvenstedt
 bbf0d0981596b5	d	Lassen Sie ihn im warmen Bus und bleiben Sie bei ihm.
 bc0e582c44c7d7	m2	Sternschanze
+bc3bf6e4db5fbe	f5	Groß Flottbek
+bc3cd83e1fcbc5	f6	Eißendorf
 bc3def0919e8e9	f1	HafenCity
+bc5599a25a2844	f8	Harburg
+bc5bbfdfb6f01c	f7a	Vor der Kneipe prügeln sie sich! Das sind ganz viele!
+bc64d6b08bac71	m6	Altengamme
 bc7d86bf362769	d	Helfen Sie ihm auf und setzen Sie ihn aufs Rad.
 bc8a3638637b31	f2	Volksdorf
 bcaa6d21515c82	f3p	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
 bcb0f67c48b340	f1	Bergedorf
+bcc7405f40afc1	f4	Jenfeld
+bcd493d3196e93	f7	HafenCity
+bd045201968dee	m6	Billbrook
+bd0d7f0892b1e7	m9	Neuland
+bd3b2e17418000	m5	Curslack
 bd4c87fb0c38b5	f1	Wandsbek
+bd7f5cad1f002b	f7	Uhlenhorst
 bd8507d5182e7e	m2	Harburg
-bd8d1d3106672f	f1a	Zwei Cocktails nur. Ich glaube, da war was im Glas.
-bdec01e9c2f750	m2n	Licht einschalten? Bei Gas? Sind Sie sicher?
+bda885402f118a	m3	Barmbek-Süd
+bdbd43acfa6ed6	f5	Langenhorn
 be027a514edf9f	d	Schalten Sie im Keller das Licht ein und suchen Sie die Stelle.
+be1ec9db9c8802	m4	Heimfeld
 be344900dcb6f3	m2	Iserbrook
+be46e8c7f11019	f8	Osdorf
+be6ae7c3e6a68a	m6	Gut Moor
+bea091bf22128a	m6	Rotherbaum
+beaa1d159992b2	m8	Lurup
 bec980f0e19d7e	r0	An alle: Veranstaltung am Rathausmarkt beendet, erhöhtes Verkehrsaufkommen.
-bf10126ed146bf	f2n	Mir wurde in der Wandelhalle die Handtasche weggerissen, er ist die Treppe hoch!
+becc7265620b73	m9	Tatenberg
 bf4ee9e31c668e	f1	Neuenfelde
+bf610b4c826807	f8	Eidelstedt
 bf653598cdc941	f1	Wilstorf
+bf8101ac91f389	m5	Rothenburgsort
+bfb53038a8caff	m3	Marienthal
+bfc6188b2a6319	m7n	Er hat vorhin nach mir geschlagen, aber wir halten ihn fest.
 bfc746578ab5b9	f1	Allermöhe
 bfd0ace99e5d6f	r1	Sind im Bereich Altona, alles ruhig.
 bfd3c497820deb	m2a	Ich sitze im Kiosk und da steht ein Betrunkener, der Geld will und mir droht.
 bfe9dbf0292cfc	d	Ich bin da und schicke Hilfe. Atmen Sie einmal tief durch und antworten Sie mir kurz.
+bff2b6ad06bfef	m5	Niendorf
+c00923200eae06	f8	Altenwerder
+c021a0a6a2f4c3	m8	Horn
+c03508a9570c29	m5	Rönneburg
 c045173cf4984f	d	Holen Sie sofort Bahnpersonal, nicht selbst ins Gleis.
 c06ed7782dd507	f2	Hummelsbüttel
 c0a3a2be7fd4b4	f2	Steinwerder
-c171c126be4e78	m1a	Nach einem Gebäudeschaden müssen Anwohner begleitet und Sammelstellen geordnet werden.
+c0ac7c769e37ce	f8	Wohldorf-Ohlstedt
+c0bb7f05d25365	f5	Lemsahl-Mellingstedt
+c0d58dbb70dc4d	m7	Hammerbrook
+c0f0c53afada18	f6	Kleiner Grasbrook
+c10bdf118d0dcd	m3	Nienstedten
+c13bc47ba86d7f	m7	Ottensen
+c1500c7603bfd6	m6	Moorfleet
+c150f42f9c8c5d	f4	Neustadt
+c15959819b3624	m6	Wilstorf
+c1b76102c078a4	f7	Altenwerder
 c1c2dd1cd6e08a	f2	St. Pauli
+c1e7b60708d8a0	f4	Altona
 c1edc86dc5f51f	m2	Bramfeld
 c2178a8a39dbcb	d	Halten Sie Abstand und lassen Sie die Tür offen.
+c2686b0583dc82	m9	Hohenfelde
 c27133eaa8c712	m2	Langenbek
 c28a356d3fc415	m1	Billbrook
-c29d1498ba50ce	m1n	Spedition: Transformator mit 4,5 Metern Breite, Begleitung ab 22 Uhr angemeldet.
+c2a82212c66e2e	f9	St. Georg
 c301152a0b20c2	d	Können Sie das Kind noch sehen?
-c319306bdbf6da	f1p	Mein Sohn ist weg! Eben war er noch da! Er ist doch erst sechs!
-c333abc0a31941	m2n	Im Stadtpark ist gerade ein Radfahrer böse gestürzt, er steht nicht auf.
+c30402db7bd457	m3w	Ich sehe zwei Taschenlampen.
 c339c38cf33c7b	m1	Nettelnburg
-c35fd4fa986808	m2a	Meine Tochter, vier Jahre, war eben noch neben mir am Markt – jetzt ist sie weg!
-c37dd7305d7087	f2p	Ja… ja. Okay. Ich versuche es.
+c34f727450fbb1	m3a	In
+c38827f5420527	m4n	Ein Restaurantbesitzer zahlt angeblich Schutzgeld. Er hat Angst, selbst anzurufen.
 c38fdaa74e85ad	d	Wie viele Personen sehen Sie?
+c3a56af2a51b43	m8	Finkenwerder
+c3b8dac77750a7	m4	Moorfleet
 c3bbc743c02634	f1	Rothenburgsort
-c3f0ef0c6e3fd9	m2n	Guten Abend. Mein Nachbar feiert schon wieder. Ich kann so nicht schlafen.
+c3cee1855b9cc0	f8	Jenfeld
+c3e4a7d545dbed	f5w	Da ist jemand in meinem Haus. Ich habe Glas splittern hören. Ich bin oben im Bad.
 c3f845036fe78c	d	Seit wann vermissen Sie sie?
+c41175ab920202	m9	Lurup
 c42c57ef5f7a8a	m1	Altona-Altstadt
+c45e86b5c599b9	m4	Moorburg
+c461b3e3b9067c	m7p	Ich mache weiter. Bitte, kommen Sie schnell.
 c4b09371b04cbc	d	Beschreiben Sie die Person.
-c4cd149493b45c	m2n	Flughafen, Terminal 1, Ankunft, an den Sitzbänken.
+c4b384c9ddd367	m8a	Nach einem Gebäudeschaden müssen Anwohner begleitet und Sammelstellen geordnet werden.
+c4bd0009886d24	f9	Lokstedt
 c4d3a373db6cd1	f1	Spadenland
-c51508df984f1b	m1n	Mehrere Einbrüche zeigen ein gemeinsames Muster. Hinweise müssen zusammengeführt und Betroffene befragt werden.
+c4ec6c05a0d130	f4w	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
+c4fead62ce7fc0	m6a	Die Anzeige sagt: in zwei Minuten!
+c5118992117429	f4	Eppendorf
+c515d096fc3605	m5	Othmarschen
+c52ff2a2a925f5	f9	Osdorf
 c53eab783a5f7c	d	Wie viele Personen hören Sie?
+c588eb4886f744	m5	Lokstedt
+c5b80a2e00b1a8	m5	Uhlenhorst
+c5c739b751018a	m3	Fuhlsbüttel
 c5f3ccc5dbbde3	r2	Sind im Bereich Altona, alles ruhig.
+c5fc12044a5064	m9	Rotherbaum
+c5fe2a1e113f92	f9	Neugraben-Fischbek
+c60e021733f09a	f1a	Zwei Autos. Keiner verletzt, nur ein Schreck.
+c6118e0e6dc3b6	m3	Moorfleet
 c6251ec7f8f670	m2	Reitbrook
-c64650a536de7e	m1n	Eine Wandergruppe hat ein Mitglied aus den Augen verloren. Suchbereiche müssen verteilt und Hinweise gesammelt werden.
-c69e7a0912eb85	f3a	Meine Mutter redet plötzlich so komisch. Ich verstehe sie gar nicht mehr.
+c63e169a5595e3	f3n	Parkplatz am Einkaufszentrum in
+c670a55436afa1	f7	Blankenese
+c68d9db5b18e06	m4n	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
+c6ade05ad0ae83	m3	Eppendorf
 c6bce06ac4b4d7	m1	Hamm
 c6ddf363041dd6	m2	Borgfelde
+c6f2b1dda11b28	m3	Hausbruch
 c6fdd3704e09dc	f3	Hamburg
-c7261655237208	f3a	Höhe
+c71c6a265fef56	f7	Kleiner Grasbrook
 c726ea4e90bc5c	m1n	In
+c744306309f05c	f9	Eißendorf
 c774bcf881f990	r3	Hafenstraße überprüft, nichts festgestellt.
-c78620212de0db	f3n	Schulterblatt, Ecke Susannenstraße, im Hinterhof.
+c7bbf01f3ae4b4	m5	Lurup
+c7c16a65129d2f	m8	Wellingsbüttel
+c7c8a26422a699	m8	Neugraben-Fischbek
+c7d5e92696b74d	f7	St. Georg
+c7d82d6d8efa12	m8a	Einige haben Pyrotechnik dabei.
+c7f10d4151267e	m9	Marmstorf
+c7f79e98ea1ebb	f5w	Zwei Stimmen, glaube ich. Unten im Wohnzimmer.
 c80752077a2bb2	m2	Jenfeld
 c810d5a40819be	m1	Langenbek
-c84757dfb4df9d	m2n	Hier liegt ein älterer Herr auf der Bank, er weiß nicht, wo er ist.
+c843d317d12db1	m7	Altona
 c8574df2eff16c	r3	Person angetroffen, geht es ihr gut, kein Einsatz nötig.
-c884e0bddbc340	m2w	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
-c893edd9547380	m2n	Der Sturm hat einen Baum auf die Straße geworfen. Da kommt keiner mehr durch.
+c88cf2fe9c7329	m3	Volksdorf
+c88ffeed7a8cd1	m6	Eimsbüttel
+c8add771e00339	m5	HafenCity
 c8b7bc8a3d4f90	f3	Langenbek
-c921f7513b0351	f1n	Ich sage dem Personal Bescheid und gehe auf Abstand.
-c95d7f6f5cf816	m1n	Moin. Hier am Fischmarkt ist ein Lieferwagen in einen Stand gefahren.
+c9132958a18fec	f7	Hamm
+c938ef73d4186f	m6	Sasel
 c9618434aae151	r1	Peter 3
+c972836bbff44f	m7	Dulsberg
 c98d75b703af0d	m1	Neustadt
+c99021c29c8fdb	m7	St. Georg
 c99a6996e29b72	m2	Billbrook
+c9c24c664fbd5d	f6	Altengamme
 c9c4060cc33ad2	f3	Hoheluft-Ost
-ca48420014c1fc	m1n	Machen wir.
+c9d32e084fa0fc	f9	Altengamme
+c9e0b2df6d8632	m3	Neuland
+c9e3762b6b1e92	m5	St. Georg
+ca32a10974bab0	m5	Alsterdorf
+ca4bb2453d9b3b	f8	Billbrook
+ca4d8202889dcc	m7	Farmsen-Berne
+ca5926a23c1aba	m6a	Da vorne ist die Aufsicht, ich laufe hin!
+ca62c5e22366ee	m9	Rahlstedt
 ca673e921c52e4	f3	Eppendorf
+ca9423be0b42c9	m8	Rahlstedt
 caf2143556b10a	f2	Eißendorf
+cafbefe4bf316e	f7	Finkenwerder
 cafd7a65705278	m2	Hoheluft-Ost
+cb033ec0274845	f3p	Rote Jacke, blaue Mütze, Dinosaurier-Rucksack.
+cb04df58b9ee5e	m9	Bramfeld
+cb1bf79eddce42	m8	Volksdorf
 cb1c8339e1547f	f3	Hamm
 cb3442c95e1e17	f3	Hummelsbüttel
 cb3844d01e7262	d	Schauen Sie vorsichtig hinein.
-cb83afaffe01ab	m2n	Soll ich da wirklich reingucken?
+cb66e9db01d67d	f9	Eilbek
+cb74caae24bf2f	m9	Sternschanze
+cb85dd9ac957b3	f6	Barmbek-Nord
+cb8e8004dd90ba	f6	Jenfeld
+cb8eda3dac10fb	m8w	Bei uns im Haus läuft ein Mann mit einer Waffe durchs Treppenhaus. Er schreit herum.
+cbe393b0f6eac8	f9	Reitbrook
+cc15f3ad82bb17	f5	Kleiner Grasbrook
+cc16bcfff7c14c	m4	Langenhorn
 cc32ed71dac2b5	r2	hat verstanden, wir fahren an.
 cc46c56552f61a	f3p	Ja… ja. Okay. Ich versuche es.
+cc570899a6eb43	f9	Langenhorn
 cc699bf5ff1212	m2a	Kiosk am Bahnhof Harburg, Hannoversche Straße.
 cc85f6316f5b26	f3	Barmbek-Nord
 cc9c4dc0917a6b	r0	Peter 23
+cca3c2a593413c	f4p	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
+ccb68b06cc2fcd	f9n	Oh, entschuldigen Sie. Danke!
 ccbca1d95bd074	f1	Neuengamme
-ccc4b6272a4139	m2p	Mein Vater! Er ist einfach umgefallen, er rührt sich nicht mehr!
-ccc8ccaf89e457	f1n	Nein, der hat mich nicht bemerkt.
+cccea16a57b0cf	f7	Wohldorf-Ohlstedt
 ccd59b6b2b537c	r3	Peter 2
-cd2b1f5cdebe3c	m1w	Das mache ich auf keinen Fall.
-cd32a4712f6ae8	m1n	Mehrere Tiere laufen nahe einer vielbefahrenen Straße. Verkehrssicherung und Tierbetreuung werden koordiniert.
+cd1a3820328610	m9	Altenwerder
 cd3ebef01f01e6	f1	Billbrook
 cd4b4e786c3f62	d	Behalten Sie die Personen im Blick und weisen Sie die Retter ein.
+cd5fb0f03e6f1e	m7	Eilbek
+cd69f2ab043dc0	m8n	Im Stadtpark ist gerade ein Radfahrer böse gestürzt, er steht nicht auf.
+cd6bb264944ffb	f8	Heimfeld
 cd77459151ebb7	r3	Sprechwunsch.
+cd7d78c1e2205a	m7	Kleiner Grasbrook
 cd86893990b279	m2a	Nein, noch nie gesehen.
+cd8cfa42ed652a	m8n	Elbbrücken stadtauswärts, gerade auf der Mitte.
+cdd1af9d0e1e05	m6	Winterhude
 ce1b238c1dfb03	r0	Peter 21
+ce2df20cc076ef	f6	Langenbek
 ce319c47a33fb8	r0	Peter 5
 ce3a48c1327e9b	d	Der Notruf ist nur für Notfälle. Bitte legen Sie auf.
+ce3ad87474cce3	f6	Wandsbek
 ce42ec619a75b5	f3	Billwerder
-cebde749bbe0de	m2n	Rund fünf junge Leute.
+ce4fbbf6d10169	m7	Francop
+ce62b04f47227a	f9	Ochsenwerder
+ce69176b89fc52	f4	Reitbrook
+ce7bfbc3dd09d5	m3	Hammerbrook
+ce9e17ef10bc4e	m5	Hamm
+ceb4abda941ae6	m4n	Nein, nein, alles gut bei mir. Reine Neugier.
+cebda18bb981c7	m7	Barmbek-Süd
 cedcdbe86cacb4	f1	Moorburg
-cef9fcaf5efda3	m2w	Allein? Das ist nicht mein Auftrag.
+ceecb73712ccbc	m7	Volksdorf
+cf41b69d3a66df	f9	Eppendorf
 cf5bebb7d18862	d	Wie schnell fährt er?
+cf71af32da7682	f4	Farmsen-Berne
 cf8b28cfc74a5a	m2	Fuhlsbüttel
-cfa8ceecab5988	m1w	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
 cfb72f011aa24c	m2	Rotherbaum
-d08b5d532a25f1	f1w	Liefern Sie bitte nach
-d12eca5efd9822	m1n	Mal zwanzig, mal achtzig.
-d13bf0a7c3e890	m2n	Unten am Keller. Beim Hausmeister macht keiner auf.
+cfd3461c560139	m6	Kirchwerder
+cfda52732d0a95	f5	Ottensen
+cfde8c4149d4f9	m9	Eidelstedt
+d03bca25369abf	m8	Farmsen-Berne
+d059ba03d1aa70	f5	Francop
+d07c35232ce24c	f5	Farmsen-Berne
+d0bdb5af9259f5	m3	Hoheluft-West
+d0bfe47ffb9f89	m4	Lurup
 d14fce36f2708c	r0	An alle: Ampelausfall an der Max-Brauer-Allee.
+d174330341fc26	m6	Eppendorf
+d1777fb44e01e1	f9	Iserbrook
 d1a1b02f59ced9	f3	Neuengamme
-d1d2128da143c5	f1a	Ich? Das sind zehn Männer!
-d29f723893c79e	m1a	Hier am Stadion stehen sich zwei Fangruppen gegenüber. Das kippt gleich!
+d1a950c26378fc	m5	Veddel
+d1c4aebd5a8717	f9	Alsterdorf
+d1c6f998b7cc8d	m6a	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
+d1edda284a55df	f8	Eißendorf
+d1f175128dc205	f4p	Ein Junge, vielleicht acht.
+d1f881f6081c96	f6	Lohbrügge
+d2446f77f2e55d	f9	Rönneburg
+d247a9ad56be01	f6	Rahlstedt
+d261a103308366	f5	Rahlstedt
+d26631ad965239	f4	Sülldorf
+d29e15bc1d4de7	m7	Hummelsbüttel
 d2a23e54f18ede	f3	Niendorf
 d2aca67a681862	m2	Duvenstedt
+d2c3c95d44f3f1	f8	Billwerder
+d2e1ece09e8348	f8	Hamburg
+d2e2095989bc9a	m4	Hummelsbüttel
+d2e3dbce889e01	m9	Veddel
+d30971fa612b97	f6	Nienstedten
 d31f0ed8da9d46	d	Wehren Sie sich mit dem, was Sie finden.
+d33a1fb50a2fea	f3a	Meine Freundin ist in der Toilette umgekippt. Wir sind auf dem Kiez, die wacht nicht richtig auf!
+d37baa576ca729	f8	Farmsen-Berne
 d3af63d98483a1	f2	Moorburg
+d3be22cbf7eb62	m6	Harburg
+d3dc42addedae6	m3	Lohbrügge
+d431e566b3ff89	m3	Dulsberg
 d44c0252326be4	d	Laufen Sie hinein und holen Sie die Frau.
-d48c17449aaf84	f3a	. Sie wohnt im Erdgeschoss.
+d47eca5455d1ef	f5	Altengamme
+d48640d315fb1c	f9	Hausbruch
+d4bf1c70397d56	f5	Sternschanze
 d4d80042b5726b	m2	Groß Borstel
-d511fc40dd24fd	m2a	An einem belebten Platz wartet ein aufgelöstes Kind. Betreuung und das Auffinden der Begleitperson sind dringend.
 d54cb1bb7e87b8	m1	St. Georg
+d572a8b8472bc0	m6	Kleiner Grasbrook
+d57a1d52c40238	m8	Fuhlsbüttel
+d57d95bd929c18	f9	Lürade
+d5a747ee3e891c	m3	Steilshoop
 d5a8b71e1c4e3d	d	Wie heißen Sie? Missbrauch von Notrufen ist strafbar.
+d5bf88b197e65f	f6	Altenwerder
+d5c0408056b504	f6	Bramfeld
+d5cb00dd76d674	f8	Nettelnburg
 d5cf62c5ff9b9f	f3	Marienthal
-d610f02f5ba853	m1n	Eine Verbindung brach ohne klare Schilderung ab. Der Rückruf blieb erfolglos; eine Überprüfung ist nötig.
+d5d6507ad7b7a1	f4	Barmbek-Süd
+d607a165648e7e	f7	Poppenbüttel
+d6094817fda81f	m5	Wohldorf-Ohlstedt
+d624389627905e	m4	Borgfelde
 d65e654180c290	f2	Neuengamme
 d65ec0d6144c32	f3n	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
-d68b6cc84f2224	m1n	Mönckebergstraße, Personaleingang Rückseite, zweiter Stock.
+d66883569b6bf8	m3	Ottensen
 d6967715dfbadf	m1	Ochsenwerder
+d6bdb52945e41a	m4	Hoheluft-Ost
 d6ce226c847bae	m2	Francop
+d6de247a292df7	f9n	Die Tonnen stehen immer noch draußen. Das geht doch nicht.
+d6e73951aeb34d	m4	Groß Borstel
+d6f69b9af413e8	m8	Bergedorf
+d6fab6949aa6ec	m4	Cranz
+d70245564eae5b	m8	Othmarschen
+d709bc8f2f908b	f3a	Das bringt doch nichts, oder?
+d710f36eb5d245	f6	Hamm
+d711a6bdb48073	f7	Lokstedt
 d71d089ad3fff3	f1n	Junger Mann, die Polizei hat mich gerade angerufen, ich soll mein Geld vor die Tür legen.
 d71ebdad8836c8	m1	Farmsen-Berne
+d739b139d8bf0c	m7	Billstedt
+d756dcee375d6a	m6	Steinwerder
 d75d0304856a4c	d	Wo genau ist das?
-d794a009cf32e4	f3n	In der Schanze brennen Müllcontainer direkt an einer Hauswand.
+d79235548f70a3	m8	Alsterdorf
+d797f89b4f1fc8	m9	Spadenland
 d7a5500528c46f	m2	Hoheluft-West
-d7bc16e70b20b0	f1w	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
+d7ab628a1afa06	m9	Neuenfelde
 d7c5a582150096	r2	Kontrolle Wandsbek Markt beendet.
+d7d9eb6c674f88	m7	Lurup
+d7dddf0881a596	f8	Lürade
+d7dfbf7c762508	m4	Kleiner Grasbrook
+d7ebedaabe22b1	f8	HafenCity
+d7ece2d12d19cf	m5p	Er hatte eine Pistole. Ich weiß nicht, ob die echt war.
 d7eceeb249a99e	m1	Stellingen
+d7eea2e8caaf81	m5	Altona-Altstadt
+d8181dfbef135e	f6	Bergstedt
+d8208f77dbc268	f7	Curslack
 d840c47ae9daaf	r1	Wir stehen an den Elbbrücken, kommen.
+d8429fd3c57647	f9	Duvenstedt
+d845500a2b5fc3	f9a	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
+d860c7e70a0b46	m4	Altona-Nord
+d8aabfa3a2c76d	m7n	Große Elbstraße, direkt an der Fischauktionshalle.
+d8ac3c1a6bea86	m7	Neuengamme
 d8ad63e7b607a6	f2	Borgfelde
+d8b77f891118d3	m3	Altenwerder
+d8f045610ecfbb	f3a	Ja, ganz ruhig. Sie stöhnt, wenn ich sie anfasse.
 d92531f27ffed2	m2	Wandsbek
+d94c6083b4a075	m2n	Mehrere ähnliche Diebstähle wurden gemeldet. Hinweise und unauffällige Informationsgewinnung sollen zusammengeführt werden.
+d961412ecf377a	f6	Alsterdorf
+d98803781ddfbd	m7	Winterhude
+d99be1c4eab53e	m8	Eimsbüttel
 d9a6f6b69cf91a	f3	Rothenburgsort
+d9ad20332476df	m8a	Hier am Stadion stehen sich zwei Fangruppen gegenüber. Das kippt gleich!
 d9bf0d8e86f23a	d	Hier ist der Notruf. Sind Sie in Gefahr? Antworten Sie nur mit Ja oder Nein.
-d9ee6d0494f90c	m2n	Die Hausverwaltung meldet beschädigte Fenster. Zeugen warten auf die Aufnahme.
-da3151a047a5fa	m1n	Hilfe? Ich brauch ein Taxi! Ach, ist das nicht die Taxizentrale? Na, denn nicht.
+d9d50268258d0a	m3	Schnelsen
+d9ea2a0bdc3c4a	f9	Bramfeld
+da0a47350e7b76	m4	Altengamme
+da0b520b329dc2	f5	Rönneburg
+da0f3602622d3f	m4	Hamm
+da12a526624a21	m4	Rahlstedt
+da2da4176dc786	m9	Alsterdorf
+da977731c3f7b2	f7	Neuland
 daaf66a732b9ff	f1	Niendorf
+dacced597fe93f	m4	Finkenwerder
 dacd1ccb7a7938	d	Nicht berühren, Abstand halten, Leute wegbitten.
+daea81f48019fa	m6	Billstedt
+dafd83afed74e0	f5	Hummelsbüttel
 db2857fb1a3392	f3	Waltershof
 db2f7823e94007	f3	Wandsbek
+db3dbd9bf29db6	f8	Neuallermöhe
+db48d060bc635d	f7	Groß Flottbek
+db4beb6e3c7165	m4	Osdorf
 db6c1f80e9fcb3	r1	Sprechwunsch.
-dbaf72c39b49ea	m1a	Ja, das sieht wirklich gefährlich aus. Bitte beeilen Sie sich.
-dbb2486334a3b2	m2n	Mehrere Personen melden auffällige Abbuchungen. Der Bereich und die Aussagen müssen dokumentiert werden.
+db747396cdcdc7	m4	Marienthal
+dbae62693ca1fc	m4	Harvestehude
 dbd4c11aee8922	f1	Groß Borstel
+dbe2dc19a6cebc	m3	Rahlstedt
+dbfab0ed0a3f23	f5	Bramfeld
+dc12fcf96db695	m5	Sternschanze
 dc16835ae3329a	f1	Fuhlsbüttel
 dc18e18b9d6daa	m2n	Ein Einbruch wurde entdeckt. Räumlichkeiten und Zeugenaussagen müssen sorgfältig dokumentiert werden.
-dc2a6b97adc9c4	m2n	Kripo: Nach dem Raub am Kiosk brauchen wir Zeugen und Kamerabilder aus der Straße.
+dc279f5bb81456	m5	Sinstorf
 dc4eb79c9859c7	m1	Sinstorf
-dcafb2d7a8c1e5	m1n	Eine angemeldete Versammlung benötigt Begleitung, Auskunft und sichere Wege für alle Beteiligten.
+dc753940a01cc9	f6	Francop
+dc86c82a9a4aee	f6	Neuenfelde
+dc962b5783909b	m3w	Sicherheitsdienst Speicherstadt. In einem Kontor ist Licht, das darf nicht sein.
+dcadbcddc25056	m6	St. Pauli
+dcc5ab2f894d43	m3	Poppenbüttel
+dcc5b3f1cb68f1	m6	Dulsberg
+dce2289d8bbef0	f6	Winterhude
 dd0d2e92dae0c8	f1	Altengamme
+dd3145b54990c7	f6	Nettelnburg
+dd432e305f0d9e	m5	Ottensen
+dd5c25e5037cd3	m6	Neugraben-Fischbek
+dd7b3e79d440ca	f3a	Zwei Cocktails nur. Ich glaube, da war was im Glas.
+dd99ab35adf771	f7	Iserbrook
+ddb551279bf863	f6	Marmstorf
+ddb90b4b9a4005	m6	Ottensen
 ddbe18a4ded53a	m1	Altona
 dddfea7e7f49c4	f1	Wellingsbüttel
+dde900db9fc991	f4	Spadenland
 ddf8b00d6bd12f	f2	Hohenfelde
 de090800d90710	r0	Verstanden, Ende.
-de0eac8312e2dd	m1n	Tachchen. Einmal Taxi nach Barmbek, bitte. Aber fix.
+de5bf17ac54fdd	m9	Bergstedt
 deae753e77cabb	f1n	Ach du meine Güte. Dann lege ich alles wieder hin.
-dec3a21c53a611	m1a	Es brennt! Aus dem Fenster gegenüber kommen Flammen!
-dfbf6fd2e020b6	m2p	Ja… ja. Okay. Ich versuche es.
-e01cf873bee57c	m1n	Er will jetzt gehen und wird laut.
+deb6fe50f6c094	m5p	Ich schließe zu. Die Kasse rühre ich nicht an.
+ded51942984e4e	m6a	Es brennt! Aus dem Fenster gegenüber kommen Flammen!
+df2c8e6979336c	m6	Hoheluft-Ost
+df320f70ccd71c	f7	Hausbruch
+df347f9b2d1e70	f8	Waltershof
+df3d832c30cf7d	m8	Duvenstedt
+df4d908c317f71	m4	Groß Flottbek
+df57cb13cbdef7	m5a	Mehrere Fahrzeuge sind beteiligt. Rettungsdienst und Räumung brauchen eine koordinierte Absicherung.
+df697fe7a007f2	f7	Neustadt
+df713c21550c0f	f7	Tonndorf
+df759a25b486e5	m4	Bahrenfeld
+dfc315c42a00b7	f8	Sasel
+dfd53f9b8d054d	f4n	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
+e087c89532721e	f4w	Ja… ja. Okay. Ich versuche es.
+e092c6bd90efb4	f4n	Hallo Helga, ich bin's! Wegen Sonntag…
+e0a5a7216257a6	f9	Groß Flottbek
+e0bb3fa4f418ae	f9	Rahlstedt
+e0be153afbb311	f9	Cranz
 e0c1d34264103d	m1p	Ja, sie läuft los!
+e101ff889bf725	f6	Curslack
+e111c30457b01b	m9	St. Pauli
 e115320e677ecc	m1	HafenCity
-e1a9a81410e6aa	m1n	Seit drei Tagen steht ein Transporter mit laufendem Motor vor der Schule. Jeden Morgen.
+e1195e7fd7ca06	f3n	Weißer Transporter, ein Kennzeichen von außerhalb. Beide in dunklen Jacken.
+e121aba13e85b9	m9	Kleiner Grasbrook
+e18d2feb3b212c	f4	Marienthal
+e190da4023e8b9	m7	Osdorf
+e1991a23b147e1	f4	Stellingen
 e1b4cd352495c8	r0	Person ohne Erkenntnisse.
-e1e60dae61d9cd	m2n	Ein weiträumiges Ereignis erfordert ein gemeinsames Lagebild. Luftbeobachtung und Ansprechpartner am Boden werden koordiniert.
+e1c8f615cbe39d	f1n	Bei mir steht ein bisschen Wasser im Keller, zwei Zentimeter. Kommt da jemand zum Aufwischen?
+e1f978fac118a4	m8	Eilbek
+e22a7efb69e973	f9	Hamburg
 e2323dc9948efd	m2	Neugraben-Fischbek
+e2379c8532c982	m9	Neugraben-Fischbek
+e253fd9f4a5755	m5n	Bei mir im Bus sitzt ein älterer Herr im Schlafanzug. Er weiß nicht, wo er hin will.
+e2613326e9bb77	m6a	Verlorene Ladung gefährdet den Verkehr. Der Abschnitt muss gesichert und die Räumung abgestimmt werden.
 e2712477fd6ea6	m2a	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
-e2ea493c6dcaac	m2n	Nach einem Raub treffen neue Hinweise ein. Zeugengespräche und Tatortdokumentation laufen parallel.
-e3184768456c26	m1n	Na gut. Dann eben so.
-e322e52d4e8167	m2p	Nein… nur so ein seltsames Schnappen, ganz selten. Das ist doch nicht normal, oder?
+e2d1a7adc26b76	f5	Veddel
+e2e8c683d718dc	m4	Spadenland
+e2f8f4309af2c0	f8	Groß Flottbek
+e306c46fe00a73	f9	Farmsen-Berne
+e3279a3bf176d0	m5	Bahrenfeld
 e3308bc382602c	f3	Uhlenhorst
+e34f8b1610a46a	f6	Groß Flottbek
+e3650988da1c14	f8	Volksdorf
 e36cf90b15d7b6	m2	Sülldorf
 e37c578df25703	m1	Lürade
 e388448413e253	r2	Peter 7
 e39a59d92dac36	f2	Harvestehude
-e3bbc575f2c1f1	m2a	Ähm… Tschüss!
-e3be69043b9428	m1n	Einer hält sich den Nacken, sonst steht man nur rum.
 e3c3bef1f829c1	m1	Hammerbrook
+e3edcfc366fb32	f7	Heimfeld
 e3fc76e8fd951c	d	Atmet er normal? Kopf überstrecken, drei Sekunden hinsehen.
+e401c09c0e03b1	m4a	Einer hat ein Messer gezeigt und ist in die Seitengasse!
 e41222298ac609	f1n	In einer Stunde kommt ein Kollege von ihm.
 e4231cbabc634d	d	Bleiben Sie am Riesenrad, Ihre Frau geht zum Dom-Sicherheitsdienst.
+e4249467293ed3	f8	Bahrenfeld
+e429eceffd637a	f8	Bergstedt
+e4345ae2b8cb3a	f9	Gut Moor
+e43bdabdec7652	m4	Neuengamme
 e4543bf04428bf	f1n	Frau Gerdes, wir kommen zu Ihnen!
 e4771323ee028b	f2	Rönneburg
 e47a77b38a8a16	f2	Iserbrook
+e498b40983f4a2	m4	Bramfeld
 e49e15a5f136a7	f3	Moorfleet
+e4a4346a52c1af	m3a	Ja… ja. Okay. Ich versuche es.
+e4c55ff37bc1ea	f4	Eißendorf
 e4c8f5a614a8c4	m1	Billstedt
+e507a9db85045e	m8n	Ich soll den ausbremsen?
 e50f3cfbf8949a	f3	Bramfeld
 e54d6506cbb3cc	f2	Rotherbaum
+e550227e27e2c5	m9	Hamm
+e56cb753586752	m7n	Nee, aber die Gasflasche vom Stand liegt am Boden.
+e584c3c740ad09	m9n	gleich hinter der Kurve.
+e58684573a7e33	m8	Barmbek-Süd
+e59bf1fc721378	m4n	Das mache ich sofort, danke.
+e59dd1c7d95fd0	m3	Wilstorf
 e5a96ced5f6d48	d	Bitten Sie sie zu lächeln und beide Arme zu heben.
+e5b05d3b13985a	m9n	Spedition: Transformator mit 4,5 Metern Breite, Begleitung ab 22 Uhr angemeldet.
+e5eea15518e16a	m4	Sinstorf
+e604a8c1b56e9d	f8	Altona-Altstadt
+e612f781f514a7	m8n	Ja, aber er weiß nicht, welcher Tag ist. Kein Helm.
 e6145f2989f9fe	f2	Dulsberg
 e62918d812a76c	f1	Stellingen
 e660a4561019bd	m1	Hoheluft-West
 e67a2b8fb96c14	m2	Tonndorf
+e6ee85d9f4d5b1	m9	Harvestehude
+e6f5a45d5c6729	f5	Altona
+e7292327daa8a3	m8	Uhlenhorst
 e7476f7c3b554b	m2	Heimfeld
 e747fc089dd033	m1	Moorburg
-e7aff3fcbc2216	m1n	Nein, verletzt ist keiner.
+e775db2f17ba32	m7	Schnelsen
+e7943319baaf6e	m5	Dulsberg
+e79e82bd92963f	f4	Hohenfelde
+e7d84aad1f1683	f8	Steinwerder
 e7fa3038276305	f1n	Wirklich? Dann hole ich mal die Schatulle.
-e823b3e4f92221	f1w	Ja. Genau. Eine große, bitte.
-e87ddbd07c6086	m1a	Mein Ex steht vor der Tür und sagt, er bringt mich um. Er hat ein Messer!
+e7fc9b533c9030	m3	Altengamme
+e7ffbce819ab40	m8	Sülldorf
+e81496abba23cf	f5w	Das… das traue ich mich nicht. Muss ich das?
 e896c360877382	d	Fahrzeug und Kennzeichen?
+e8eb6d3da90f8b	f4w	Liefern Sie bitte nach
 e90f6e17ba8d2c	m1	Hohenfelde
+e92a25591f857c	m6n	Mache ich vom Gehweg aus.
+e9368481c94441	m6	Nienstedten
+e93cd486594aa1	m3	Eimsbüttel
 e9454cd3205519	f1	Jenfeld
-e9b12aed3460e2	m1n	Große Elbstraße, direkt an der Fischauktionshalle.
+e94cffdca54409	m6a	Hauptbahnhof, Gleis 13, Südende.
+e969ef6d1367c4	m5n	Landungsbrücken, Brücke 4, auf den Bänken.
+e96babc5c2c37c	m6	Hammerbrook
+e97cf1568c5a5c	f9	Eidelstedt
+e986f0ffcd4418	f9	Stellingen
+e9b277074ef8d0	f9	Winterhude
+e9c446d229c296	f7	Rotherbaum
 e9fa6b24f8bdbf	f3	Dulsberg
-ea0d2abd5be3ad	m2n	An der Bahnstrecke irrt ein großer Hund über die Straße. Die Autos müssen bremsen.
+ea0a42ba0868fa	m9	Lokstedt
 ea16c42ae99fdd	f3	Neustadt
 eaa48825c62bcf	d	Warnblinker an, Warnweste, Warndreieck, hinter die Leitplanke.
+eab9b6040627d0	m8	Cranz
+eacc225d2ba80d	m7	Sternschanze
 eade9fa7481d45	r1	Nehmen den Sachverhalt auf, dauert noch zehn Minuten.
 eae02dd99f1385	m1	Wilhelmsburg
-eb1b141598285d	m1a	Eine akute Gefahrenlage bindet Spezialkräfte. Schutz, Betreuung und zentrale Koordination haben Vorrang.
-ebf8f3eca837f3	m2n	Bei mir brennt der Mond!
+eb18dd011f4fde	f7	Ottensen
+eb4cc4ce5864cb	m5n	Seit Stunden dröhnt Bass aus der Wohnung über mir. Ich muss um fünf zur Arbeit.
+eb52faab708f19	m9	Duvenstedt
+eb6b1226ad15b7	m9	Fuhlsbüttel
+eb6f1becd20af4	m4	Veddel
+eb8bbb1c9a7273	m8a	Ja… ja. Okay. Ich versuche es.
+ebc18376e1203e	f7	Wandsbek
+ebe0b865f3e032	m9n	Niemand verletzt. Aber ein Auto hat's knapp erwischt.
+ebe5cfb97de924	m7	Groß Borstel
+ebf56164a70cb2	f6	Hummelsbüttel
 ec00ec381a7681	d	Schauen Sie nach, wem er gehört.
+ec0cbc53a633fd	f9	Langenbek
+ec101fd7087eb7	m5	Schnelsen
+ec271e54e96f9c	m9	Eppendorf
+ec70ad5bc52141	f9	Moorburg
 ec741aeccb27c6	d	Halten Sie Gäste drinnen und Abstand zu dem Mann mit dem Messer.
 ec9e40ce3aa0b6	m2	Lokstedt
-eca71af22aaf77	m1a	das Mehrfamilienhaus an der Ecke, dritter Stock.
+ecb5929fa2de87	m4n	Na gut, nichts für ungut.
+ecb99a37eb7426	m3	Sternschanze
+ecd26632c7c23f	m8w	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
 ecd4496e2ebc73	f3	Veddel
 ece991125e47d4	f2	Nettelnburg
 ecff5c8c6fa81f	m1	Rissen
+ed03776ffa1920	f7	Harvestehude
+ed1a53f4ffb4dc	f7	Groß Borstel
 ed3b1b6370960e	r0	Wie ist Ihr Standort, kommen.
 ed3b5987b0fd1f	f2	Billstedt
-ed840548a34547	m2n	Nein. Nur unfassbar laut.
+ed4d7395202866	f8	Stellingen
+ed4f25dad588de	f5	Hohenfelde
+ed835fb03ea6c6	m4	Rönneburg
 ed87ed6a941c20	d	Sind noch Menschen im Haus?
+eda6d936075eaa	f7	Steilshoop
+eda8c2d5733fc6	m5	Neuenfelde
 edc44691f4e319	f2	Langenbek
+edc60b089f790f	f4	Wilhelmsburg
+edd53b2c351cfa	f4	Neuland
+ede258f6e2adca	f5	Wandsbek
 ee2915cd567d97	m2	Dulsberg
+ee34681dc5cee9	f4	Bahrenfeld
 ee6db374b80f18	m2	Wellingsbüttel
 ee8eebe60083c8	f1	Eilbek
+eea0463643136d	f9	Fuhlsbüttel
+eea9629375e05d	m8w	Sieht aus wie ein Gewehr. Ich habe es durch den Türspion gesehen.
 eeadf368cfa05b	f1	Kirchwerder
+eef470226c8df3	m8	Osdorf
+ef1a881a58f8ea	m3	Iserbrook
+ef22d17fafcbba	m6n	Eine Verbindung brach ohne klare Schilderung ab. Der Rückruf blieb erfolglos; eine Überprüfung ist nötig.
 ef331ebf14c138	f2	Hammerbrook
-ef5fe77d78ba9a	m2a	Er hat den ganzen Käse gegessen!
 ef913c2bc741c9	m1	Kleiner Grasbrook
 ef9a727befbd55	r0	Peter 9
 efc713b94e3bc5	f2	Heimfeld
-efc76a13873e87	f1n	hinten am Fahrstuhl.
-f06157e7d02551	f1a	vor der Eckkneipe.
+f0381ff4d72873	f9	Bergstedt
+f04baf26bff4ac	f6	Allermöhe
+f056d530613bb7	m5n	Klar, ich warte mit ihm hier.
 f07ff3332492d3	m2	Bergstedt
 f089fb8ae40984	f3	Farmsen-Berne
-f0c80806e185ff	m1a	Unsere Zeugin im Prozess wurde bedroht und will nicht mehr aus dem Haus.
+f0d94b4ce1c5b3	f7	Cranz
+f0eb5081704b88	f6	Othmarschen
 f0fc9355cff2d3	d	Wie sieht er aus, was trägt er?
+f11ac4780a1e0f	m6	Altona
 f1520b9e40d16e	f1	Gut Moor
+f17169e56b0bfa	m8	Marmstorf
+f17242ead1d5df	m4n	vor dem Drogeriemarkt.
+f1a8b8c576ab94	f7	Bramfeld
+f1ed28c5cc0eb3	m8	Borgfelde
+f1f060cdd5f43e	f4w	Ja, danke. Das wäre sehr nett.
 f20349a1042fef	f3a	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
-f22a4348404ed3	m1a	Einige haben Pyrotechnik dabei.
+f20cb2500fb672	m5	Hausbruch
 f253e5ff5fe0a8	m2	Rönneburg
-f264406f30acbe	m2p	In
-f272a3e8754002	f1w	Ja… ja. Okay. Ich versuche es.
 f2a102a8b7bc37	f3	Steinwerder
+f2a3020de377c6	m7	Steinwerder
 f2ed74b70a3f7c	d	Überholen und das Auto ausbremsen.
+f2f1a6adf9a3d8	m6	Heimfeld
 f2fd8a2341442f	f1	Veddel
 f31d87959dad51	m1	Cranz
 f320ade3770055	f2	Gut Moor
 f32c25ee5cd390	m1	Hummelsbüttel
 f3447e0c2e4584	f1	Barmbek-Süd
-f39b521e7c9f92	m2n	Bei mir im Bus sitzt ein älterer Herr im Schlafanzug. Er weiß nicht, wo er hin will.
-f3e24a2e11d389	m1a	Dunkler Kombi, sehr schnell, ohne Licht!
-f45cf816bad64a	m1a	In
+f365cfd0a39216	m6	St. Georg
+f377679a2591b5	f7	Volksdorf
+f37b6a0daa617b	f4p	Das ist doch viel zu gefährlich, die Strömung!
+f38a481ae37e0c	f6	Rissen
+f3cc52d9569903	m9	Marienthal
+f4130564b0e7b4	m6	Iserbrook
+f4177e8afe3817	f7	Lemsahl-Mellingstedt
+f44092601beb32	f5	Lürade
+f46c3fb89e04aa	m3	Othmarschen
 f46e254c9e2c0a	m2	Allermöhe
-f48eeb885c4ce3	m1n	Ein Hinweis auf eine vermisste Person soll mit spezialisierter Unterstützung überprüft werden.
-f4b60b08a231d5	m2n	Er knurrt nicht, er hat nur Angst.
+f4b39b0c9ad224	m3	Ochsenwerder
 f4cd8ac2bfc0ed	m1	Borgfelde
+f4d4a40edfb928	m5p	Ich bin überfallen worden! Ich arbeite an der Tankstelle, er ist gerade raus!
+f4deb345e42f4f	m3	Steinwerder
 f4f22ff74ff557	m2	Neuengamme
-f4fefac689e634	m2n	Aufs Rad? Der kann kaum die Augen offenhalten.
-f533989908e241	m1n	Eine Zugangssperre im Hafenumfeld ist beschädigt. Betreiber und Zeugen warten auf eine Überprüfung.
+f51d6ab5497748	m4	Dulsberg
 f537f8a8607c2c	m1	Iserbrook
-f5e5f48fd4f933	m1n	Silberner Golf, Hamburger Kennzeichen, HH-K irgendwas.
+f58cf2299be470	m7	Groß Flottbek
+f5a8b4cb5d81b3	m4	Neuland
+f5bcb8be2e02e7	m5	Altenwerder
 f6050806009715	r0	Peter 20
+f632f57e1a8399	f9	Horn
 f652b2ff9d0541	f3	Volksdorf
-f68d6e5ec41561	m2n	Eine orientierungslose Person bittet um Hilfe. Angehörige und weitere Betreuung müssen verständigt werden.
+f6cffd919d394a	m4	Sülldorf
+f6de20d15f5414	f6	Wilhelmsburg
+f6fc347e431bd3	m6a	Ja, das sieht wirklich gefährlich aus. Bitte beeilen Sie sich.
 f720612d09bd6d	d	Lassen Sie sie erst mal ausschlafen.
-f747f8eb632a45	m2n	Ein Baum liegt quer über der Landstraße, ich habe gerade noch bremsen können!
+f73957ae29bfa4	m6	Waltershof
+f7713e65fdab4c	m6	Hoheluft-West
 f78874fc8b91f5	f1	Finkenwerder
+f7a3fbfd24e1cc	m5	Lürade
+f7a89c0b58f22e	f8	Eppendorf
+f7dc26e46cada4	f5	Lurup
 f7e2f50f20592c	d	Abstand halten, nicht überholen, bleiben Sie am Telefon.
 f7e8923af841e8	f2	Wilhelmsburg
 f82684b2893ff7	f1	Wilhelmsburg
 f82ea24914106a	m1	Rothenburgsort
 f83391ef432407	d	Wie sieht er aus, wohin läuft er?
+f85d1a9b4ef30d	m7	Barmbek-Nord
 f87aa009a2a50b	d	Wo ist es am stärksten?
 f88e0fbbbd63d0	f1	Hummelsbüttel
 f8b9c4c354e115	f2	Bergedorf
+f8c87bd456537b	f7	Nettelnburg
+f8d1462ccc9080	f6	Neuallermöhe
+f8f4081bdebedc	f5	Neuenfelde
+f919b941a56379	m8	Billwerder
 f92387da4ebd42	r2	Person angetroffen, geht es ihr gut, kein Einsatz nötig.
+f9614d5f84c3a2	m5a	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
+f962573d75fbf6	m7	Neustadt
 f96457e7f4c300	m1	Blankenese
 f97c110929098d	r1	Peter 24
-f982548217fbb2	f2p	Ich kann doch gar nicht gut schwimmen!
+f98c48c3173c1e	f5	Barmbek-Süd
+f994580e6299dd	m6a	das Mehrfamilienhaus an der Ecke, dritter Stock.
+f9ab0cd8385acc	f4p	Wir haben eine Luftmatratze!
+f9cd355c165b1e	f8	Sternschanze
+fa2d33d5e5668b	f1a	Ich hatte gerade einen Unfall. Mir ist jemand hinten draufgefahren.
 fa2dd2be165ff7	m1	Sasel
 fa71ee31580cc2	f3	Altona-Nord
+fa7b423ecd20af	m8	Schnelsen
+fabe8722a27ccc	f9	Poppenbüttel
+fac692530ef2e3	f5w	Ja. Nur mein Hund, und der ist bei mir.
+fade7f7486ffd3	m7	Wandsbek
+fae64fbbc963d8	f6	Altona-Nord
+fb2f994944b0f9	m5	Barmbek-Nord
+fb31ddf1662756	f5	Rothenburgsort
+fb72ecd4bd2fdd	f8	Spadenland
+fb816598a8672e	f9	Bergedorf
+fb9538a1be8723	f5	Neuengamme
+fbda94b0f864e9	m6	Sternschanze
+fbeb3f05854158	m6	Duvenstedt
+fbf331493b1ba6	m7	Bramfeld
 fc1dcf6805f618	m2	Eimsbüttel
+fc1e9351fd4c71	m9	Wilstorf
+fc2ff70e89710e	m5	Iserbrook
+fc3763803cdf9e	m7	Billwerder
+fc4b4b61ac805d	m6n	Rauschen. Eine Frauenstimme flüstert etwas, dann wird aufgelegt.
+fc597487509bfa	f6n	Am Bahnhof
 fcc1b3660d397d	m2	Billwerder
 fcca8cbe4aa82a	m1	Allermöhe
-fce19910363f6b	m1n	Nee, aber die Gasflasche vom Stand liegt am Boden.
+fcde13fcf0ca90	f5	Eimsbüttel
+fce9321b55443a	m4	Wandsbek
+fcf848c85f58b4	m4	Rothenburgsort
+fd02bb091bdbf5	f5	Sinstorf
 fd090a3d5edab4	f1	Francop
 fd12e735052d46	d	Schließen Sie ab und fassen Sie nichts an, was der Täter berührt hat.
 fd7aa62a48c224	f1	Osdorf
-fdb97480df6435	m1n	Mach ich. Wir sperren hier ab.
-fdbe8257f0743f	m1a	Ja! Am Fenster daneben steht eine alte Frau und winkt!
+fd7cec52798430	f9a	Ausschlafen? Das sieht aber gar nicht gut aus.
+fdbbf9fa79264e	f5	Harburg
+fdc17182e26b83	m5	Eimsbüttel
+fdf91420e8708c	m3n	Nachbarbehörde: Ein gesuchtes Fahrzeug ist Richtung eures Gebiets unterwegs.
 fdffc19b01bff8	r3	Peter 8
+fe17ab1b2e96d9	m5n	Eine angemeldete Versammlung benötigt Begleitung, Auskunft und sichere Wege für alle Beteiligten.
 fe3934ece1beaa	f1	Hammerbrook
+fe563216c188ad	m9	Langenhorn
 fe81176f89205c	f3	Blankenese
 fe886218fc2d71	m1n	Eine längerfristige Beobachtung ist angefordert. Unauffällige spezialisierte Kräfte werden für die Informationsgewinnung benötigt.
 fea0ea587336b6	r1	Tankstopp, zehn Minuten nicht einsatzbereit.
+feb18d10127f52	m5	Eppendorf
+feb31487d781bb	m3	Sinstorf
+febdf045894868	m4	Allermöhe
 feeaf40f790937	d	Ist die Person noch bei Ihnen im Raum?
-ff48c502b60b41	f1p	Ich weiß nicht! Beeilen Sie sich doch! Bitte!
+ff10e5c8c15814	m7n	Nein, akut nicht, soweit ich das sehe.
+ff16b46d4b0d90	f7	Francop
+ff54c239cf7a8e	f4	Eimsbüttel
 ff623c0553fec8	m2	Kirchwerder
 ff8bf51702672d	f2	Alsterdorf
 ff9603f773c950	m1p	Fünf Jahre, gelbes Kleid, Zöpfe.
-ff99f700b6ba94	m2n	Ist gut. Ich halte seine Hand.
-ffaf79c257f33b	m2w	Unten steht ein Transporter mit laufendem Motor.
+ff98262fc231d4	m9n	Da hängt auch eine Stromleitung mit drin, glaube ich.
 ffd6a1f4cd1631	f3	Wellingsbüttel
-ffe0ca3a1c50d9	m1n	Mache ich. Ich habe Freisprechen.
+ffdb11e2e96fa9	m5	Eißendorf
