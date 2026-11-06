@@ -494,7 +494,7 @@ class GameController(
             val origin = (compatible.ifEmpty { availableStations }).let {
                 if (it.isEmpty()) null else it[i % it.size]
             }
-            if (r.code == "DE-HH" && origin == null) continue
+            if (r.code == "DE-HH" && officialStations.isNotEmpty() && origin == null) return@repeat
             val p = origin?.let { GeoPoint(it.lon, it.lat) }
                 ?: if (state.scope != "STATE") OperationsAreas.sample(r, state.scope, rng)
                 else if (i < r.cities.size) GeoPoint(city.lon, city.lat) else sampleState(r)
