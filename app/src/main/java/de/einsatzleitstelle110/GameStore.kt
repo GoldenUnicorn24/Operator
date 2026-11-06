@@ -225,6 +225,7 @@ object GameStore {
                     .put("scope", u.scope)
                     .put("stationId", u.stationId)
                     .put("capabilities", strings(u.capabilities))
+                    .put("vehicleClass", u.vehicleClass)
                     .put("routeBasis", u.routeBasis)
                     .put(
                         "routePoints",
@@ -573,6 +574,7 @@ object GameStore {
                     v.optString("routeBasis", "DISTANCE_APPROXIMATION"),
                     v.optString("stationId", ""),
                     texts(array(v, "capabilities", 11)).toMutableSet(),
+                    v.optString("vehicleClass", "AUTO"),
                 )
             val points = array(v, "routePoints", 5000)
             for (k in 0 until points.length()) {
@@ -600,6 +602,7 @@ object GameStore {
             require(u.trainingLeft == 0 || u.training in GameContent.courses)
             require(u.capabilities.all { it in GameController.TYPES && it != "TASKFORCE" })
             require(u.stationId.length <= 100)
+            require(u.vehicleClass in GameController.VEHICLE_CLASSES)
             if (type !in listOf("RETTUNG", "FEUERWEHR")) {
                 u.equipment.add("P99")
             } else {
