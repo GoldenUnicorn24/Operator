@@ -15,8 +15,8 @@ data class VoiceClip(val voice: String, val text: String) {
  */
 object VoiceLines {
     const val DISPATCHER = "d"
-    val FEMALE = listOf("f1", "f2", "f3")
-    val MALE = listOf("m1", "m2")
+    val FEMALE = (1..9).map { "f$it" }
+    val MALE = (1..9).map { "m$it" }
     val RADIO = listOf("r0", "r1", "r2", "r3")
     private val FEMALE_CALLERS = listOf("Frau", "Dame", "Touristin")
     private val STAGE = Regex("\\([^)]*\\)")
@@ -39,7 +39,7 @@ object VoiceLines {
 
     fun callerVoice(script: CallScript): String {
         val pool = if (FEMALE_CALLERS.any { it in script.caller }) FEMALE else MALE
-        val base = pool[abs(script.id.hashCode()) % pool.size]
+        val base = pool[(script.id.hashCode() and Int.MAX_VALUE) % pool.size]
         return base + when (script.mood) { "PANISCH" -> "p"; "AUFGEREGT" -> "a"; "FLUESTERND" -> "w"; else -> "n" }
     }
 
