@@ -98,7 +98,11 @@ object PhoneDesk {
         for ((type, count) in wanted) {
             val have = s.units.count { it.region == s.region && it.scope == s.scope && it.type == type }
             for (i in have until count) {
-                val p = sites[(i * 3 + type.length) % sites.size]
+                val official = if (s.region == "DE-HH")
+                    HamburgStations.matching(type).filter { s.scope == "STATE" || g.inScope(it.point) }
+                else emptyList()
+                val p = if (official.isNotEmpty()) official[i % official.size].point
+                    else sites[(i * 3 + type.length) % sites.size]
                 val name = when (type) { "RETTUNG" -> "RTW"; "FEUERWEHR" -> "HLF"; else -> "Hund" }
                 val u = UnitState("PARTNER-${s.region}-${s.scope}-$type-$i", "$name ${i + 1}", type, s.region, p.lat, p.lon, crew = 2,
                     officer = Officer("Partnerkraft ${i + 1}", 62, portrait = i % 8 + 1), scope = s.scope,
