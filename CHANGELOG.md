@@ -1,3 +1,12 @@
+## 0.16.0 – Operator Notruf: reale Hamburg-Wachen und eigene Taskforces
+
+- 141 amtliche Hamburger Standorte offline eingebunden (37 Polizei, 18 Berufsfeuerwehr, 86 Freiwillige Feuerwehr); amtliche Standorte erscheinen auf der Karte statt erfundener Wachmarker.
+- Automatisch generierte Hamburger Einheiten werden an verifizierten Wachen stationiert; ältere automatische Heimatstandorte werden bei der Übernahme angepasst. Selbst gebaute Wachen bleiben erhalten.
+- Native Editor-Funktionen zum Erstellen und Entfernen eigener Fahrzeuge, zur Wahl von Besatzung, Geschwindigkeit und Heimatwache sowie zur Bearbeitung kombinierter Taskforces mit mehreren Fähigkeiten.
+- Eigene, unbelegte Dienststellen können geschlossen werden; Fahrzeugkarten und Live-Fahrzeugsymbole wurden verbessert.
+- 18 differenzierte, offline erzeugte Anrufer-Sprachprofile mit moderaten individuellen Betonungs- und Klangvarianten auf Basis lizenzgeprüfter Piper-Stimmen.
+- Versionscode 117. Die simulierte Fahrzeuggeschwindigkeit und spezialisierte Fähigkeiten sind Spielwerte und keine Zusage zu realen Rettungsmitteln.
+
 # Stimmen-Update · 0.15.0-Vorschau · 05.11.2026
 
 - **Meldung:** Du meldest dich jetzt mit „Notruf, Polizei Hamburg“.
