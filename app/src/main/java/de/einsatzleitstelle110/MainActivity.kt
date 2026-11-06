@@ -208,6 +208,7 @@ class MainActivity : Activity() {
             "HELI" -> "Luftunterstützung"
             "RETTUNG" -> "Rettungsdienst"
             "FEUERWEHR" -> "Feuerwehr"
+            "TASKFORCE" -> "Taskforce (mehrere Einsatzarten)"
             else -> type
         }
 
@@ -1356,6 +1357,14 @@ class MainActivity : Activity() {
         val speed =
             field("Simulationsgeschwindigkeit km/h", u.vehicleSpeed.toInt().toString(), true)
         for (v in listOf(name, vehicle, speed)) c.addView(v)
+        val visualClasses = GameController.VEHICLE_CLASSES
+        val visualNames = listOf("Standard (automatisch)", "SUV / Geländewagen", "Transporter",
+            "Lkw / Großfahrzeug", "Geschütztes Einsatzfahrzeug", "Zivilfahrzeug", "Hubschrauber")
+        val vehicleShape = choices(visualNames).apply {
+            setSelection(visualClasses.indexOf(u.vehicleClass).coerceAtLeast(0))
+        }
+        c.addView(text("Fahrzeugdarstellung auf der Live-Karte", 13f, muted))
+        c.addView(vehicleShape)
         val duty =
             CheckBox(this).apply {
                 text = "In der nächsten Schicht im Dienst"
@@ -1381,6 +1390,7 @@ class MainActivity : Activity() {
                 u.callsign = name.text.toString().take(60)
                 u.vehicleName = vehicle.text.toString().take(90)
                 u.vehicleSpeed = n
+                u.vehicleClass = visualClasses[vehicleShape.selectedItemPosition]
                 u.onDuty = duty.isChecked
                 save()
                 showUnit(u)
@@ -1565,11 +1575,15 @@ class MainActivity : Activity() {
         val vehicle = field("Fahrzeug / Typbezeichnung", "Einsatzfahrzeug")
         val speed = field("Simuliertes Fahrzeugtempo (20–250 km/h)", "62", true)
         val crew = field("Besatzung (1–8)", "2", true)
+        val visualClasses = GameController.VEHICLE_CLASSES
+        val vehicleShape = choices(listOf("Automatische Darstellung", "SUV", "Transporter",
+            "Großfahrzeug / Lkw", "Geschütztes Einsatzfahrzeug", "Zivilwagen", "Hubschrauber"))
         val types = GameController.TYPES
         val type = choices(types.map { roleName(it) })
         c.addView(callsign)
         c.addView(type)
         c.addView(vehicle)
+        c.addView(vehicleShape)
         c.addView(speed)
         c.addView(crew)
         val stations = game.stations().filter { game.inScope(it.lat, it.lon) }
@@ -1606,6 +1620,7 @@ class MainActivity : Activity() {
                     base != null && game.addCustomUnit(
                         callsign.text.toString(), types[type.selectedItemPosition], base,
                         vehicle.text.toString(), people, kmh, cap,
+                        visualClasses[vehicleShape.selectedItemPosition],
                     )
                 } else {
                     val place = cities.getOrNull(stationSelector.selectedItemPosition)
@@ -1614,6 +1629,7 @@ class MainActivity : Activity() {
                     ).also { ok ->
                         if (ok) game.state.units.lastOrNull()?.let { u ->
                             u.vehicleName = vehicle.text.toString().take(90)
+                            u.vehicleClass = visualClasses[vehicleShape.selectedItemPosition]
                             u.vehicleSpeed = kmh.coerceIn(20.0, 250.0)
                             u.capabilities.addAll(cap)
                         }
