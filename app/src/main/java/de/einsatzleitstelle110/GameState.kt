@@ -64,6 +64,8 @@ data class UnitState(
     var specialSignal: Boolean = false,
     var distanceDrivenKm: Double = 0.0,
     var shiftDrivenKm: Double = 0.0,
+    var taskforceName: String = "",
+    var customCapabilities: MutableSet<String> = mutableSetOf(),
 ) {
     /** Public FMS meanings, kept separate from the simulation's finer-grained states. */
     val fmsStatus: Int get() = when {
@@ -727,6 +729,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
             }
 
     fun canHandle(u: UnitState, required: String): Boolean {
+        if (required in u.customCapabilities) return true
         chiefCapabilities(u)?.let { return required in it }
         return u.type == required ||
             (required == "STREIFE" &&
@@ -2104,6 +2107,19 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         created.vehicleSpeed = speedKmh
         created.crew = crewSize
         ensureRoster(created)
+        return true
+    }
+
+    /** Configure a player-owned multi-role taskforce without changing its primary vehicle type. */
+    fun configureTaskforce(unitId: String, name: String, capabilities: Set<String>): Boolean {
+        if (state.phase != "PLANNING" || name.isBlank()) return false
+        val unit = state.units.firstOrNull { it.id == unitId && it.id.startsWith("CUSTOM-") }
+            ?: return false
+        if (unit.incidentId.isNotBlank()) return false
+        if (capabilities.isEmpty() || capabilities.size > TYPES.size || !TYPES.containsAll(capabilities)) return false
+        unit.taskforceName = name.trim().take(60)
+        unit.customCapabilities.clear()
+        unit.customCapabilities.addAll(capabilities)
         return true
     }
 
