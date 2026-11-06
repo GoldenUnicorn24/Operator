@@ -502,7 +502,7 @@ object GameStore {
             require(v.optBoolean("custom", true))
             require(v.optString("name").isNotBlank())
             require(v.optString("type") in listOf("POLIZEI", "BERUFSFEUERWEHR", "RETTUNG", "SONSTIGE"))
-            require(lat in 53.2..54.0 && lon in 9.5..10.6)
+            require(lat in 53.0..54.2 && lon in 8.2..10.8)
             s.customStations.add(DispatchStation(
                 id, v.getString("name").take(90), v.getString("type"), lat, lon,
                 v.optString("address").take(100), "PLAYER", true,
