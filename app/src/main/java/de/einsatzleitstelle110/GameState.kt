@@ -58,6 +58,7 @@ data class UnitState(
     var routeBasis: String = "DISTANCE_APPROXIMATION",
     var stationId: String = "",
     var capabilities: MutableSet<String> = mutableSetOf(),
+    var vehicleClass: String = "AUTO",
 )
 
 data class IncidentState(
@@ -350,10 +351,11 @@ class GameController(
     fun addCustomUnit(
         callsign: String, type: String, station: DispatchStation,
         vehicleName: String, crew: Int, speed: Double, capabilities: Set<String>,
+        vehicleClass: String = "AUTO",
     ): Boolean {
         if (state.phase != "PLANNING" || callsign.isBlank() || vehicleName.isBlank() ||
             type !in TYPES || crew !in 1..8 || !speed.isFinite() || speed !in 20.0..250.0 ||
-            capabilities.any { it !in TYPES || it == "TASKFORCE" } ||
+            vehicleClass !in VEHICLE_CLASSES || capabilities.any { it !in TYPES || it == "TASKFORCE" } ||
             stations().none { it.id == station.id } || !inScope(station.lat, station.lon) ||
             !spend(25000)
         ) return false
@@ -363,6 +365,7 @@ class GameController(
             homeLat = station.lat, homeLon = station.lon,
             stationId = station.id, vehicleName = vehicleName.trim().take(90),
             vehicleSpeed = speed, capabilities = capabilities.toMutableSet(),
+            vehicleClass = vehicleClass,
         )
         ensureRoster(u)
         repeat(2) { k ->
@@ -1170,6 +1173,7 @@ class GameController(
     }
 
     companion object {
+        val VEHICLE_CLASSES = listOf("AUTO", "SUV", "VAN", "LKW", "GESCHUETZT", "ZIVIL", "HELI")
         val TYPES =
             listOf(
                 "STREIFE",
