@@ -256,6 +256,8 @@ object GameStore {
                     .put("vehicleCondition", u.vehicleCondition)
                     .put("vehicleSpeed", u.vehicleSpeed)
                     .put("vehicleName", u.vehicleName)
+                    .put("taskforceName", u.taskforceName)
+                    .put("customCapabilities", JSONArray(u.customCapabilities.toList()))
                     .put("readinessLeft", u.readinessLeft)
                     .put("onDuty", u.onDuty)
                     .put("scope", u.scope)
@@ -676,6 +678,8 @@ object GameStore {
                     mutableListOf(),
                     v.optString("routeBasis", "DISTANCE_APPROXIMATION"),
                 )
+            u.taskforceName = v.optString("taskforceName", "")
+            u.customCapabilities.addAll(texts(array(v, "customCapabilities", 30)))
             u.patrolMode = v.optString("patrolMode", "WATCH")
             u.patrolScope = v.optString("patrolScope", u.scope)
             u.focusLon = coordinate(v, "focusLon", lon)
