@@ -123,7 +123,7 @@ class PoliceChiefScreen(
     private fun stations(body: LinearLayout) {
         button(body, "Dienststelle gründen · 30.000 €", true) {
             val content = ui.column()
-            val name = field(content, "Name der fiktiven Dienststelle", "Revier Wandsbek")
+            val name = field(content, "Name deiner eigenen Dienststelle", "Revier Wandsbek")
             addText(content, "Danach den gewünschten Standort auf der Karte lange drücken. Er muss innerhalb der aktuellen Zuständigkeit liegen. Zwei Stellplätze sind enthalten.")
             val d = AlertDialog.Builder(activity).setTitle("Neue Dienststelle").setView(content)
                 .setPositiveButton("Standort auf Karte", null).setNegativeButton("Abbrechen", null).create()
@@ -143,7 +143,7 @@ class PoliceChiefScreen(
             val c = card(body)
             val count = game.state.chief.vehicles.count { it.stationId == station.id }
             addText(c, "${station.name} · Stufe ${station.level}", false, true)
-            addText(c, "Fiktiv · ${station.scope} · %.5f, %.5f".format(Locale.GERMANY, station.lat, station.lon))
+            addText(c, "Eigene Dienststelle · ${station.scope} · %.5f, %.5f".format(Locale.GERMANY, station.lat, station.lon))
             addText(c, "$count/${station.parking} Stellplätze · Räume ${station.lounge}/3 · Arrest ${station.cells}/3 · Werkstatt ${station.workshop}/3\nGebäude: ${euro(station.dailyCost)} pro Tag")
             val upgrades = listOf(
                 Triple("PARKING", "2 Stellplätze", if (station.parking < 20) 12000 + station.parking * 1000 else null),
@@ -153,6 +153,14 @@ class PoliceChiefScreen(
             )
             upgrades.forEach { (id, label, price) ->
                 if (price != null) button(c, "$label · ${euro(price)}") { changed(game.upgradeChiefStation(station.id, id)) }
+            }
+            button(c, "Eigene Dienststelle schließen") {
+                AlertDialog.Builder(activity)
+                    .setTitle("${station.name} schließen?")
+                    .setMessage("Nur leere eigene Dienststellen ohne stationierte Fahrzeuge können entfernt werden.")
+                    .setPositiveButton("Schließen") { _, _ -> changed(game.removeChiefStation(station.id)) }
+                    .setNegativeButton("Abbrechen", null)
+                    .show()
             }
         }
     }
