@@ -223,6 +223,9 @@ object GameStore {
                     .put("readinessLeft", u.readinessLeft)
                     .put("onDuty", u.onDuty)
                     .put("scope", u.scope)
+                    .put("stationId", u.stationId)
+                    .put("capabilities", strings(u.capabilities))
+                    .put("vehicleClass", u.vehicleClass)
                     .put("routeBasis", u.routeBasis)
                     .put(
                         "routePoints",
@@ -266,6 +269,21 @@ object GameStore {
             },
         )
         o.put("customTemplates", jsonArray(s.customTemplates) { template(it as IncidentTemplate) })
+        o.put(
+            "customStations",
+            jsonArray(s.customStations) { value ->
+                val station = value as DispatchStation
+                JSONObject()
+                    .put("id", station.id)
+                    .put("name", station.name)
+                    .put("type", station.type)
+                    .put("lat", station.lat)
+                    .put("lon", station.lon)
+                    .put("address", station.address)
+                    .put("source", station.source)
+                    .put("custom", true)
+            },
+        )
         o.put(
             "reports",
             jsonArray(s.reports) { value ->
@@ -475,6 +493,22 @@ object GameStore {
                     it.isFinite() && it in 0f..1f
                 }
         )
+        for (index in 0 until array(root, "customStations", 200).length()) {
+            val v = root.getJSONArray("customStations").getJSONObject(index)
+            val id = v.getString("id")
+            val lat = coordinate(v, "lat", 53.55)
+            val lon = coordinate(v, "lon", 10.0)
+            require(id.startsWith("CUSTOM-STATION-"))
+            require(s.customStations.none { it.id == id })
+            require(v.optBoolean("custom", true))
+            require(v.optString("name").isNotBlank())
+            require(v.optString("type") in listOf("POLIZEI", "BERUFSFEUERWEHR", "RETTUNG", "SONSTIGE"))
+            require(lat in 53.0..54.2 && lon in 8.2..10.8)
+            s.customStations.add(DispatchStation(
+                id, v.getString("name").take(90), v.getString("type"), lat, lon,
+                v.optString("address").take(100), "PLAYER", true,
+            ))
+        }
         val units = array(root, "units", 2000)
         val ids = mutableSetOf<String>()
         for (j in 0 until units.length()) {
@@ -538,6 +572,9 @@ object GameStore {
                     v.optString("scope", "STATE"),
                     mutableListOf(),
                     v.optString("routeBasis", "DISTANCE_APPROXIMATION"),
+                    v.optString("stationId", ""),
+                    texts(array(v, "capabilities", 11)).toMutableSet(),
+                    v.optString("vehicleClass", "AUTO"),
                 )
             val points = array(v, "routePoints", 5000)
             for (k in 0 until points.length()) {
@@ -563,6 +600,9 @@ object GameStore {
                     u.restUntil >= 0
             )
             require(u.trainingLeft == 0 || u.training in GameContent.courses)
+            require(u.capabilities.all { it in GameController.TYPES && it != "TASKFORCE" })
+            require(u.stationId.length <= 100)
+            require(u.vehicleClass in GameController.VEHICLE_CLASSES)
             if (type !in listOf("RETTUNG", "FEUERWEHR")) {
                 u.equipment.add("P99")
             } else {

@@ -1,0 +1,1269 @@
+{
+  "version": "2026-11-06",
+  "sourceUrls": [
+    "https://suche.transparenz.hamburg.de/dataset/polizeikommissariate-hamburg23",
+    "https://suche.transparenz.hamburg.de/dataset/feuerwehrwachen-hamburg20"
+  ],
+  "stations": [
+    {
+      "id": "PK-1",
+      "name": "Polizeikommissariat 11",
+      "type": "POLIZEI",
+      "lat": 53.5549507,
+      "lon": 10.0163923,
+      "address": "20099 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-2",
+      "name": "Polizeikommissariat 14",
+      "type": "POLIZEI",
+      "lat": 53.5545245,
+      "lon": 9.9846967,
+      "address": "20355 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-3",
+      "name": "Polizeikommissariat 15",
+      "type": "POLIZEI",
+      "lat": 53.5490864,
+      "lon": 9.9626928,
+      "address": "20359 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-4",
+      "name": "Polizeikommissariat 16",
+      "type": "POLIZEI",
+      "lat": 53.5589575,
+      "lon": 9.9616212,
+      "address": "22767 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-5",
+      "name": "Polizeikommissariat 17",
+      "type": "POLIZEI",
+      "lat": 53.5689986,
+      "lon": 9.9760733,
+      "address": "20146 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-6",
+      "name": "Polizeikommissariat 21",
+      "type": "POLIZEI",
+      "lat": 53.549599,
+      "lon": 9.945491,
+      "address": "22767 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-7",
+      "name": "Polizeikommissariat 23",
+      "type": "POLIZEI",
+      "lat": 53.5852653,
+      "lon": 9.9663615,
+      "address": "22529 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-8",
+      "name": "Polizeikommissariat 24",
+      "type": "POLIZEI",
+      "lat": 53.6245099,
+      "lon": 9.95611,
+      "address": "22453 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-9",
+      "name": "Polizeikommissariat 25",
+      "type": "POLIZEI",
+      "lat": 53.5723378,
+      "lon": 9.8802952,
+      "address": "22607 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-10",
+      "name": "Polizeikommissariat 26",
+      "type": "POLIZEI",
+      "lat": 53.5764272,
+      "lon": 9.8498489,
+      "address": "22549 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-11",
+      "name": "Außenstelle Rissen",
+      "type": "POLIZEI",
+      "lat": 53.5781911,
+      "lon": 9.7720422,
+      "address": "22559 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-12",
+      "name": "Polizeikommissariat 27",
+      "type": "POLIZEI",
+      "lat": 53.5923217,
+      "lon": 9.9353081,
+      "address": "22527 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-13",
+      "name": "Polizeikommissariat 31",
+      "type": "POLIZEI",
+      "lat": 53.5718336,
+      "lon": 10.0310987,
+      "address": "22081 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-14",
+      "name": "Polizeikommissariat 33",
+      "type": "POLIZEI",
+      "lat": 53.5892469,
+      "lon": 10.0191435,
+      "address": "22303 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-15",
+      "name": "Polizeikommissariat 34",
+      "type": "POLIZEI",
+      "lat": 53.6546699,
+      "lon": 10.0186485,
+      "address": "22415 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-16",
+      "name": "Polizeikommissariat 35",
+      "type": "POLIZEI",
+      "lat": 53.6512764,
+      "lon": 10.0923796,
+      "address": "22391 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-17",
+      "name": "Außenstelle Volksdorf",
+      "type": "POLIZEI",
+      "lat": 53.6500199,
+      "lon": 10.1618786,
+      "address": "22359 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-18",
+      "name": "Polizeikommissariat 36",
+      "type": "POLIZEI",
+      "lat": 53.6111518,
+      "lon": 10.0799954,
+      "address": "22179 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-19",
+      "name": "Polizeikommissariat 37",
+      "type": "POLIZEI",
+      "lat": 53.5708571,
+      "lon": 10.0707597,
+      "address": "22041 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-20",
+      "name": "Polizeikommissariat 38",
+      "type": "POLIZEI",
+      "lat": 53.6000604,
+      "lon": 10.1510945,
+      "address": "22147 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-21",
+      "name": "Polizeikommissariat 41",
+      "type": "POLIZEI",
+      "lat": 53.5578502,
+      "lon": 10.045943,
+      "address": "20535 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-22",
+      "name": "Polizeikommissariat 42",
+      "type": "POLIZEI",
+      "lat": 53.5386052,
+      "lon": 10.1093872,
+      "address": "22111 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-23",
+      "name": "Außenstelle Horn",
+      "type": "POLIZEI",
+      "lat": 53.5540292,
+      "lon": 10.0852382,
+      "address": "22111 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-24",
+      "name": "Polizeikommissariat 43",
+      "type": "POLIZEI",
+      "lat": 53.4913932,
+      "lon": 10.2041583,
+      "address": "21031 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-25",
+      "name": "Außenstelle Allermöhe",
+      "type": "POLIZEI",
+      "lat": 53.4896863,
+      "lon": 10.1593354,
+      "address": "21035 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-26",
+      "name": "PK43 Polizeiposten",
+      "type": "POLIZEI",
+      "lat": 53.4913915,
+      "lon": 10.20416,
+      "address": "21031 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-27",
+      "name": "Polizeikommissariat 44",
+      "type": "POLIZEI",
+      "lat": 53.5072883,
+      "lon": 9.9918108,
+      "address": "21107 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-28",
+      "name": "Polizeikommissariat 46",
+      "type": "POLIZEI",
+      "lat": 53.4598832,
+      "lon": 9.9855816,
+      "address": "21073 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-29",
+      "name": "Polizeikommissariat 47",
+      "type": "POLIZEI",
+      "lat": 53.4695927,
+      "lon": 9.8533173,
+      "address": "21149 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-30",
+      "name": "Außenstelle Finkenwerder",
+      "type": "POLIZEI",
+      "lat": 53.5359282,
+      "lon": 9.8776149,
+      "address": "21129 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-31",
+      "name": "PK47 Posten Cranz",
+      "type": "POLIZEI",
+      "lat": 53.5357531,
+      "lon": 9.7796361,
+      "address": "21129 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-32",
+      "name": "Polizeipräsidium",
+      "type": "POLIZEI",
+      "lat": 53.604524,
+      "lon": 10.0112278,
+      "address": "22297 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-33",
+      "name": "Wasserschutzpolizeikommissariat",
+      "type": "POLIZEI",
+      "lat": 53.5268485,
+      "lon": 9.9285061,
+      "address": "21129 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-34",
+      "name": "Wasserschutzpolizeikommissariat",
+      "type": "POLIZEI",
+      "lat": 53.5250938,
+      "lon": 9.9725934,
+      "address": "20457 Hamburg - Steinwerder",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-35",
+      "name": "Außenstelle Landungsbrücken",
+      "type": "POLIZEI",
+      "lat": 53.5456981,
+      "lon": 9.9685326,
+      "address": "20359 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "PK-36",
+      "name": "Wasserschutzpolizeikommissariat",
+      "type": "POLIZEI",
+      "lat": 53.4726384,
+      "lon": 9.9881077,
+      "address": "21079 Hamburg",
+      "source": "PK_GEO_2026"
+    },
+    {
+      "id": "BF-2",
+      "name": "Feuer- und Rettungswache Innenstadt (F11)",
+      "type": "BERUFSFEUERWEHR",
+      "lat": 53.5460753,
+      "lon": 9.9826528,
+      "address": "Admiralitätsstraße 54 20459 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "BF-3",
+      "name": "Feuer- und Rettungswache Altona (F12)",
+      "type": "BERUFSFEUERWEHR",
+      "lat": 53.5495914,
+      "lon": 9.944485,
+      "address": "Mörkenstraße 36 22767 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "BF-4",
+      "name": "Feuer- und Rettungswache Rotherbaum (F13)",
+      "type": "BERUFSFEUERWEHR",
+      "lat": 53.5686754,
+      "lon": 9.9755322,
+      "address": "Sedanstraße 30 20146 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "BF-5",
+      "name": "Feuer- und Rettungswache Osdorf (F14)",
+      "type": "BERUFSFEUERWEHR",
+      "lat": 53.5730099,
+      "lon": 9.8541131,
+      "address": "Harderweg 10 22549 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "BF-6",
+      "name": "Feuer- und Rettungswache Stellingen (F15)",
+      "type": "BERUFSFEUERWEHR",
+      "lat": 53.5917761,
+      "lon": 9.9343119,
+      "address": "Basselweg 71 22527 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "BF-7",
+      "name": "Feuer- und Rettungswache Alsterdorf (F16)",
+      "type": "BERUFSFEUERWEHR",
+      "lat": 53.6138553,
+      "lon": 10.0013107,
+      "address": "Alsterkrugchaussee 288 22297 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "BF-8",
+      "name": "Feuer- und Rettungswache Wandsbek (F21)",
+      "type": "BERUFSFEUERWEHR",
+      "lat": 53.5845442,
+      "lon": 10.1178973,
+      "address": "Stein-Hardenberg-Straße  2 22045 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "BF-9",
+      "name": "Feuer- und Rettungswache Berliner Tor (F22)",
+      "type": "BERUFSFEUERWEHR",
+      "lat": 53.554447,
+      "lon": 10.0247221,
+      "address": "Westphalensweg 1 20099 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "BF-10",
+      "name": "Feuer- und Rettungswache Barmbek (F23)",
+      "type": "BERUFSFEUERWEHR",
+      "lat": 53.5830751,
+      "lon": 10.0440615,
+      "address": "Maurienstraße 7-9 22305 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "BF-11",
+      "name": "Feuer- und Rettungswache Sasel (F24)",
+      "type": "BERUFSFEUERWEHR",
+      "lat": 53.6498978,
+      "lon": 10.1182203,
+      "address": "Saseler Kamp  2 22393 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "BF-12",
+      "name": "Feuer- und Rettungswache Billstedt (F25)",
+      "type": "BERUFSFEUERWEHR",
+      "lat": 53.5331601,
+      "lon": 10.0812064,
+      "address": "Wöhlerstraße  28 22113 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "BF-13",
+      "name": "Feuer- und Rettungswache Bergedorf (F26)",
+      "type": "BERUFSFEUERWEHR",
+      "lat": 53.4912231,
+      "lon": 10.2036284,
+      "address": "Sander Damm 2 21031 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "BF-14",
+      "name": "Feuer- und Rettungswache Harburg (F31)",
+      "type": "BERUFSFEUERWEHR",
+      "lat": 53.4599729,
+      "lon": 10.0100967,
+      "address": "Großmoorbogen 8 21079 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "BF-15",
+      "name": "Technik- und Umweltschutzwache (F32)",
+      "type": "BERUFSFEUERWEHR",
+      "lat": 53.512063,
+      "lon": 9.9671456,
+      "address": "Neuhöfer Brückenstrasse  2 21107 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "BF-16",
+      "name": "Feuer- und Rettungswache Veddel (F33)",
+      "type": "BERUFSFEUERWEHR",
+      "lat": 53.5230366,
+      "lon": 10.0195181,
+      "address": "Am Zollhafen  11-13 20539 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "BF-17",
+      "name": "Feuer- und Rettungswache Wilhelmsburg (F34)",
+      "type": "BERUFSFEUERWEHR",
+      "lat": 53.5058331,
+      "lon": 9.9884767,
+      "address": "Rotenhäuserstraße 73 21107 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "BF-18",
+      "name": "Feuer- und Rettungswache Finkenwerder (F35)",
+      "type": "BERUFSFEUERWEHR",
+      "lat": 53.5347173,
+      "lon": 9.8794064,
+      "address": "Benittstraße 15 21129 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "BF-19",
+      "name": "Feuer- und Rettungswache Süderelbe (F36)",
+      "type": "BERUFSFEUERWEHR",
+      "lat": 53.4764121,
+      "lon": 9.8986358,
+      "address": "Waltershofer Straße 1 21147 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-1",
+      "name": "Freiwillige Feuerwehr Rissen",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.5801497,
+      "lon": 9.7653792,
+      "address": "Rissener Landstraße  254 22559 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-2",
+      "name": "Freiwillige Feuerwehr Blankenese",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.5640737,
+      "lon": 9.8057764,
+      "address": "Blankeneser Landstraße 41 22587 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-3",
+      "name": "Freiwillige Feuerwehr Nienstedten",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.553157,
+      "lon": 9.8488972,
+      "address": "Georg-Bonne-Straße  92 22609 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-4",
+      "name": "Freiwillige Feuerwehr Osdorf",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.5761836,
+      "lon": 9.8490084,
+      "address": "Blomkamp 11 22549 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-5",
+      "name": "Freiwillige Feuerwehr Groß Flottbek",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.5654039,
+      "lon": 9.875763,
+      "address": "Baron-Voght-Straße  183 22607 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-6",
+      "name": "Freiwillige Feuerwehr Lurup",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.5955059,
+      "lon": 9.8686821,
+      "address": "Stückweg  4 22547 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-7",
+      "name": "Freiwillige Feuerwehr Sülldorf-Iserbrook",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.5830374,
+      "lon": 9.7943431,
+      "address": "Sülldorfer Kirchenweg  235 22589 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-8",
+      "name": "Freiwillige Feuerwehr Altona",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.5622425,
+      "lon": 9.9591047,
+      "address": "Eifflerstraße  29 22769 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-9",
+      "name": "Freiwillige Feuerwehr Ottensen-Bahrenfeld",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.5580915,
+      "lon": 9.9109174,
+      "address": "Friesenweg  5d 22763 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-10",
+      "name": "Freiwillige Feuerwehr Stellingen",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.5914647,
+      "lon": 9.9273299,
+      "address": "Melanchthonstraße  10 22525 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-11",
+      "name": "Freiwillige Feuerwehr Eidelstedt",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.6053976,
+      "lon": 9.8987165,
+      "address": "Furtweg  57a 22523 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-12",
+      "name": "Freiwillige Feuerwehr Schnelsen",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.6339876,
+      "lon": 9.9139353,
+      "address": "Oldesloer Straße  34 22457 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-13",
+      "name": "Freiwillige Feuerwehr Niendorf",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.6239203,
+      "lon": 9.9570085,
+      "address": "Fuhlsbütteler Weg  5 22453 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-14",
+      "name": "Freiwillige Feuerwehr Lokstedt",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.5993736,
+      "lon": 9.9614731,
+      "address": "Vogt-Wells-Straße  13 22529 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-15",
+      "name": "Freiwillige Feuerwehr Eimsbüttel",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.5771351,
+      "lon": 9.9382592,
+      "address": "Kieler Straße  204 22525 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-16",
+      "name": "Freiwillige Feuerwehr Pöseldorf",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.5646086,
+      "lon": 9.9743799,
+      "address": "Schröderstiftstraße  13 20146 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-17",
+      "name": "Freiwillige Feuerwehr Eppendorf",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.6168017,
+      "lon": 10.0124346,
+      "address": "Maienweg  119 22297 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-18",
+      "name": "Freiwillige Feuerwehr Fuhlsbüttel",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.6260707,
+      "lon": 10.0220602,
+      "address": "Fuhlsbütteler Damm  115 22335 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-19",
+      "name": "Freiwillige Feuerwehr Langenhorn-Nord",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.6689607,
+      "lon": 10.0193806,
+      "address": "Neuberger Weg 158 22419 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-20",
+      "name": "Freiwillige Feuerwehr Groß Borstel",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.621332,
+      "lon": 10.0057131,
+      "address": "Geschwister-Beschütz-Bogen  20 22335 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-21",
+      "name": "Freiwillige Feuerwehr Alsterdorf",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.6168017,
+      "lon": 10.0124346,
+      "address": "Maienweg 119 22297 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-22",
+      "name": "Freiwillige Feuerwehr Langenhorn",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.6541047,
+      "lon": 10.0187343,
+      "address": "Tangstedter Landstraße 139 22417 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-23",
+      "name": "Freiwillige Feuerwehr Berne",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.6310079,
+      "lon": 10.1367448,
+      "address": "Kuhkoppel  24 22159 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-24",
+      "name": "Freiwillige Feuerwehr Farmsen",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.6032934,
+      "lon": 10.1194101,
+      "address": "Berner Heerweg  151 22159 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-25",
+      "name": "Freiwillige Feuerwehr Oldenfelde-Siedlung",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.611131,
+      "lon": 10.1368997,
+      "address": "Bekassinenau  30c 22147 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-26",
+      "name": "Freiwillige Feuerwehr Oldenfelde",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.611578,
+      "lon": 10.1531114,
+      "address": "Bargteheider Straße  165 22143 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-27",
+      "name": "Freiwillige Feuerwehr Meiendorf",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.6234682,
+      "lon": 10.1620412,
+      "address": "Lofotenstraße  10 22145 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-28",
+      "name": "Freiwillige Feuerwehr Rahlstedt",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.5964629,
+      "lon": 10.1560414,
+      "address": "Brockdorffstraße  22 22149 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-29",
+      "name": "Freiwillige Feuerwehr Tonndorf",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.5829667,
+      "lon": 10.1258491,
+      "address": "Jenfelder Allee  75 22045 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-30",
+      "name": "Freiwillige Feuerwehr Wandsbek-Marienthal",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.5750676,
+      "lon": 10.0894675,
+      "address": "Am Neumarkt  30 22041 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-31",
+      "name": "Freiwillige Feuerwehr Bramfeld",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.6116492,
+      "lon": 10.0797242,
+      "address": "Ellernreihe  139 22179 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-32",
+      "name": "Freiwillige Feuerwehr Wellingsbüttel",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.63923,
+      "lon": 10.0798267,
+      "address": "Schulteßdamm  18 22391 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-33",
+      "name": "Freiwillige Feuerwehr Poppenbüttel",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.6601917,
+      "lon": 10.0798531,
+      "address": "Rehmbrook  4 22399 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-34",
+      "name": "Freiwillige Feuerwehr Hummelsbüttel",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.6429842,
+      "lon": 10.0391071,
+      "address": "Stiegstück 2 22339 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-35",
+      "name": "Freiwillige Feuerwehr Sasel",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.6548187,
+      "lon": 10.1104567,
+      "address": "Saseler Parkweg  1 22393 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-36",
+      "name": "Freiwillige Feuerwehr Barmbek",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.6068709,
+      "lon": 10.0541025,
+      "address": "Schwarzer Weg  3 22309 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-37",
+      "name": "Freiwillige Feuerwehr Winterhude",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.5882597,
+      "lon": 10.0318227,
+      "address": "Wiesendamm  36 22303 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-38",
+      "name": "Freiwillige Feuerwehr Volksdorf",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.6527418,
+      "lon": 10.1654694,
+      "address": "Vörn Barkholt 9 22359 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-39",
+      "name": "Freiwillige Feuerwehr Bergstedt",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.6750825,
+      "lon": 10.121059,
+      "address": "Rodenbeker Straße  30 22395 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-40",
+      "name": "Freiwillige Feuerwehr Lemsahl-Mellingstedt",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.6875312,
+      "lon": 10.0917269,
+      "address": "Bilenbarg  3 22397 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-41",
+      "name": "Freiwillige Feuerwehr Duvenstedt",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.707118,
+      "lon": 10.1043241,
+      "address": "Poppenbütteler Chaussee 17 22397 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-42",
+      "name": "Freiwillige Feuerwehr Wohldorf",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.7117244,
+      "lon": 10.1408017,
+      "address": "Herrenhausallee 42 22397 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-43",
+      "name": "Freiwillige Feuerwehr Ohlstedt",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.6944957,
+      "lon": 10.1381738,
+      "address": "Brunskrogweg  4 22397 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-44",
+      "name": "Freiwillige Feuerwehr Bergedorf",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.4870764,
+      "lon": 10.2160128,
+      "address": "Chrysander Straße  2d 21029 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-45",
+      "name": "Freiwillige Feuerwehr Nettelnburg",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.477423,
+      "lon": 10.1889535,
+      "address": "Nettelnburger Straße  48 21035 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-46",
+      "name": "Freiwillige Feuerwehr Lohbrügge",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.4952463,
+      "lon": 10.2064243,
+      "address": "Lohbrügger Markt  3 21031 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-47",
+      "name": "Freiwillige Feuerwehr Boberg",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.5148097,
+      "lon": 10.1600492,
+      "address": "Am Langberg  76 21033 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-48",
+      "name": "Freiwillige Feuerwehr Kirchsteinbek",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.5336058,
+      "lon": 10.1262825,
+      "address": "Brockhausweg 15 22117 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-49",
+      "name": "Freiwillige Feuerwehr Öjendorf",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.5467308,
+      "lon": 10.1325879,
+      "address": "Reinskamp 40 22117 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-50",
+      "name": "Freiwillige Feuerwehr Bille",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.4870764,
+      "lon": 10.2160128,
+      "address": "Chrysander Straße  2d 21029 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-51",
+      "name": "Freiwillige Feuerwehr Billstedt-Horn",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.5566362,
+      "lon": 10.1018431,
+      "address": "Bergmannring 4 22119 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-52",
+      "name": "Freiwillige Feuerwehr Curslack",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.4498992,
+      "lon": 10.2216716,
+      "address": "Curslacker Deich  177a 21039 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-53",
+      "name": "Freiwillige Feuerwehr Altengamme",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.4319403,
+      "lon": 10.2746206,
+      "address": "Gammer Weg  49 21039 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-54",
+      "name": "Freiwillige Feuerwehr Neuengamme",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.4450481,
+      "lon": 10.2287991,
+      "address": "Neuengammer Hausdeich 217 21039 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-55",
+      "name": "Freiwillige Feuerwehr Krauel",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.4020019,
+      "lon": 10.2209447,
+      "address": "Kirchwerder Marschbahndamm 21037 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-56",
+      "name": "Freiwillige Feuerwehr Kirchwerder-Süd",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.4092011,
+      "lon": 10.1575468,
+      "address": "In de Wisch 29 21037 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-57",
+      "name": "Freiwillige Feuerwehr Kirchwerder-Nord",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.4370903,
+      "lon": 10.1883253,
+      "address": "Norderquerweg  1 21037 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-58",
+      "name": "Freiwillige Feuerwehr Warwisch",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.4442111,
+      "lon": 10.1272184,
+      "address": "Durchdeich  62 21037 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-59",
+      "name": "Freiwillige Feuerwehr Allermöhe-Billwerder",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.4820102,
+      "lon": 10.1311973,
+      "address": "Allermöher Deich  113 21037 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-60",
+      "name": "Freiwillige Feuerwehr Reitbrook",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.4686161,
+      "lon": 10.1505598,
+      "address": "Vorderdeich  128 21037 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-61",
+      "name": "Freiwillige Feuerwehr Hohendeich",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.441074,
+      "lon": 10.1130587,
+      "address": "Ochsenwerder Elbdeich  325 21037 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-62",
+      "name": "Freiwillige Feuerwehr Neudorf",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.4720304,
+      "lon": 10.072831,
+      "address": "Elversweg  46b 21037 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-63",
+      "name": "Freiwillige Feuerwehr Spadenland",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.4863611,
+      "lon": 10.0544152,
+      "address": "Ruschorter Hauptdeich 1 21037 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-64",
+      "name": "Freiwillige Feuerwehr Moorfleet",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.5120792,
+      "lon": 10.0871603,
+      "address": "Sandwisch 83 22113 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-65",
+      "name": "Freiwillige Feuerwehr Fünfhausen",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.405361,
+      "lon": 10.1797178,
+      "address": "Sülzbrackring  52 21037 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-66",
+      "name": "Freiwillige Feuerwehr Berliner Tor",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.5569529,
+      "lon": 10.1019054,
+      "address": "Bergmannring  6 22119 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-67",
+      "name": "Freiwillige Feuerwehr Kirchdorf",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.4990739,
+      "lon": 10.022365,
+      "address": "Bei der Windmühle  61 21109 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-68",
+      "name": "Freiwillige Feuerwehr Moorwerder",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.4789687,
+      "lon": 10.0537731,
+      "address": "Bauernstegel  1 21109 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-69",
+      "name": "Freiwillige Feuerwehr Neuland",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.4679033,
+      "lon": 10.037137,
+      "address": "Neuländer Elbdeich  245 21079 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-70",
+      "name": "Freiwillige Feuerwehr Rönneburg",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.4381186,
+      "lon": 10.0050962,
+      "address": "Küsterstieg 1 21079 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-71",
+      "name": "Freiwillige Feuerwehr Sinstorf",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.4236251,
+      "lon": 9.9735809,
+      "address": "Beckedorfer Straße 1 21077 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-72",
+      "name": "Freiwillige Feuerwehr Marmstorf",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.4381756,
+      "lon": 9.9690154,
+      "address": "Elfenwiese  6 21077 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-73",
+      "name": "Freiwillige Feuerwehr Rothenburgsort-Veddel",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.5378501,
+      "lon": 10.0374209,
+      "address": "Billhorner Kanalstraße  45 20539 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-74",
+      "name": "Freiwillige Feuerwehr Wilhelmsburg",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.5058331,
+      "lon": 9.9884767,
+      "address": "Rotenhäuser Straße 73 21107 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-75",
+      "name": "Freiwillige Feuerwehr Hausbruch",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.4722389,
+      "lon": 9.8754224,
+      "address": "Rehrstieg  1 21149 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-76",
+      "name": "Freiwillige Feuerwehr Harburg",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.468681,
+      "lon": 9.9817871,
+      "address": "Lotsekai  1 21079 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-77",
+      "name": "Freiwillige Feuerwehr Moorburg",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.4925894,
+      "lon": 9.9321159,
+      "address": "Moorburger Elbdeich  221 21079 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-78",
+      "name": "Freiwillige Feuerwehr Neugraben",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.4741313,
+      "lon": 9.8624334,
+      "address": "In de Krümm  50 21147 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-79",
+      "name": "Freiwillige Feuerwehr Fischbek",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.4733239,
+      "lon": 9.8274635,
+      "address": "Fischbeker Weg  28 21149 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-80",
+      "name": "Freiwillige Feuerwehr Eißendorf",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.4700438,
+      "lon": 9.9572478,
+      "address": "Stader Straße  27 21075 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-81",
+      "name": "Freiwillige Feuerwehr Finkenwerder",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.5350884,
+      "lon": 9.8733523,
+      "address": "Doggerbankweg 1 21129 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-82",
+      "name": "Freiwillige Feuerwehr Francop",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.5056254,
+      "lon": 9.8761868,
+      "address": "Hohenwischer Straße 89 21129 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-83",
+      "name": "Freiwillige Feuerwehr Neuenfelde-Nord",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.5179933,
+      "lon": 9.8112404,
+      "address": "Arp-Schnittger-Stieg 39 21129 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-84",
+      "name": "Freiwillige Feuerwehr Cranz",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.5373566,
+      "lon": 9.7804976,
+      "address": "Estedeich  111 21129 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-85",
+      "name": "Freiwillige Feuerwehr Neuenfelde-Süd",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.5149751,
+      "lon": 9.7936817,
+      "address": "Nincoper Straße  147c 21129 Hamburg",
+      "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-86",
+      "name": "Freiwillige Feuerwehr Neuwerk",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.9223312,
+      "lon": 8.5002901,
+      "address": "Insel Neuwerk 27499 Hamburg-Insel Neuwerk",
+      "source": "FEUERWEHR_GEO_2026"
+    }
+  ]
+}

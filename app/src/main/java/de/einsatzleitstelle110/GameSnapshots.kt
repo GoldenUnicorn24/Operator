@@ -21,6 +21,7 @@ object GameSnapshots {
                             officer = roster.firstOrNull() ?: officer(u.officer),
                             officers = roster,
                             equipment = u.equipment.toMutableSet(),
+                            capabilities = u.capabilities.toMutableSet(),
                             routePoints = u.routePoints.toMutableList(),
                             reliefTeams =
                                 u.reliefTeams
@@ -51,5 +52,6 @@ object GameSnapshots {
             reports =
                 s.reports.map { it.copy(trainingDone = it.trainingDone.toList()) }.toMutableList(),
             logs = s.logs.toMutableList(),
+            customStations = s.customStations.map { it.copy() }.toMutableList(),
         )
 }
