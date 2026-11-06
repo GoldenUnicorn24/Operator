@@ -60,8 +60,18 @@ def main():
     loaded = {n: load(n) for n in FILES}
     women = [loaded[n] for n in FEMALE_ORDER if loaded[n]] or [loaded['thorsten']]
     men = [loaded['thorsten'], loaded['thorsten_medium'] or loaded['thorsten']]
-    voices = {'d': women[0], 'f1': women[0], 'f2': women[1 % len(women)], 'f3': women[2 % len(women)], 'm1': men[0], 'm2': men[1],
-              'r0': women[1 % len(women)], 'r1': men[0], 'r2': men[1], 'r3': women[2 % len(women)]}
+    voices = {'d': women[0], 'r0': women[1 % len(women)], 'r1': men[0],
+              'r2': men[1], 'r3': women[2 % len(women)]}
+    for number in range(1, 10):
+        voices[f'f{number}'] = women[(number - 1) % len(women)]
+        voices[f'm{number}'] = men[(number - 1) % len(men)]
+    # Nine caller delivery profiles per gender, each bound to a consistent actor model.
+    # A modest formant/pitch shift enriches variety without cartoonish distortions.
+    tone = {'d': 1.0, 'r0': 1.0, 'r1': 1.0, 'r2': 1.0, 'r3': 1.0}
+    profile_pitch = [1.0, .965, 1.035, .985, 1.055, .945, 1.020, .975, 1.040]
+    for number in range(1, 10):
+        tone[f'f{number}'] = profile_pitch[number - 1]
+        tone[f'm{number}'] = profile_pitch[9 - number]
     speed = {'p': .84, 'a': .92, 'w': 1.05, 'n': 1.0}
     todo = [l for l in lines if not (OUT / f'{l[0]}.ogg').exists()]
     print(len(lines), 'lines,', len(todo), 'to render', flush=True)
@@ -78,6 +88,12 @@ def main():
     def encode(job):
         wav, voice = job
         chain = RADIO if voice[0] == 'r' else 'volume=-7dB,' + PHONE if voice.endswith('w') else PHONE
+        pitch = tone.get(voice[:2], 1.0)
+        if abs(pitch - 1) > .001:
+            with wave.open(str(wav), 'rb') as source:
+                source_rate = source.getframerate()
+            # Shift timbre slightly, compensate timing so stress still depends on the script.
+            chain = f'asetrate={round(source_rate * pitch)},aresample=24000,atempo={1.0 / pitch:.4f},' + chain
         subprocess.run(['ffmpeg', '-nostdin', '-loglevel', 'error', '-y', '-i', str(wav), '-af', chain, '-ac', '1', '-ar', '24000',
                         '-c:a', 'libopus', '-b:a', '20k', '-vbr', 'on', str(OUT / f'{wav.stem}.ogg')], check=True)
 
