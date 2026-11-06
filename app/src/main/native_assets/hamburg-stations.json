@@ -1255,6 +1255,15 @@
       "lon": 9.7936817,
       "address": "Nincoper Straße  147c 21129 Hamburg",
       "source": "FEUERWEHR_GEO_2026"
+    },
+    {
+      "id": "FF-86",
+      "name": "Freiwillige Feuerwehr Neuwerk",
+      "type": "FREIWILLIGE_FEUERWEHR",
+      "lat": 53.9223312,
+      "lon": 8.5002901,
+      "address": "Insel Neuwerk 27499 Hamburg-Insel Neuwerk",
+      "source": "FEUERWEHR_GEO_2026"
     }
   ]
 }
