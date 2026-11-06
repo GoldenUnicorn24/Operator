@@ -109,6 +109,20 @@ fun GameController.createChiefStation(name: String, point: GeoPoint): ChiefStati
     }
 }
 
+/** Remove an empty player-built station without disturbing deployed personnel. */
+fun GameController.removeChiefStation(stationId: String): Boolean {
+    if (!chiefPlanning()) return false
+    val station = state.chief.stations.firstOrNull { it.id == stationId && it.region == state.region }
+        ?: return chiefReject("Eigene Dienststelle nicht gefunden.")
+    if (state.chief.vehicles.any { it.stationId == stationId })
+        return chiefReject("Fahrzeuge zuerst auf eine andere Dienststelle verlegen oder verkaufen.")
+    if (state.units.any { it.region == station.region && it.homeLon == station.lon && it.homeLat == station.lat })
+        return chiefReject("Station ist noch Heimatstandort einer Einheit.")
+    state.chief.stations.remove(station)
+    chiefLog("${station.name} als eigene Dienststelle geschlossen.")
+    return true
+}
+
 fun GameController.upgradeChiefStation(stationId: String, upgrade: String): Boolean {
     if (!chiefPlanning()) return false
     val s = state.chief.stations.find { it.id == stationId } ?: return chiefReject("Dienststelle fehlt.")
