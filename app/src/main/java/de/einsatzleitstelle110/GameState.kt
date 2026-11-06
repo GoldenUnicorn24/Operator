@@ -777,7 +777,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
     fun alignHamburgLegacyHomes() {
         if (state.region != "DE-HH" || HamburgStations.all.isEmpty()) return
         for (u in state.units) {
-            if (u.region != "DE-HH" || !u.id.startsWith("DE-HH-")) continue
+            if (u.region != "DE-HH" || !(u.id.startsWith("DE-HH-") || u.id.startsWith("PARTNER-DE-HH-"))) continue
             val candidates = HamburgStations.matching(u.type)
             if (candidates.isEmpty()) continue
             val old = GeoPoint(u.homeLon, u.homeLat)
