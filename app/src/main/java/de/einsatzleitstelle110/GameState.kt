@@ -56,6 +56,8 @@ data class UnitState(
     var scope: String = "STATE",
     var routePoints: MutableList<GeoPoint> = mutableListOf(),
     var routeBasis: String = "DISTANCE_APPROXIMATION",
+    var stationId: String = "",
+    var capabilities: MutableSet<String> = mutableSetOf(),
 )
 
 data class IncidentState(
@@ -179,6 +181,7 @@ data class GameState(
     var randomSeed: Long = 982341L,
     var legacySource: String = "",
     val logs: MutableList<String> = mutableListOf(),
+    val customStations: MutableList<DispatchStation> = mutableListOf(),
 )
 
 object GameContent {
@@ -307,7 +310,69 @@ object GameContent {
             }
 }
 
-class GameController(val state: GameState, val regions: List<GeoRegion>) {
+class GameController(
+    val state: GameState,
+    val regions: List<GeoRegion>,
+    private val officialStations: List<DispatchStation> = emptyList(),
+) {
+    /** Real locations are immutable. Only player-built locations can be edited or removed. */
+    fun stations(): List<DispatchStation> =
+        if (state.region == "DE-HH") officialStations + state.customStations else emptyList()
+
+    fun addStation(name: String, type: String, lat: Double, lon: Double): Boolean {
+        if (state.phase != "PLANNING" || state.region != "DE-HH" ||
+            name.isBlank() || type !in listOf("POLIZEI", "BERUFSFEUERWEHR", "RETTUNG", "SONSTIGE") ||
+            !lat.isFinite() || !lon.isFinite() || !inScope(lat, lon) ||
+            !region().contains(GeoPoint(lon, lat)) || !spend(35000)
+        ) return false
+        state.customStations.add(DispatchStation(
+            id = "CUSTOM-STATION-${state.nextId++}",
+            name = name.trim().take(90), type = type, lat = lat, lon = lon,
+            address = "Spielerstandort", source = "PLAYER", custom = true,
+        ))
+        return true
+    }
+
+    fun removeStation(id: String): Boolean {
+        if (state.phase != "PLANNING" || !id.startsWith("CUSTOM-STATION-") ||
+            state.units.any { it.stationId == id }) return false
+        return state.customStations.removeAll { it.id == id && it.custom }
+    }
+
+    fun removeCustomUnit(id: String): Boolean {
+        if (state.phase != "PLANNING" || !id.startsWith("CUSTOM-")) return false
+        val u = state.units.find { it.id == id } ?: return false
+        if (u.incidentId.isNotBlank() || u.status !in listOf("FREE", "OFF_DUTY")) return false
+        return state.units.remove(u)
+    }
+
+    /** A unit is one deployable resource, owning a configurable vehicle and crew. */
+    fun addCustomUnit(
+        callsign: String, type: String, station: DispatchStation,
+        vehicleName: String, crew: Int, speed: Double, capabilities: Set<String>,
+    ): Boolean {
+        if (state.phase != "PLANNING" || callsign.isBlank() || vehicleName.isBlank() ||
+            type !in TYPES || crew !in 1..8 || !speed.isFinite() || speed !in 20.0..250.0 ||
+            capabilities.any { it !in TYPES || it == "TASKFORCE" } ||
+            stations().none { it.id == station.id } || !inScope(station.lat, station.lon) ||
+            !spend(25000)
+        ) return false
+        val u = UnitState(
+            "CUSTOM-${state.nextId++}", callsign.trim().take(60), type, state.region,
+            station.lat, station.lon, crew = crew, scope = state.scope,
+            homeLat = station.lat, homeLon = station.lon,
+            stationId = station.id, vehicleName = vehicleName.trim().take(90),
+            vehicleSpeed = speed, capabilities = capabilities.toMutableSet(),
+        )
+        ensureRoster(u)
+        repeat(2) { k ->
+            u.reliefTeams.add(u.officers.map {
+                Officer(it.name + " / Ablösung ${k + 1}", portrait = it.portrait)
+            }.toMutableList())
+        }
+        state.units.add(u)
+        return true
+    }
     var notify: ((String, String) -> Unit)? = null
 
     private fun rnd(): Double {
@@ -356,7 +421,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
             }
 
     fun canHandle(u: UnitState, required: String) =
-        u.type == required ||
+        u.type == required || required in u.capabilities ||
             (required == "STREIFE" &&
                 u.type in listOf("SEK", "MEK", "KRIPO", "BEREITSCHAFT", "HUND", "VERKEHR"))
 
@@ -417,8 +482,21 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                     )[i]
                 else types[i % types.size]
             val city = r.cities[i % r.cities.size]
-            val p =
-                if (state.scope != "STATE") OperationsAreas.sample(r, state.scope, rng)
+            // Hamburg spawns only at official, verified stations, never at random city pins.
+            val availableStations = if (r.code == "DE-HH") stations().filter {
+                inScope(it.lat, it.lon)
+            } else emptyList()
+            val compatible = availableStations.filter {
+                if (t in listOf("RETTUNG", "FEUERWEHR"))
+                    it.type != "POLIZEI"
+                else it.type == "POLIZEI"
+            }
+            val origin = (compatible.ifEmpty { availableStations }).let {
+                if (it.isEmpty()) null else it[i % it.size]
+            }
+            if (r.code == "DE-HH" && origin == null) continue
+            val p = origin?.let { GeoPoint(it.lon, it.lat) }
+                ?: if (state.scope != "STATE") OperationsAreas.sample(r, state.scope, rng)
                 else if (i < r.cities.size) GeoPoint(city.lon, city.lat) else sampleState(r)
             val u =
                 UnitState(
@@ -436,6 +514,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                             portrait = i % 8 + 1,
                         ),
                     scope = state.scope,
+                    stationId = origin?.id.orEmpty(),
                 )
             ensureRoster(u)
             repeat(2) { team ->
@@ -1103,6 +1182,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                 "HELI",
                 "RETTUNG",
                 "FEUERWEHR",
+                "TASKFORCE",
             )
     }
 }
