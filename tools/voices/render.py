@@ -4,7 +4,7 @@
 Neural Piper voices, used only if their model card says CC0. Runs in CI, the app stays offline.
 Existing clips are kept, so a text change only renders what is new.
 """
-import concurrent.futures, json, pathlib, subprocess, sys, tempfile, urllib.request, wave
+import concurrent.futures, hashlib, json, pathlib, subprocess, sys, tempfile, urllib.request, wave
 from piper.voice import PiperVoice
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -37,6 +37,18 @@ def load(name):
     return PiperVoice.load(str(model))
 
 
+def individual_delivery(clip_id, voice):
+    """Stable, subtle delivery variation without changing the caller's assigned voice.
+
+    Keep dispatcher/radio acknowledgements uniform; vary caller clips only.
+    The same clip always renders identically across machines and rebuilds.
+    """
+    if voice.startswith(('d', 'r')):
+        return 1.0
+    digest = hashlib.sha256(clip_id.encode('utf-8')).digest()
+    return 0.94 + (digest[0] / 255.0) * 0.12
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     MODELS.mkdir(exist_ok=True)
@@ -58,7 +70,7 @@ def main():
     for i, (cid, voice, text) in enumerate(todo):
         wav = tmp / f'{cid}.wav'
         with wave.open(str(wav), 'wb') as w:
-            voices[voice[:2]].synthesize(text, w, length_scale=speed.get(voice[2:], 1.0) * (.93 if voice[0] == 'r' else 1.0))
+            voices[voice[:2]].synthesize(text, w, length_scale=speed.get(voice[2:], 1.0) * (.93 if voice[0] == 'r' else 1.0) * individual_delivery(cid, voice))
         jobs.append((wav, voice))
         if i % 200 == 0:
             print(i, flush=True)
