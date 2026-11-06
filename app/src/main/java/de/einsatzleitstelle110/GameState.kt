@@ -770,9 +770,38 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         u.officer = u.officers.first()
     }
 
+    /**
+     * Old saves contain auto-seeded units in fictional town centres.
+     * Relocate only generated DE-HH units; never move player-created vehicles or stations.
+     */
+    fun alignHamburgLegacyHomes() {
+        if (state.region != "DE-HH" || HamburgStations.all.isEmpty()) return
+        for (u in state.units) {
+            if (u.region != "DE-HH" || !u.id.startsWith("DE-HH-")) continue
+            val candidates = HamburgStations.matching(u.type)
+            if (candidates.isEmpty()) continue
+            val old = GeoPoint(u.homeLon, u.homeLat)
+            if (candidates.any { GeoData.km(it.point, old) < .12 }) continue
+            val location = candidates.minByOrNull { GeoData.km(it.point, old) } ?: continue
+            u.homeLon = location.lon
+            u.homeLat = location.lat
+            if (state.phase == "PLANNING" && u.incidentId.isBlank()) {
+                u.lon = location.lon
+                u.lat = location.lat
+                u.startLon = location.lon
+                u.startLat = location.lat
+                u.destLon = location.lon
+                u.destLat = location.lat
+                u.focusLon = location.lon
+                u.focusLat = location.lat
+            }
+        }
+    }
+
     fun seedUnitsIfNeeded() {
         state.units.forEach { ensureRoster(it) }
         val r = region()
+        if (r.code == "DE-HH") alignHamburgLegacyHomes()
         if (state.units.any { it.region == r.code && it.scope == state.scope }) return
         val types =
             listOf(
@@ -820,14 +849,18 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                     else sites[i % sites.size]
                 else if (state.scope != "STATE") OperationsAreas.sample(r, state.scope, rng)
                 else if (i < r.cities.size) GeoPoint(city.lon, city.lat) else sampleState(r)
+            val official = if (r.code == "DE-HH")
+                HamburgStations.matching(t).filter { state.scope == "STATE" || inScope(it.point) }
+            else emptyList()
+            val home = if (official.isNotEmpty()) official[i % official.size].point else p
             val u =
                 UnitState(
                     r.code + "-" + state.scope + "-" + (i + 1),
                     "${if(t=="STREIFE")"Peter" else t} ${r.code.takeLast(2)} ${i+1}",
                     t,
                     r.code,
-                    p.lat,
-                    p.lon,
+                    home.lat,
+                    home.lon,
                     crew = if (t == "SEK") 4 else 2,
                     officer =
                         Officer(
