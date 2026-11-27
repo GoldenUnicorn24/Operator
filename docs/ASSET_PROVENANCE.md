@@ -48,3 +48,10 @@ SEK hat besondere Gefahrenlagen, MEK Observation und Fahndung, Kripo Ermittlung 
 ## Operator Rebuilt
 
 `app/src/main/res/drawable/ic_operator_rebuilt.xml` ist ein für dieses Projekt erstellter Android-Vektor. Der vorhandene Hamburger Wachendatensatz, die OSM/LGV-Kartenressourcen und die 18 bestehenden Anrufer-Sprachprofile stammen aus der 0.16-Basis. Bei dynamischer Sprache verwendet die App ausschließlich eine vorhandene, von Android als offline gemeldete deutsche Gerätestimme.
+
+### Amtliche Wachstandorte
+
+Die eingebettete Fassung trägt das Importdatum 6. November 2026. Die drei amtlichen OGC-Sammlungen wurden für die Vorschau erneut abgefragt und die Standorte mit den eingebetteten Koordinaten verglichen. Alle 37 Polizei- und 86 Freiwillige-Feuerwehr-Punkte stimmen innerhalb der Rundungsgrenze überein. Die Berufsfeuerwehr-Sammlung enthält 19 Datensätze. Davon gehören 18 zum abgebildeten Spielgebiet. Der zusätzliche Eintrag ist das Havariekommando Cuxhaven. Das Spiel verwendet weiterhin die 141 Hamburger Vorlagen.
+
+Beide veröffentlichten Datensätze tragen die Datenlizenz Deutschland Namensnennung 2.0. Die Quellangabe nennt die Freie und Hansestadt Hamburg, Polizei Hamburg, beziehungsweise die Behörde für Inneres und Sport.
+[Polizeikommissariate Hamburg](https://suche.transparenz.hamburg.de/dataset/polizeikommissariate-hamburg23) · [Feuerwehrwachen Hamburg](https://suche.transparenz.hamburg.de/dataset/feuerwehrwachen-hamburg19)

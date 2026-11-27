@@ -31,7 +31,7 @@
 | M4 | Aufgabenbasierte Einsatzengine, Welt-Ereignisse und überarbeiteter Dispositionsassistent stehen aus. |
 | M5 | Gruppen-Taskforces, Management- und Wirtschaftsumbau, neue Karriere und KI-Mitarbeiter stehen aus. |
 | M6 | Erweiterte Editoren, Inhaltspakete, Statistiken und vollständige Asset-Überarbeitung stehen aus. |
-| M7 | Geräteabnahme, Lasttests, vollständiger visueller Satz und Freigabe stehen aus. |
+| M7 | Die erste Kandidaten-APK hat 11 Geräteprüfungen absolviert. Zusätzliche Geräteabläufe, physische Leistungsmessungen, vollständiger visueller Satz und Vollfreigabe stehen aus. |
 
 ## Reproduzierbare Prüfungen
 
@@ -41,16 +41,33 @@ python3 -m unittest discover -s tools/tests -v
 python3 scripts/verify_native_apk.py app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Die visuelle Prüfung des ersten Emulatorlaufs zeigte eine kurzzeitig leere Tempo-Schaltfläche und einen zu niedrigen Aktenbereich im Querformat. Der Folgecommit setzt den Schaltflächentext bei der Erstellung und reserviert mehr Höhe für die Akte. Die Android-Tests prüfen beide Fälle.
+Die visuelle Prüfung des ersten Emulatorlaufs zeigte eine kurzzeitig leere Fortsetzen-Schaltfläche und einen zu niedrigen Aktenbereich im Querformat. Der Folgecommit setzt die Beschriftung bei der Erstellung und reserviert mehr Höhe für die Akte. Die Android-Tests prüfen beide Fälle.
 
-Der erste lokale Rebuilt-Lauf startete 157 Unit-Tests. 156 waren erfolgreich. Der verpflichtende Vergleich des Binärnetzes mit den eingecheckten Rohdaten meldete den fehlenden lokalen JSON-Export. Die geprüften eingebetteten Assets des Ausgangs-APKs stimmen mit 2.685 Git-Blob-Prüfsummen überein. Sie ersetzen den Rohdatenvergleich nicht. APK, Instrumentation-APK und Lint wurden lokal erfolgreich erzeugt. Der native APK-Prüfer hat keine Web-Dokumente gefunden. Der GitHub-Lauf [46082334536](https://github.com/GoldenUnicorn24/Operator/actions/runs/46082334536) hat Unit-Tests, Build, Lint, Geodatenverträge und Paketprüfung im vollständigen Repository erfolgreich ausgeführt. Der SHA-256-Wert der lokalen Vorschau lautet `3df9d6e07adad53356ff49d48a700b431a823616604e938672bcc3840afc30de`.
+Der erste lokale Rebuilt-Lauf startete 157 Unit-Tests. 156 waren erfolgreich. Der verpflichtende Vergleich des Binärnetzes mit den eingecheckten Rohdaten meldete den fehlenden lokalen JSON-Export. Die geprüften eingebetteten Assets des Ausgangs-APKs stimmen mit 2.685 Git-Blob-Prüfsummen überein. Sie ersetzen den Rohdatenvergleich nicht. APK, Instrumentation-APK und Lint wurden lokal erfolgreich erzeugt. Der native APK-Prüfer hat keine Web-Dokumente gefunden. Der GitHub-Lauf [46082334536](https://github.com/GoldenUnicorn24/Operator/actions/runs/46082334536) hat Unit-Tests, Build, Lint, Geodatenverträge und Paketprüfung im vollständigen Repository erfolgreich ausgeführt. Sein Prüfarchiv enthält 157 bestandene Unit-Tests, 11 bestandene Android-Tests und 34 Emulatorbilder. Lint meldete 0 Fehler und 76 Warnungen. Der SHA-256-Wert der lokalen Vorschau lautet `3df9d6e07adad53356ff49d48a700b431a823616604e938672bcc3840afc30de`.
 
 Die Android-Instrumentation enthält einen Ablauf für frühe Alarmierung und Rückkehr zum laufenden Anruf. Für eine Geräteprüfung müssen App und Test-APK auf derselben Android-Instanz installiert sein. Die lokale Debug-APK und der archivierte 0.16-CI-Build haben unterschiedliche Zertifikate. Ein direktes Android-Upgrade dieser 0.16-Installation ist mit dem hier geprüften APK deshalb nicht möglich.
 
 
+## Veröffentlichte Vorschau 1
+
+| Prüfung | Ergebnis |
+| --- | --- |
+| Verifizierter Code | [aa4860d](https://github.com/GoldenUnicorn24/Operator/commit/aa4860d4381a94f6dee114b5fe60d410786c8b1f) |
+| Unit-Tests | 157 bestanden |
+| Android-35-Emulator | 11 bestanden, darunter Alarmierung im laufenden Gespräch und das höhere Aktenlayout im Querformat |
+| Paket | VersionCode 118, native Paketprüfung bestanden, 2.685 APK-Assets mit der 0.16-Ausgangs-APK identisch |
+| Offline-Start | Installation und Kaltstart im Flugmodus, gemeldete Startzeit 3.131 ms |
+| Lint | 0 Fehler, 63 Warnungen |
+| SHA-256 der veröffentlichten APK | `c583bbd69410ab3e0383ca7c227552f054dff1183e03e20ae6f7944f7d0862b9` |
+| Prüfnachweise | [CI-Lauf 46083439125](https://github.com/GoldenUnicorn24/Operator/actions/runs/46083439125) und 34 Emulatorbilder |
+| Download | [GitHub-Pre-Release](https://github.com/GoldenUnicorn24/Operator/releases/tag/v0.20.0-rebuilt-preview.1) |
+| Pull Request | [Draft-PR #7](https://github.com/GoldenUnicorn24/Operator/pull/7) mit Ziel `claude/operator-notruf` |
+
+Auch das Zertifikat der veröffentlichten APK weicht vom Zertifikat der archivierten 0.16-APK ab. Der Test der Spielstanddaten und die Freigabe eines direkt installierbaren Updates sind damit getrennte Abnahmepunkte.
+
 ## Provisorische Simulationsmessung
 
-JVM mit Java 21, Hamburger Offline-Routengraph, aktive Fahrzeuge und gleichzeitige Einsätze. Pro Zeile wurden nach einem Aufwärmlauf drei Folgen von jeweils 120 simulierten Minuten gemessen. Die Werte umfassen `advance(1)` ohne Kartenrendering, Audio, ETA-Vorschau oder UI. Laufzeiten auf physischen Geräten und Bildrate sind offen.
+JVM mit Java 21, Hamburger Offline-Routengraph, aktive Fahrzeuge und gleichzeitige Einsätze. Pro Zeile wurden nach einem Aufwärmlauf drei Folgen von jeweils 120 simulierten Minuten gemessen. Die Werte umfassen `advance(1)` ohne Kartenrendering, Audio, ETA-Vorschau oder UI. Laufzeiten auf physischen Geräten und Bildrate sind offen. Im Android-35-Emulator benötigte die Detailkarte im separaten Software-Canvas-Test durchschnittlich 24,58 ms je Zeichenvorgang und 31,10 ms am P95. Im veröffentlichten Prüflauf waren es durchschnittlich 36,50 ms und 38,15 ms am P95. Beide Werte beschreiben Software-Canvas-Zeichenvorgänge im Emulator.
 
 | Fahrzeuge | Parallele Einsätze | Median pro Tick | P95 | Spitze |
 | ---: | ---: | ---: | ---: | ---: |
@@ -59,6 +76,13 @@ JVM mit Java 21, Hamburger Offline-Routengraph, aktive Fahrzeuge und gleichzeiti
 | 250 | 50 | 0,49 ms | 6,03 ms | 17,58 ms |
 | 500 | 100 | 0,39 ms | 6,88 ms | 31,75 ms |
 
+## Zweite Durchsicht
+
+- **Spielerperspektive.** Frühe Disposition ist erstmals im Gesprächsablauf nutzbar. Der Emulator-Ablauf bestätigt, dass Anruf, priorisierter Einsatz und entsandte Fahrzeuge gleichzeitig im Modell bestehen. Die drei Layoutaufnahmen zeigen, wo Fortsetzung, Fahrzeugliste und Akte zu finden sind.
+- **Spieldesign.** Die Vorschau verändert den Zeitpunkt der Alarmierung und baut auf den bestehenden Szenarien auf. Eigenständige Arbeitsaufgaben pro Einheit, neue Abschlusslogik, kontinuierliche Weltentwicklungen und langfristige Finanzen benötigen eigene Balance- und Langzeitprüfungen.
+- **Technik.** Umdisposition und Dateioperationen wurden auf unveränderten Quellzustand bei Ablehnung geprüft. Die Routing-Nebenläufigkeit ist durch parallele Abfragen abgesichert. Die frühere grobe UI-Erkennung ist ersetzt. Die Simulationsautorität liegt weiter beim Hauptthread und ist der wichtigste offene Architekturpunkt.
+- **Release.** Der vorhandene Anwendungsschlüssel der archivierten 0.16-APK lässt sich aus dem veröffentlichten Paket nicht wiederherstellen. Ein kompatibel signiertes Upgrade ist ein eigener Freigabepunkt.
+
 ## Nächster Integrationspunkt
 
-Zuerst die Geräteprüfung und die überarbeiteten Regressionstests auf dem aktuellen Commit ausführen. Danach die direkten Zugriffe der Dialoge und der Kartendarstellung auf den veränderlichen Simulationszustand in klar definierte Befehle und unveränderliche Anzeigezustände überführen. Erst danach den Simulationsbesitz auf einen separaten Dispatcher verlagern. Die bestehende Abschnittsfolge M2 bis M7 und die ursprünglichen Abnahmekriterien bleiben die Referenz.
+Die bestätigte Vorschau ist der Ausgangspunkt. Die Bestätigung beim Neuanlegen einer Partie benötigt noch einen Prüffall mit reiner Personal- oder Wachplanung am ersten Tag. Die direkten Zugriffe der Dialoge und der Kartendarstellung auf den veränderlichen Simulationszustand in klar definierte Befehle und unveränderliche Anzeigezustände überführen. Erst danach den Simulationsbesitz auf einen separaten Dispatcher verlagern. Die bestehende Abschnittsfolge M2 bis M7 und die ursprünglichen Abnahmekriterien bleiben die Referenz.
