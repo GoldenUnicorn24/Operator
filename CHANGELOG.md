@@ -1,3 +1,12 @@
+## 0.20.0-rebuilt-preview.1
+
+- Notrufe mit Gesprächsverlauf an die Folgeschicht übergeben und nach dem Laden fortsetzen.
+- Einsatz während des Gesprächs anlegen, disponieren und mit weiteren Erkenntnissen ergänzen.
+- Umdisposition vor der Ablösung validieren. Aufgaben zusätzlicher Fahrzeugrollen anhand von Besatzung, Qualifikation und Ausrüstung prüfen.
+- Funk nach Dringlichkeit wiedergeben, eigene Rufnamen mit optionaler lokaler Sprache unterstützen.
+- Hauptmenü, Telefonwarteschlange, Einsatzaktengrößen und Querformat-Leitstelle überarbeiten.
+- Autosave-Backup atomar schreiben. Pflicht-Geodaten bei Tests voraussetzen.
+
 ## 0.16.0 – Operator Notruf: reale Hamburg-Wachen und eigene Taskforces
 
 - 141 amtliche Hamburger Standorte offline eingebunden (37 Polizei, 18 Berufsfeuerwehr, 86 Freiwillige Feuerwehr); amtliche Standorte erscheinen auf der Karte statt erfundener Wachmarker.

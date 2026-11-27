@@ -11,21 +11,26 @@ adb shell settings put global anr_show_background 0 || true
 # emulator launcher is simply disabled for this run (never part of the app or its checks).
 adb shell pm disable-user --user 0 com.android.launcher3 || true
 adb shell am force-stop com.android.launcher3 || true
-adb install -r release/Einsatzleitstelle110-Native-Leitstelle.apk
+adb install -r "${APP_APK:-release/Einsatzleitstelle110-Native-Leitstelle.apk}"
 adb install -r release/instrumentation.apk
-adb shell am instrument -w -r de.einsatzleitstelle110.test/androidx.test.runner.AndroidJUnitRunner | tee runtime/instrumentation.txt
+instrument_status=0
+timeout 40m adb shell am instrument -w -r de.einsatzleitstelle110.test/androidx.test.runner.AndroidJUnitRunner \
+    | tee runtime/instrumentation.txt || instrument_status=$?
 # Capture required app evidence before optional root diagnostics restart adbd.
 adb pull /sdcard/Android/data/de.einsatzleitstelle110/files runtime/screens || true
 adb exec-out screencap -p > runtime/device-final.png || true
 adb logcat -d > runtime/logcat.txt || true
 adb shell dumpsys activity lastanr > runtime/last-anr.txt || true
-adb root || true
-adb wait-for-device
-adb pull /data/anr runtime/anr || true
+if (( instrument_status != 0 )); then
+    echo "Instrumentation exited with status $instrument_status" >&2
+    exit "$instrument_status"
+fi
 python3 - <<'PY'
+import re
 from pathlib import Path
 text = Path('runtime/instrumentation.txt').read_text()
-assert 'OK (10 tests)' in text and 'FAILURES!!!' not in text, text
+result = re.search(r"^OK \((\d+) tests?\)$", text, re.M)
+assert result and int(result[1]) >= 10 and 'FAILURES!!!' not in text and 'INSTRUMENTATION_FAILED' not in text, text
 for name in ['phone-ringing','phone-call','phone-result','incident-desk','dispatch-advice','incident-desk-dispatched','caller-callback','save-slots','landscape-dispatch','chief-station','chief-fleet','chief-personnel','chief-reloaded','wandsbek-patrol','signal-comparison','fms-radio','wandsbek-overview','wandsbek-street-names','wandsbek-oneway-drive','wandsbek','officer','equipment','24h-report','niedersachsen','bayern','hamburg-live','dispatch-panel','vehicle-route','hamburg-8h-report','career','editor','tutorial']:
     p = Path(f'runtime/screens/native-{name}.png')
     assert p.read_bytes().startswith(b'\x89PNG\r\n\x1a\n'), f'Missing actual screenshot: {p}'

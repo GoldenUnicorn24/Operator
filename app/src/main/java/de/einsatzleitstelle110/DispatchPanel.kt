@@ -109,6 +109,7 @@ class DispatchPanel(
     private val onChanged: () -> Unit,
     private val onUnitDetails: (UnitState) -> Unit,
     private val toast: (String) -> Unit,
+    private val onResize: () -> Unit,
 ) {
     val root: LinearLayout = ui.column()
     private val scroll = ScrollView(activity)
@@ -119,7 +120,11 @@ class DispatchPanel(
     private val selected = LinkedHashSet<String>()
     private var specialRights = true
     private var showBound = false
-    private var lastVersion = ""
+    private var showTranscript = false
+    private val heights = listOf(.36f, .54f, .78f)
+    private var size = 1
+    val heightFraction get() = heights[size]
+    private var lastVersion: DispatchPanelState? = null
 
     init {
         root.background = ui.bg(Color.rgb(10, 24, 35), ui.edge, 16)
@@ -140,6 +145,7 @@ class DispatchPanel(
             specialRights = c.priority == 1
             selected.clear()
             showBound = false
+            showTranscript = false
             scroll.scrollTo(0, 0)
             // A proposal is only a selection; the player still confirms the actual radio order.
             if (c.status == "OPEN") selected.addAll(DispatchAdvisor.plan(game, c, specialRights).picks.map { it.unitId })
@@ -147,7 +153,7 @@ class DispatchPanel(
         call = c
         map.selectedCall = c
         map.previewUnits = selected.toSet()
-        lastVersion = ""
+        lastVersion = null
         render()
     }
 
@@ -160,27 +166,18 @@ class DispatchPanel(
         map.invalidate()
     }
 
-    /** Called every live tick: re-render only if the call or its units changed. */
+    /** Rebuild only when a field displayed by the open file changes. */
     fun refresh() {
-        val c = call ?: return
-        if (c.status in listOf("SOLVED", "FAILED")) {
-            render()
-            return
-        }
-        if (version(c) != lastVersion) render()
+        val current = call ?: return
+        val next = DispatchPanelState.capture(game, current, showBound)
+        if (next != lastVersion) render(next)
     }
-
-    /** Who can be sent, not where they are: rows and ETAs are only rebuilt when that changes. */
-    private fun version(c: IncidentState) =
-        c.status + c.pending + c.notes.size + c.assignedUnits.joinToString() + c.age / 3 + game.state.weather +
-            game.state.units.count { it.region == c.region && game.dispatchable(it) } +
-            c.assignedUnits.joinToString { id -> game.state.units.find { it.id == id }?.status.orEmpty() }
 
     private fun minutesLeft(c: IncidentState) = (c.deadline - c.age).coerceAtLeast(0)
 
-    private fun render() {
+    private fun render(presentation: DispatchPanelState? = null) {
         val c = call ?: return
-        lastVersion = version(c)
+        lastVersion = presentation ?: DispatchPanelState.capture(game, c, showBound)
         val y = scroll.scrollY
         body.removeAllViews()
         footer.removeAllViews()
@@ -191,8 +188,18 @@ class DispatchPanel(
             ui.text("  ${c.title}", 16f, ui.ink, true),
             LinearLayout.LayoutParams(0, -2, 1f),
         )
+        if (activity.resources.configuration.orientation != android.content.res.Configuration.ORIENTATION_LANDSCAPE) {
+            val label = listOf("Größe: kompakt", "Größe: mittel", "Größe: groß")[size]
+            head.addView(ui.button("↕") {
+                size = (size + 1) % heights.size
+                onResize()
+                render()
+            }.apply { contentDescription = label }, LinearLayout.LayoutParams(ui.dp(48), ui.dp(48)))
+        }
         head.addView(ui.text("✕", 20f, ui.muted, true).apply {
-            setPadding(ui.dp(12), ui.dp(2), ui.dp(4), ui.dp(2))
+            gravity = Gravity.CENTER
+            minWidth = ui.dp(48)
+            minHeight = ui.dp(48)
             contentDescription = "Einsatzakte schließen"
             setOnClickListener { close(); onChanged() }
         })
@@ -227,6 +234,29 @@ class DispatchPanel(
                 },
                 LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = ui.dp(4) },
             )
+        if (c.phoneTranscript.isNotEmpty()) {
+            body.addView(ui.button(if (showTranscript) "Notrufprotokoll ausblenden" else "Notrufprotokoll anzeigen") {
+                showTranscript = !showTranscript
+                render()
+            })
+            if (showTranscript) {
+                val times = listOf("Eingang" to c.reportedAt, "Annahme" to c.answeredAt,
+                    "Erste Alarmierung" to c.firstDispatchedAt, "Gesprächsende" to c.phoneClosedAt)
+                val knownTimes = times.filter { it.second >= 0 }
+                knownTimes.forEach { (name, time) ->
+                    val minute = time % 1440
+                    body.addView(ui.text("$name · %02d:%02d".format(minute / 60, minute % 60), 12f, ui.cyan))
+                }
+                c.phoneTranscript.forEach { line ->
+                    val speaker = when (line.substringBefore('|')) {
+                        "C" -> "Anruf"
+                        "D" -> "Leitstelle"
+                        else -> "Telefon"
+                    }
+                    body.addView(ui.text("$speaker · ${line.substringAfter('|')}", 12f, ui.muted))
+                }
+            }
+        }
         if (c.notes.isNotEmpty()) {
             body.addView(ui.text("Entscheidungen", 12f, ui.muted, true).apply { setPadding(0, ui.dp(6), 0, ui.dp(2)) })
             for (n in c.notes) body.addView(ui.text("• $n", 12f, if (n.startsWith("⏱")) ui.amber else ui.muted))
@@ -382,7 +412,7 @@ class DispatchPanel(
     private fun candidateRow(c: IncidentState, u: UnitState, eta: Int, need: List<String>, from: IncidentState?): View {
         val fit =
             when {
-                need.contains(u.type) -> "passt" to ui.mint
+                need.contains(u.type) && game.canHandle(u, u.type) -> "passt" to ui.mint
                 need.any { game.canHandle(u, it) } -> "kann übernehmen" to ui.cyan
                 need.isEmpty() -> "Verstärkung" to ui.cyan
                 else -> "ungeeignet" to ui.muted
@@ -407,8 +437,9 @@ class DispatchPanel(
             }
         val crew = u.officers.size
         val fatigue = u.officers.minOfOrNull { it.energy } ?: 100
-        val fee = game.deploymentCost(u.type)
-        val special = if (fee > 0) " · ${fee} € · danach ${game.recoveryMinutes(u.type)} Min Erholung" else ""
+        val deploymentType = game.deploymentType(u, c)
+        val fee = game.deploymentCost(deploymentType)
+        val special = if (fee > 0) " · ${fee} € · danach ${game.recoveryMinutes(deploymentType)} Min Erholung" else ""
         info.addView(ui.text("${ui.roleName(u.type)} · $crew Pers. · Kraft $fatigue%$extra$special", 11f, ui.muted))
         r.addView(info, LinearLayout.LayoutParams(0, -2, 1f))
         val right = ui.column().apply { gravity = Gravity.END }

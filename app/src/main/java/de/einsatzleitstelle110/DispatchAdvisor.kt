@@ -17,16 +17,16 @@ object DispatchAdvisor {
         val assigned = call.assignedUnits.distinct().mapNotNull { id -> game.state.units.find { it.id == id } }
         val assignedIds = assigned.map { it.id }.toSet()
         val available = game.state.units.filter { u ->
-            u.region == call.region && u.id !in assignedIds && game.dispatchable(u) && roles.any { game.canHandle(u, it) }
+            u.region == call.region && u.id !in assignedIds && game.dispatchable(u) && roles.any { game.declaresCapability(u, it) }
         }.distinctBy { it.id }.sortedBy { it.id }
-        val eligible = available.filter { game.dispatchTrainingIssue(it).isBlank() }
+        val eligible = available.filter { u -> roles.any { game.canHandle(u, it) } }
         val units = assigned + eligible
         val etas = eligible.associate { it.id to game.eta(it, call, specialRights) }
         val budget = if (game.state.unlimitedBudget) Long.MAX_VALUE else game.state.budget.toLong().coerceAtLeast(0)
         // Prefer using already assigned resources before adding extra free vehicles at the same fee.
         val extraPenalty = (((etas.values.maxOrNull() ?: 0).coerceAtMost(1_000_000) + 6L) * minOf(roles.size, units.size) + 1)
             .coerceAtMost(1_000_000_000).toInt()
-        fun fee(u: UnitState) = if (u.id in assignedIds) 0 else game.deploymentCost(u.type)
+        fun fee(u: UnitState) = if (u.id in assignedIds) 0 else game.deploymentCost(game.deploymentType(u, call))
         val matches = RoleMatching.assign(roles, units, game::canHandle,
             { u, role -> if (u.id in assignedIds) 0 else extraPenalty + etas.getValue(u.id).coerceAtMost(1_000_000) + if (u.type == role) 0 else 6 },
             ::fee, budget)
@@ -37,7 +37,7 @@ object DispatchAdvisor {
         val covered = matches.map { it.role }.toSet()
         val missing = roles.filterIndexed { i, _ -> i !in covered }
         val warnings = mutableListOf<String>()
-        if (available.size != eligible.size) warnings.add("Ausbildung fehlt bei ${available.size - eligible.size} verfügbaren Spezialeinheiten.")
+        if (available.size != eligible.size) warnings.add("Ausbildung, Besatzung oder Ausstattung fehlt bei ${available.size - eligible.size} verfügbaren Einheiten.")
         if (missing.isNotEmpty()) {
             val withoutBudget = RoleMatching.assign(roles, units, game::canHandle)
             if (withoutBudget.size > matches.size) warnings.add("Budget begrenzt den Vorschlag; verfügbare Mittel ${budget} €.")

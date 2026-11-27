@@ -12,22 +12,37 @@ class IncidentDeskScreen(
     val root = ScrollView(activity)
     private val body = ui.column().apply { setPadding(ui.dp(12), ui.dp(12), ui.dp(12), ui.dp(12)) }
     private var filter = "ACTION"
-    private var version = ""
+    private data class Row(
+        val id: String, val status: String, val priority: Int, val title: String, val location: String,
+        val outcome: String, val attention: IncidentAttention, val missing: List<String>,
+    )
+
+    private data class ScreenState(val filter: String, val active: Int, val actionable: Int, val rows: List<Row>)
+
+    private var version: ScreenState? = null
     init { root.addView(body); refresh() }
 
     fun refresh() {
         val calls = IncidentDesk.ordered(game, game.state.incidents.filter { it.region == game.state.region && game.inScope(it.lat, it.lon) })
-        val next = "$filter:${game.state.elapsed}:${game.state.phase}:" + calls.joinToString {
-            "${it.id}:${it.status}:${it.pending}:${it.age}:${it.assignedUnits}:${game.remainingTypes(it)}"
+        val active = calls.filter { it.status in listOf("OPEN", "DRIVING", "WORKING") }
+        val attention = active.associate { it.id to IncidentDesk.attention(game, it) }
+        val action = attention.count { it.value.needsAction }
+        val visible = when (filter) {
+            "ACTION" -> active.filter { attention.getValue(it.id).needsAction }
+            "ACTIVE" -> active
+            else -> calls.filter { it.id !in attention }
+        }.take(100)
+        val rows = visible.map {
+            val detail = attention[it.id] ?: IncidentDesk.attention(game, it)
+            Row(it.id, it.status, it.priority, it.title, it.location, it.outcome, detail,
+                if (detail.needsAction) game.remainingTypes(it) else emptyList())
         }
+        val next = ScreenState(filter, active.size, action, rows)
         if (next == version) return
         version = next
         val y = root.scrollY
         body.removeAllViews()
-        body.addView(ui.text("Lagezentrum", 24f, ui.ink, true))
-        body.addView(ui.text("${game.region().name} · Priorität, Fristen und fehlende Kräfte", 12f, ui.muted))
-        val active = calls.filter { it.status in listOf("OPEN", "DRIVING", "WORKING") }
-        val action = active.count { IncidentDesk.attention(game, it).needsAction }
+        body.addView(ui.text("Einsätze", 24f, ui.ink, true))
         body.addView(ui.text("Handlungsbedarf: $action · Aktive Lagen: ${active.size}", 15f,
             if (action > 0) ui.amber else ui.mint, true).apply { setPadding(0, ui.dp(12), 0, ui.dp(8)) })
         val filters = ui.row()
@@ -38,20 +53,13 @@ class IncidentDeskScreen(
         body.addView(ui.button("Notruf simulieren") { simulate(); refresh() }.apply {
             setPadding(ui.dp(8), ui.dp(8), ui.dp(8), ui.dp(8))
         })
-        val visible = calls.filter {
-            when (filter) {
-                "ACTION" -> IncidentDesk.attention(game, it).needsAction
-                "ACTIVE" -> it.status in listOf("OPEN", "DRIVING", "WORKING")
-                else -> it.status !in listOf("OPEN", "DRIVING", "WORKING")
-            }
-        }
         if (visible.isEmpty()) body.addView(ui.text(when (filter) {
             "ACTION" -> "Kein Handlungsbedarf. Laufende Einsätze findest du unter Alle aktiven."
             "ACTIVE" -> "Keine aktiven Lagen. Die nächste Meldung erscheint hier."
             else -> "Noch keine abgeschlossenen Einsätze."
         }, 14f, ui.mint).apply { setPadding(0, ui.dp(20), 0, ui.dp(20)) })
-        for (call in visible.take(100)) {
-            val a = IncidentDesk.attention(game, call)
+        for ((call, row) in visible.zip(rows)) {
+            val a = row.attention
             val card = ui.column().apply {
                 setPadding(ui.dp(12), ui.dp(12), ui.dp(12), ui.dp(12))
                 background = ui.bg(ui.panel, if (a.order == 0) ui.red else ui.edge)
@@ -60,7 +68,7 @@ class IncidentDeskScreen(
             card.addView(ui.text(a.reason, 13f, if (a.needsAction) ui.amber else ui.mint, true))
             card.addView(ui.text(call.location, 12f, ui.muted))
             if (a.needsAction) {
-                val missing = game.remainingTypes(call).groupingBy { it }.eachCount()
+                val missing = row.missing.groupingBy { it }.eachCount()
                 if (missing.isNotEmpty()) card.addView(ui.text("Fehlt: " + missing.entries.joinToString { "${it.value}× ${ui.roleName(it.key)}" }, 12f, ui.muted))
             }
             if (call.outcome.isNotBlank()) card.addView(ui.text(call.outcome, 12f, if (call.status == "SOLVED") ui.mint else ui.red))

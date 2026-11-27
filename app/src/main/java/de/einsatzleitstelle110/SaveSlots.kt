@@ -85,8 +85,8 @@ class SlotRepository(private val directory: File) {
             check(directory.isDirectory || directory.mkdirs()) { "Speicherverzeichnis konnte nicht angelegt werden." }
             val base = primary(slot)
             val old = backup(slot)
-            if (readable(base) != null) atomicWrite(old, base.readBytes())
-            atomicWrite(base, raw)
+            if (readable(base) != null) writeSaveAtomically(old, base.readBytes())
+            writeSaveAtomically(base, raw)
             info(slot)
         }
     }
@@ -99,16 +99,6 @@ class SlotRepository(private val directory: File) {
     fun delete(slot: Int) = synchronized(lock) {
         val files = listOf(primary(slot), backup(slot), File(directory, primary(slot).name + ".tmp"), File(directory, backup(slot).name + ".tmp"))
         for (file in files) if (file.exists() && !file.delete()) throw IOException("Speicherplatz $slot konnte nicht gelöscht werden.")
-    }
-
-    private fun atomicWrite(target: File, raw: ByteArray) {
-        val temp = File(target.parentFile, target.name + ".tmp")
-        try {
-            FileOutputStream(temp).use { stream -> stream.write(raw); stream.fd.sync() }
-            Files.move(temp.toPath(), target.toPath(), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
-        } finally {
-            if (temp.exists()) temp.delete()
-        }
     }
 
     companion object {
@@ -125,4 +115,14 @@ object SaveSlots {
     fun save(context: Context, slot: Int, name: String, state: GameState): SlotInfo = repository(context).save(slot, name, state)
     fun load(context: Context, slot: Int): GameState = repository(context).load(slot)
     fun delete(context: Context, slot: Int) = repository(context).delete(slot)
+}
+
+internal fun writeSaveAtomically(target: File, raw: ByteArray) {
+    val temp = File(target.parentFile, target.name + ".tmp")
+    try {
+        FileOutputStream(temp).use { stream -> stream.write(raw); stream.fd.sync() }
+        Files.move(temp.toPath(), target.toPath(), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+    } finally {
+        if (temp.exists()) temp.delete()
+    }
 }

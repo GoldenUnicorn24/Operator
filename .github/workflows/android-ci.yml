@@ -1,7 +1,7 @@
 name: Native Android APK and device verification
 on:
   push:
-    branches: [main, 'codex/**', 'claude/**']
+    branches: [main, 'codex/**', 'claude/**', '!codex/operator-rebuilt-v020']
   pull_request:
     branches: [main]
   workflow_dispatch:

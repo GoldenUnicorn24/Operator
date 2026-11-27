@@ -9,14 +9,16 @@ import android.os.Looper
 import android.os.SystemClock
 import android.view.Gravity
 import android.view.View
+import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import android.text.Editable
+import android.text.TextWatcher
 
 /**
- * The call itself. Full screen, the clock crawls while the caller talks. The player reads, asks,
- * instructs and finally names the keyword; only then does an incident exist.
+ * Native phone console. The player can open the linked dispatch file and resume the same call.
  */
 class PhoneScreen(
     private val activity: Activity,
@@ -58,9 +60,17 @@ class PhoneScreen(
         outer.addView(head)
         outer.addView(status.apply { setPadding(0, ui.dp(4), 0, ui.dp(8)) })
         scroll.addView(transcript)
-        outer.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
         val actionScroll = ScrollView(activity).apply { addView(actions) }
-        outer.addView(actionScroll, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
+        val landscape = activity.resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+        val panels = if (landscape) ui.row() else ui.column()
+        if (landscape) {
+            panels.addView(scroll, LinearLayout.LayoutParams(0, -1, 1.15f).apply { marginEnd = ui.dp(12) })
+            panels.addView(actionScroll, LinearLayout.LayoutParams(0, -1, 1f))
+        } else {
+            panels.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
+            panels.addView(actionScroll, LinearLayout.LayoutParams(-1, 0, 1.15f).apply { topMargin = ui.dp(8) })
+        }
+        outer.addView(panels, LinearLayout.LayoutParams(-1, 0, 1f))
         dialog = Dialog(activity, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
         dialog.setContentView(outer)
         dialog.setCancelable(false)
@@ -144,12 +154,75 @@ class PhoneScreen(
                 if (a.id == "cpr") showCpr(c) else render()
             }
         }
+        val incident = PhoneDesk.linkedIncident(game, c)
+        section("DISPOSITION")
+        if (incident != null) {
+            action("Einsatzakte öffnen · ${incident.id}", true) { close(); onDispatch(incident) }
+            if (incident.status in listOf("OPEN", "DRIVING", "WORKING")) {
+                action("Stichwort oder Priorität ändern") { renderDispatchCatalog(c) }
+            }
+        } else if (c.duplicateOf.isBlank()) {
+            if (c.located) action("Während des Gesprächs alarmieren", true) { renderDispatchCatalog(c) }
+            else actions.addView(ui.text("Für die Alarmierung zuerst den Einsatzort erfassen.", 12f, ui.muted))
+        }
         section("GESPRÄCH")
-        action("Einsatzstichwort wählen", true) { renderCodes() }
+        action("Einsatzstichwort wählen") { renderCodes() }
         action("In die Warteschleife legen") {
             PhoneDesk.hold(game, c)
             close()
         }
+    }
+
+    private fun renderDispatchCatalog(c: PhoneCall) {
+        actions.removeAllViews()
+        section("EINSATZSTICHWORT")
+        val search = EditText(activity).apply {
+            hint = "Stichwort suchen"
+            setSingleLine()
+            setTextColor(ui.ink)
+            setHintTextColor(ui.muted)
+        }
+        actions.addView(search, LinearLayout.LayoutParams(-1, -2))
+        action("Zurück zum Gespräch") { render() }
+        val results = ui.column()
+        actions.addView(results)
+        val suggested = PhoneDesk.codes(game, c).filter { !it.none && !it.merge }
+            .mapNotNull { PhoneDesk.template(game, it.title) }
+        val all = (game.allTemplates() + CallScripts.templates).distinctBy { it.title }.sortedBy { it.title }
+
+        fun showResults(query: String) {
+            results.removeAllViews()
+            val matches = if (query.isBlank()) suggested else all.filter { it.title.contains(query, ignoreCase = true) }
+            if (matches.isEmpty()) results.addView(ui.text("Kein Einsatzstichwort gefunden.", 13f, ui.muted))
+            matches.take(20).forEach { template ->
+                results.addView(ui.button(template.title) { renderDispatchPriority(c, template) })
+            }
+            if (matches.size > 20) results.addView(ui.text("Suchbegriff eingrenzen · ${matches.size} Treffer", 12f, ui.muted))
+        }
+
+        search.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = showResults(s.toString().trim())
+            override fun afterTextChanged(s: Editable?) = Unit
+        })
+        showResults("")
+    }
+
+    private fun renderDispatchPriority(c: PhoneCall, template: IncidentTemplate) {
+        actions.removeAllViews()
+        section("PRIORITÄT")
+        actions.addView(ui.text("${template.title} · ${c.street}, ${c.place}", 15f, ui.ink, true))
+        for ((priority, label) in listOf(1 to "Sofort", 2 to "Dringend", 3 to "Regulär")) {
+            action("P$priority · $label", priority == (PhoneDesk.linkedIncident(game, c)?.priority ?: template.priority)) {
+                val incident = PhoneDesk.startDispatch(game, c, template.title, priority)
+                if (incident != null) {
+                    close()
+                    onDispatch(incident)
+                } else render()
+            }
+        }
+        action("Stichwort ändern") { renderDispatchCatalog(c) }
+        action("Zurück zum Gespräch") { render() }
     }
 
     private fun renderCodes() {
@@ -170,7 +243,7 @@ class PhoneScreen(
         // Fill the road fields now, so opening the dispatch panel does not stall.
         result.incident?.let { i ->
             val unit = game.state.units.firstOrNull { it.region == i.region }
-            if (unit != null) Thread({ try { NativeRouting.eta(unit, GeoPoint(i.lon, i.lat)) } catch (_: Exception) {} }, "route-prewarm").start()
+            if (unit != null) NativeRouting.prewarmEta(unit, GeoPoint(i.lon, i.lat))
         }
         actions.removeAllViews()
         val color = if (result.score >= 65) ui.mint else if (result.score >= 40) ui.amber else ui.red
@@ -199,7 +272,7 @@ class PhoneScreen(
         actions.removeAllViews()
         drain()
         section("TELEFONREANIMATION")
-        actions.addView(ui.text("„Legen Sie ihn flach auf den Rücken. Handballen in die Mitte des Brustkorbs, Arme gestreckt. Fest drücken, fünf bis sechs Zentimeter. Ich zähle mit.“", 14f, ui.ink))
+        actions.addView(ui.text("Spielsimulation · keine Notfallausbildung", 14f, ui.ink))
         val counter = ui.text("Tippe im Takt: 0 / $CPR_PRESSES", 14f, ui.amber, true).apply { gravity = Gravity.CENTER; setPadding(0, ui.dp(8), 0, ui.dp(8)) }
         actions.addView(counter, LinearLayout.LayoutParams(-1, -2))
         val size = ui.dp(132)

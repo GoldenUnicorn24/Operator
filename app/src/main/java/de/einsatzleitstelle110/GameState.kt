@@ -66,6 +66,7 @@ data class UnitState(
     var shiftDrivenKm: Double = 0.0,
     var taskforceName: String = "",
     var customCapabilities: MutableSet<String> = mutableSetOf(),
+    var operationType: String = "",
 ) {
     /** Public FMS meanings, kept separate from the simulation's finer-grained states. */
     val fmsStatus: Int get() = when {
@@ -135,6 +136,11 @@ data class IncidentState(
     var surpriseText: String = "",
     var worsened: Boolean = false,
     var takeScore: Int = -1,
+    var reportedAt: Long = -1,
+    var answeredAt: Long = -1,
+    var firstDispatchedAt: Long = -1,
+    var phoneClosedAt: Long = -1,
+    val phoneTranscript: MutableList<String> = mutableListOf(),
 )
 
 data class ChainStage(
@@ -169,6 +175,8 @@ data class IncidentTemplate(
     val followUpType: String = "KRIPO",
 )
 
+data class PhoneHandoff(val callId: String, val active: Boolean)
+
 data class ShiftReport(
     val day: Int,
     val region: String,
@@ -202,6 +210,7 @@ data class ShiftReport(
     /** German school mark 1–6 (0 = shift without phone desk). */
     val grade: Int = 0,
     val event: String = "",
+    val phoneHandoffs: List<PhoneHandoff> = emptyList(),
 )
 
 data class GameState(
@@ -485,6 +494,10 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
             else -> 0
         }
 
+    fun deploymentType(u: UnitState, call: IncidentState): String =
+        call.requiredTypes.filter { canHandle(u, it) }.maxByOrNull(::deploymentCost)
+            ?.takeIf { deploymentCost(it) > deploymentCost(u.type) } ?: u.type
+
     /** Recovery after a specialist deployment (debrief, equipment, crew rest; fuel for the helicopter). */
     fun recoveryMinutes(type: String) =
         when (type) {
@@ -606,10 +619,10 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                 u.vehicleCondition >= 20 &&
                 (!state.fatigueEnabled || u.officers.all { it.energy >= 15 }))
 
-    fun readiness(u: UnitState): Int =
+    fun readiness(u: UnitState, type: String = u.type): Int =
         if (u.status in listOf("RETURNING", "PATROLLING", "CHECKPOINT")) 0
         else
-            when (u.type) {
+            when (type) {
                 "SEK" -> 12
                 "MEK" -> 9
                 "HELI" -> 6
@@ -629,7 +642,8 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         ceil(base * SimulationConditions.travelFactor(hour(), state.weather) / signalSpeed(specialRights)).toInt().coerceAtLeast(1)
 
     fun eta(u: UnitState, call: IncidentState, specialRights: Boolean = call.priority == 1): Int =
-        readiness(u) + travelMinutes(NativeRouting.eta(u, GeoPoint(call.lon, call.lat)), specialRights)
+        (if (u.incidentId.isEmpty()) readiness(u, deploymentType(u, call)) else u.readinessLeft) +
+            travelMinutes(NativeRouting.eta(u, GeoPoint(call.lon, call.lat)), specialRights)
 
     fun fms(u: UnitState): Int = if (u.fmsStatus in listOf(1, 2) && !dispatchable(u)) 6 else u.fmsStatus
 
@@ -728,14 +742,36 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                     "DE-${it.region}" == state.region
             }
 
-    fun canHandle(u: UnitState, required: String): Boolean {
-        if (required in u.customCapabilities) return true
-        chiefCapabilities(u)?.let { return required in it }
+    private fun standardCapability(u: UnitState, required: String): Boolean {
+        val managedModel = chiefVehicle(u)?.let { ChiefCatalog.model(it.modelId) }
+        if (managedModel != null) return required in managedModel.capabilities
         return u.type == required ||
             (required == "STREIFE" &&
                 u.type in listOf("SEK", "MEK", "KRIPO", "BEREITSCHAFT", "HUND", "VERKEHR")) ||
             // In the absence of traffic police a patrol can secure and record (substitute penalty).
             (required == "VERKEHR" && u.type == "STREIFE")
+    }
+
+    internal fun declaresCapability(u: UnitState, role: String): Boolean =
+        role in u.customCapabilities || (chiefCapabilities(u)?.contains(role) ?: standardCapability(u, role))
+
+    fun canHandle(u: UnitState, role: String): Boolean =
+        declaresCapability(u, role) && capabilityIssue(u, role).isBlank()
+
+    private fun capabilityIssue(u: UnitState, role: String): String {
+        if (state.mode != "CAREER" && !state.trainingRequired) return ""
+        val standard = standardCapability(u, role)
+        val requirement = CapabilityRequirements.extra[role]
+        val course = if (standard) CapabilityRequirements.specialistCourses[role] else requirement?.course
+        if (!standard && requirement == null) return "${u.callsign} benötigt einen Fahrzeugtyp für $role."
+        if (!standard && u.officers.size < minCrew(role))
+            return "${u.callsign} benötigt für $role mindestens ${minCrew(role)} Einsatzkräfte."
+        if (course != null && u.officers.none { course in it.qualifications })
+            return "Ausbildungspflicht: ${u.callsign} braucht für $role den Lehrgang $course."
+        val gear = if (standard) null else requirement?.equipment
+        if (gear != null && u.officers.none { gear in it.equipment } && gear !in u.equipment)
+            return "${u.callsign} benötigt für $role die Ausstattung $gear."
+        return ""
     }
 
     /** Large territorial states: longer realistic response times and more forces. */
@@ -976,9 +1012,12 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         // Varied but fair opener: a single-patrol call fitting the time of day, never a P1 at minute 0.
         if (state.phoneEnabled) {
             PhoneDesk.beginShift(this)
-            if (state.tutorialStep == 0) PhoneDesk.ring(this, PhoneDesk.pick(this, opener = true))
+            if (state.tutorialStep == 0 && PhoneDesk.active(state) == null && PhoneDesk.ringing(state).isEmpty())
+                PhoneDesk.ring(this, PhoneDesk.pick(this, opener = true))
         } else newIncident(pickTemplate(opener = true))
-        emit("Schicht begonnen", "Neuer Notruf eingegangen")
+        val handed = PhoneDesk.ringing(state).count { it.lines.any { line -> line.startsWith("S|An Folgeschicht übergeben") } } +
+            if (PhoneDesk.active(state) != null) 1 else 0
+        emit("Schicht begonnen", if (handed > 0) "$handed Notrufe übernommen." else "Leitstelle ist besetzt.")
     }
 
     /** Hour of day of the simulation (0–23). */
@@ -1110,6 +1149,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                 scope = state.scope,
                 reward = template.reward,
                 followUpType = template.followUpType,
+                reportedAt = state.absoluteMinute,
             )
         if (Scenarios.find(call.title) != null) call.scenario = call.title
         state.incidents.add(0, call)
@@ -1192,50 +1232,79 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         return call.requiredTypes.filterIndexed { index, _ -> index !in covered }
     }
 
-    /** Same qualification gate for manual dispatch and the read-only advisor. */
-    fun dispatchTrainingIssue(u: UnitState): String {
-        if (!state.trainingRequired || u.type !in listOf("SEK", "MEK")) return ""
-        val course = if (u.type == "SEK") "SEK-Fortbildung" else "MEK-Observation"
-        return if (u.officers.none { course in it.qualifications })
-            "Ausbildungspflicht: ${u.callsign} braucht den Lehrgang $course." else ""
+    private data class PreparedDispatch(
+        val route: NativeRoute,
+        val eta: Int,
+        val readiness: Int,
+        val fee: Int,
+        val type: String,
+    )
+
+    private fun prepareDispatch(
+        call: IncidentState,
+        u: UnitState,
+        specialRights: Boolean,
+        redirecting: Boolean,
+    ): PreparedDispatch? {
+        if (state.phase != "RUNNING" ||
+            state.incidents.none { it === call } ||
+            state.units.none { it === u } ||
+            call.status !in listOf("OPEN", "DRIVING", "WORKING") ||
+            (!redirecting && !dispatchable(u)) ||
+            (redirecting && (!u.onDuty || !chiefDutyEligible(u) || state.absoluteMinute < u.restUntil ||
+                u.officers.size < chiefMinCrew(u) || u.status !in listOf("DRIVING", "ON_SCENE", "WORKING"))) ||
+            u.id in call.assignedUnits ||
+            u.region != call.region ||
+            u.vehicleCondition < 20 ||
+            (state.fatigueEnabled && u.officers.any { it.energy < 15 })
+        ) return null
+
+        if (call.requiredTypes.none { canHandle(u, it) }) {
+            lastError = call.requiredTypes.asSequence().filter { declaresCapability(u, it) }
+                .map { capabilityIssue(u, it) }.firstOrNull { it.isNotBlank() }.orEmpty()
+            return null
+        }
+        if (call.assignedUnits.size >= call.requiredTypes.size + 3 &&
+            remainingTypes(call).none { canHandle(u, it) }) return null
+        val type = deploymentType(u, call)
+        val fee = deploymentCost(type)
+        if (fee > 0 && limited() && state.budget < fee) {
+            lastError = "Budget reicht nicht für den $type-Einsatz (${fee} €)."
+            return null
+        }
+        if (!u.vehicleSpeed.isFinite() || u.vehicleSpeed <= 0 ||
+            !call.lat.isFinite() || !call.lon.isFinite() || !u.lat.isFinite() || !u.lon.isFinite()
+        ) {
+            lastError = "Für diese Einsatzfahrt kann keine gültige Route berechnet werden."
+            return null
+        }
+        val route = NativeRouting.routeFor(u, GeoPoint(call.lon, call.lat))
+        val readiness = if (redirecting) u.readinessLeft else readiness(u, type)
+        return PreparedDispatch(route, travelMinutes(route.durationMinutes, specialRights), readiness, fee, type)
     }
 
     fun dispatch(call: IncidentState, u: UnitState, specialRights: Boolean = call.priority == 1): Boolean {
         lastError = ""
-        if (
-            state.phase != "RUNNING" ||
-                call.status !in listOf("OPEN", "DRIVING", "WORKING") ||
-                !dispatchable(u) ||
-                u.id in call.assignedUnits ||
-                u.region != call.region ||
-                u.vehicleCondition < 20 ||
-                call.requiredTypes.none { canHandle(u, it) } ||
-                // Once all roles are covered, up to three extra units may reinforce the scene.
-                (remainingTypes(call).none { canHandle(u, it) } &&
-                    call.assignedUnits.size >= call.requiredTypes.size + 3)
-        )
-            return false
+        val plan = prepareDispatch(call, u, specialRights, redirecting = false) ?: return false
+        commitDispatch(call, u, specialRights, plan)
+        return true
+    }
+
+    private fun commitDispatch(call: IncidentState, u: UnitState, specialRights: Boolean, plan: PreparedDispatch) {
         ensureRoster(u)
-        if (state.fatigueEnabled && u.officers.any { it.energy < 15 }) return false
-        val trainingIssue = dispatchTrainingIssue(u)
-        if (trainingIssue.isNotBlank()) { lastError = trainingIssue; return false }
-        val fee = deploymentCost(u.type)
-        if (fee > 0 && !spend(fee)) {
-            lastError = "Budget reicht nicht für den ${u.type}-Einsatz (${fee} €)."
-            return false
-        }
+        val (route, eta, readiness, fee, type) = plan
+        if (limited()) state.budget -= fee
         state.shiftSpecialCost += fee
-        val readiness = readiness(u)
-        val route = NativeRouting.routeFor(u, GeoPoint(call.lon, call.lat))
-        val eta = travelMinutes(route.durationMinutes, specialRights)
         u.specialSignal = specialRights
         u.routePoints = route.points.toMutableList()
         u.routeBasis = route.basis
         if (call.status == "OPEN") call.status = "DRIVING"
         call.assignedUnit = u.id
         call.assignedUnits.add(u.id)
+        if (call.firstDispatchedAt < 0) call.firstDispatchedAt = state.absoluteMinute
         u.status = "DRIVING"
         u.incidentId = call.id
+        u.operationType = type
         u.startLat = u.lat
         u.startLon = u.lon
         u.destLat = call.lat
@@ -1244,7 +1313,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         u.travelLeft = eta
         u.workLeft = call.duration
         u.readinessLeft = readiness
-        if (u.type in listOf("SEK", "MEK")) state.shiftSpecial++
+        if (type == "SEK" || type == "MEK") state.shiftSpecial++
         emit("Einheit unterwegs", "${u.callsign} · ${eta+u.readinessLeft} Sim.-Min. · ${if (specialRights) "mit Sonderrechten: schneller, Unfall-/Lärmrisiko und Mehrverschleiß" else "ohne Sonderrechte"}")
         radioStatus(u)
         if (specialRights && rnd() < .025) {
@@ -1252,7 +1321,6 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
             state.reputation = (state.reputation - 1).coerceAtLeast(0)
             emit("Lärmbeschwerde", "${u.callsign}: Sondersignal hat Anwohner gestört (Ruf −1).")
         }
-        return true
     }
 
     /** Send several units in one radio order. Returns how many actually departed. */
@@ -1266,9 +1334,15 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         if (state.phase != "RUNNING" || u.incidentId.isBlank()) return false
         val call = state.incidents.find { it.id == u.incidentId } ?: return false
         if (call.status !in listOf("DRIVING", "WORKING")) return false
+        detachUnit(call, u)
+        sendHome(u)
+        emit("Einheit abgezogen", "${u.callsign} verlässt ${call.title}")
+        return true
+    }
+
+    private fun detachUnit(call: IncidentState, u: UnitState) {
         call.assignedUnits.remove(u.id)
         if (call.assignedUnit == u.id) call.assignedUnit = call.assignedUnits.lastOrNull() ?: ""
-        sendHome(u)
         val remaining = call.assignedUnits.mapNotNull { id -> state.units.find { it.id == id } }
         if (remaining.isEmpty()) {
             call.status = "OPEN"
@@ -1277,19 +1351,25 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
             call.status = "DRIVING"
             remaining.forEach { if (it.status == "WORKING") it.status = "ON_SCENE" }
         }
-        emit("Einheit abgezogen", "${u.callsign} verlässt ${call.title}")
-        return true
     }
 
-    /** Re-route a bound unit directly to another, more urgent call. */
+    /** Prepare the destination before touching the original incident or the vehicle. */
     fun redirect(u: UnitState, call: IncidentState, specialRights: Boolean = call.priority == 1): Boolean {
+        lastError = ""
+        if (u.incidentId.isBlank()) return dispatch(call, u, specialRights)
         if (u.incidentId == call.id) return false
-        if (u.incidentId.isNotBlank() && !recall(u)) return false
-        return dispatch(call, u, specialRights)
+        val previous = state.incidents.find { it.id == u.incidentId } ?: return false
+        if (previous.status !in listOf("DRIVING", "WORKING") || u.id !in previous.assignedUnits) return false
+        val plan = prepareDispatch(call, u, specialRights, redirecting = true) ?: return false
+        detachUnit(previous, u)
+        commitDispatch(call, u, specialRights, plan)
+        emit("Einheit umdisponiert", "${u.callsign}: ${previous.title} → ${call.title}")
+        return true
     }
 
     private fun sendHome(u: UnitState) {
         u.incidentId = ""
+        u.operationType = ""
         u.specialSignal = false
         u.startLat = u.lat
         u.startLon = u.lon
@@ -1389,8 +1469,8 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
             val u = state.units.find { it.id == id } ?: continue
             if (u.incidentId != call.id) continue
             val worked = u.status == "WORKING"
+            val recovery = recoveryMinutes(u.operationType.ifBlank { u.type })
             sendHome(u)
-            val recovery = recoveryMinutes(u.type)
             if (worked && recovery > 0) u.restUntil = state.absoluteMinute + u.travelTotal + recovery
         }
     }
@@ -1572,7 +1652,6 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         setShift(10, 8)
         startShift()
         state.incidents.removeAll { it.status == "OPEN" && it.assignedUnits.isEmpty() && it.region == state.region }
-        state.phones.clear()
         state.shiftEvent = ""
         state.shiftIncoming = 0
         state.tutorialStep = 1
@@ -1851,7 +1930,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         state.completedShifts++
         val workingStaff = duty.flatMap { it.officers }
         val fatigue = if (workingStaff.isEmpty()) 0 else workingStaff.map { 100 - it.energy }.average().roundToInt()
-        state.phones.clear()
+        val phoneHandoffs = PhoneDesk.handOver(this)
         PhoneDesk.event(state)?.takeIf { it.weather.isNotBlank() }?.let { state.weather = "CLEAR" }
         val closedP1 = state.incidents.filter { it.region == state.region && it.priority == 1 && it.closedAt >= state.shiftStartAbsolute }
         val hilfsfrist = if (closedP1.isEmpty()) -1 else closedP1.count { it.firstArrival in 0..10 } * 100 / closedP1.size
@@ -1891,6 +1970,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                 hilfsfrist,
                 grade,
                 PhoneDesk.event(state)?.title ?: "",
+                phoneHandoffs,
             ),
         )
         state.phase = "DEBRIEF"
@@ -1948,8 +2028,8 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         )
             return false
         if (
-            course.startsWith("SEK") && u.type != "SEK" ||
-                course.startsWith("MEK") && u.type != "MEK"
+            course == "SEK-Fortbildung" && !declaresCapability(u, "SEK") ||
+                course == "MEK-Observation" && !declaresCapability(u, "MEK")
         )
             return false
         val cfg = GameContent.courses.getValue(course)

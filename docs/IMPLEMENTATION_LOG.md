@@ -1,3 +1,7 @@
+# Operator Rebuilt
+
+Die neue Entwicklungslinie und ihre Nachweise sind in [REBUILT_PROGRESS.md](REBUILT_PROGRESS.md) dokumentiert. Der [Ausgangsaudit](REBUILT_AUDIT.md) enthält Basiscommit, Branchvergleich und priorisierte Defekte.
+
 # Implementierungslog
 
 ## 2026-11-01 – Codex-Vorbereitung

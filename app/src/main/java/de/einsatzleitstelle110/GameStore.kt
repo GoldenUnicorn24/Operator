@@ -55,27 +55,22 @@ object GameStore {
     @Synchronized
     private fun persist(context: Context, raw: String) {
         fromJson(JSONObject(raw))
-        val temp = context.getFileStreamPath("einsatzleitstelle-native.tmp")
-        java.io.FileOutputStream(temp).use {
-            it.write(raw.toByteArray(Charsets.UTF_8))
-            it.fd.sync()
-        }
         val base = context.getFileStreamPath(FILE)
         val backup = context.getFileStreamPath(FILE + ".backup")
-        if (base.exists()) {
-            try {
-                fromJson(JSONObject(base.readText()))
-                base.copyTo(backup, true)
-            } catch (_: Exception) {
-                /* preserve last valid backup */
-            }
+        val previous = try {
+            val bytes = base.readBytes()
+            fromJson(JSONObject(bytes.toString(Charsets.UTF_8)))
+            bytes
+        } catch (_: Exception) {
+            null
         }
-        check(temp.renameTo(base)) { "Spielstand konnte nicht atomar gesichert werden" }
+        if (previous != null) writeSaveAtomically(backup, previous)
+        writeSaveAtomically(base, raw.toByteArray(Charsets.UTF_8))
     }
 
     fun load(context: Context): GameState? {
         // A recreation can precede the queued disk write. Prefer its exact immutable snapshot.
-        if (context.getFileStreamPath(FILE).exists() || writing.get() || pending.get() != null) {
+        if (writing.get() || pending.get() != null) {
             latestSnapshot?.let {
                 return GameSnapshots.capture(it)
             }
@@ -210,9 +205,12 @@ object GameStore {
                 val c = value as PhoneCall
                 JSONObject().put("id", c.id).put("scriptId", c.scriptId).put("lat", c.lat).put("lon", c.lon)
                     .put("street", c.street).put("place", c.place).put("waited", c.waited)
-                    .put("lines", strings(c.lines)).put("asked", strings(c.asked)).put("advised", strings(c.advised))
+                    .put("lines", strings(c.lines.takeLast(120))).put("asked", strings(c.asked)).put("advised", strings(c.advised))
                     .put("calmed", c.calmed).put("located", c.located).put("duplicateOf", c.duplicateOf)
-                    .put("cprQuality", c.cprQuality)
+                    .put("cprQuality", c.cprQuality).put("status", c.status)
+                    .put("region", c.region).put("scope", c.scope)
+                    .put("receivedAt", c.receivedAt).put("answeredAt", c.answeredAt)
+                    .put("activeMinutes", c.activeMinutes).put("incidentId", c.incidentId)
             })
         o.put(
             "units",
@@ -239,6 +237,7 @@ object GameStore {
                     .put("travelTotal", u.travelTotal)
                     .put("travelLeft", u.travelLeft)
                     .put("workLeft", u.workLeft)
+                    .put("operationType", u.operationType)
                     .put("training", u.training)
                     .put("trainingLeft", u.trainingLeft)
                     .put("officers", jsonArray(u.officers) { officer(it as Officer) })
@@ -316,7 +315,7 @@ object GameStore {
                     .put("pending", i.pending)
                     .put("pendingAge", i.pendingAge)
                     .put("flags", strings(i.flags))
-                    .put("notes", strings(i.notes))
+                    .put("notes", strings(i.notes.takeLast(40)))
                     .put("waitSince", i.waitSince)
                     .put("disconnected", i.disconnected)
                     .put("duplicateCallers", i.duplicateCallers)
@@ -330,6 +329,11 @@ object GameStore {
                     .put("surpriseText", i.surpriseText)
                     .put("worsened", i.worsened)
                     .put("takeScore", i.takeScore)
+                    .put("reportedAt", i.reportedAt)
+                    .put("answeredAt", i.answeredAt)
+                    .put("firstDispatchedAt", i.firstDispatchedAt)
+                    .put("phoneClosedAt", i.phoneClosedAt)
+                    .put("phoneTranscript", strings(i.phoneTranscript))
             },
         )
         o.put("customTemplates", jsonArray(s.customTemplates) { template(it as IncidentTemplate) })
@@ -368,6 +372,10 @@ object GameStore {
                     .put("hilfsfrist", r.hilfsfrist)
                     .put("grade", r.grade)
                     .put("event", r.event)
+                    .put("phoneHandoffs", jsonArray(r.phoneHandoffs) { entry ->
+                        val handoff = entry as PhoneHandoff
+                        JSONObject().put("callId", handoff.callId).put("active", handoff.active)
+                    })
             },
         )
         return o
@@ -560,15 +568,24 @@ object GameStore {
                 shiftTakeTotal = n(root, "shiftTakeTotal", 0),
                 takeStreak = n(root, "takeStreak", 0),
             )
-        val phones = array(root, "phones", 8)
+        val phones = array(root, "phones", 128)
         for (j in 0 until phones.length()) {
             val v = phones.getJSONObject(j)
-            // A call interrupted by saving rings again, keeping its transcript.
+            val status = v.optString("status", "RINGING")
+            require(status == "RINGING" || status == "ACTIVE") { "Ungültiger Notrufstatus" }
             s.phones.add(PhoneCall(v.getString("id").take(30), v.getString("scriptId").take(120), coordinate(v, "lat", 53.55), coordinate(v, "lon", 10.0),
-                v.optString("street", "Hauptstraße").take(90), v.optString("place").take(90), "RINGING", n(v, "waited", 0, 0, 60),
-                texts(array(v, "lines", 80)).map { it.take(400) }.toMutableList(),
+                v.optString("street", "Hauptstraße").take(90), v.optString("place").take(90), status, n(v, "waited", 0, 0, 60),
+                texts(array(v, "lines", 120)).map { it.take(400) }.toMutableList(),
                 texts(array(v, "asked", 12)).toMutableSet(), texts(array(v, "advised", 12)).toMutableSet(),
-                v.optBoolean("calmed"), v.optBoolean("located"), v.optString("duplicateOf").take(30), n(v, "cprQuality", -1, -1, 100)))
+                v.optBoolean("calmed"), v.optBoolean("located"), v.optString("duplicateOf").take(30), n(v, "cprQuality", -1, -1, 100),
+                region = v.optString("region").ifBlank { s.region }.take(12),
+                scope = v.optString("scope").ifBlank { s.scope }.take(50),
+                receivedAt = v.optLong("receivedAt", -1), answeredAt = v.optLong("answeredAt", -1),
+                activeMinutes = n(v, "activeMinutes", 0, 0, 1000000),
+                incidentId = v.optString("incidentId").take(30)))
+        }
+        require(s.phones.filter { it.status == "ACTIVE" }.groupBy { it.region to it.scope }.values.none { it.size > 1 }) {
+            "Mehrere aktive Notrufe an derselben Leitstelle"
         }
         require(s.weather in SimulationConditions.weatherOptions) { "Unbekanntes Wetter" }
         root.optJSONObject("depot")?.let { d ->
@@ -680,6 +697,7 @@ object GameStore {
                 )
             u.taskforceName = v.optString("taskforceName", "")
             u.customCapabilities.addAll(texts(array(v, "customCapabilities", 30)))
+            u.operationType = v.optString("operationType").takeIf { it in GameController.TYPES }.orEmpty()
             u.patrolMode = v.optString("patrolMode", "WATCH")
             u.patrolScope = v.optString("patrolScope", u.scope)
             u.focusLon = coordinate(v, "focusLon", lon)
@@ -793,6 +811,11 @@ object GameStore {
             i.actualLon = coordinate(v, "actualLon", i.lon)
             i.actualLocation = v.optString("actualLocation", i.location).take(120)
             i.phoneScript = v.optString("phoneScript").take(120)
+            i.reportedAt = v.optLong("reportedAt", -1)
+            i.answeredAt = v.optLong("answeredAt", -1)
+            i.firstDispatchedAt = v.optLong("firstDispatchedAt", -1)
+            i.phoneClosedAt = v.optLong("phoneClosedAt", -1)
+            i.phoneTranscript.addAll(texts(array(v, "phoneTranscript", 120)).map { it.take(400) })
             i.surprise = texts(array(v, "surprise", 12)).filter { it in GameController.TYPES }.toMutableList()
             i.surpriseText = v.optString("surpriseText").take(300)
             i.worsened = v.optBoolean("worsened")
@@ -853,6 +876,12 @@ object GameStore {
                     n(v, "hilfsfrist", -1, -1, 100),
                     n(v, "grade", 0, 0, 6),
                     v.optString("event").take(90),
+                    array(v, "phoneHandoffs", 8).let { handoffs ->
+                        List(handoffs.length()) { index ->
+                            val entry = handoffs.getJSONObject(index)
+                            PhoneHandoff(entry.getString("callId").take(30), entry.optBoolean("active"))
+                        }
+                    },
                 )
             )
         }

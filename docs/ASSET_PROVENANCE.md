@@ -44,3 +44,7 @@ Die vorhandenen WebP-Porträts, Einsatz-, Fahrzeug-, Trainings- und Leitstellenb
 `web/data/catalog.ts` enthält 48 eigens verfasste Einsatzvorlagen, davon vier zusätzliche Hamburg-Vorlagen, zehn Lehrgänge und elf Ausrüstungsgegenstände. IDs und Kernnamen der neun ursprünglichen Alpha-Einsatzvorlagen sowie alle ursprünglichen Kurs-/Ausrüstungs-IDs bleiben stabil. Alle Namen und Ereignisse sind fiktiv. Entscheidungen beschreiben Ressourcen, Zeit, Betreuung und Dokumentation auf Managementebene.
 
 SEK hat besondere Gefahrenlagen, MEK Observation und Fahndung, Kripo Ermittlung und Spuren, die Streife Aufnahme und Absicherung; weitere Rollen sind Bereitschaftspolizei, Hundestaffel, Verkehr und Luftunterstützung. Geschwindigkeiten sind Simulationsparameter und keine Behauptung über reale Fahrleistungen.
+
+## Operator Rebuilt
+
+`app/src/main/res/drawable/ic_operator_rebuilt.xml` ist ein für dieses Projekt erstellter Android-Vektor. Der vorhandene Hamburger Wachendatensatz, die OSM/LGV-Kartenressourcen und die 18 bestehenden Anrufer-Sprachprofile stammen aus der 0.16-Basis. Bei dynamischer Sprache verwendet die App ausschließlich eine vorhandene, von Android als offline gemeldete deutsche Gerätestimme.

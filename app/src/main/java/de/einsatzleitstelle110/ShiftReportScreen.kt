@@ -39,6 +39,12 @@ class ShiftReportScreen(
             if (report.takeAverage >= 0) line(body, "Qualität der Notrufaufnahme", "${report.takeAverage} %")
             if (report.hilfsfrist >= 0) line(body, "P1 unter 10 Min vor Ort", "${report.hilfsfrist} %")
         }
+        if (report.phoneHandoffs.isNotEmpty()) {
+            heading(body, "Telefonübergabe")
+            report.phoneHandoffs.forEach { handoff ->
+                line(body, handoff.callId, if (handoff.active) "Aktives Gespräch" else "Wartender Notruf")
+            }
+        }
         val rows = listOf(
             "Notrufe" to "${report.served}",
             "Erfolgreich" to "${report.solved}",

@@ -232,6 +232,58 @@ class NativeControlRoomTest {
     }
 
     @Test
+    fun canDispatchAndThenContinueTheSameCallFromTheNativeViews() {
+        reset()
+        MainActivity.phoneDeskDefault = true
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            waitForBaseMap(scenario)
+            screenshot("native-rebuilt-menu.png")
+            lateinit var callId: String
+            lateinit var incidentId: String
+            scenario.onActivity { a ->
+                dismiss(a)
+                val g = game(a)
+                g.state.autoCalls = false
+                g.setShift(14, 8)
+                g.startShift()
+                g.state.phones.clear()
+                g.state.paused = true
+                val call = PhoneDesk.ring(g, CallScripts.find("unfall_verletzt"))!!
+                callId = call.id
+                invoke(a, "answerNext")
+                PhoneDesk.calm(g, call)
+                PhoneDesk.ask(g, call, "wo")
+                val screen = MainActivity::class.java.getDeclaredField("phoneScreen")
+                    .apply { isAccessible = true }.get(a) as PhoneScreen
+                val dialog = PhoneScreen::class.java.getDeclaredField("dialog")
+                    .apply { isAccessible = true }.get(screen) as android.app.Dialog
+                PhoneScreen::class.java.getDeclaredMethod("render").apply { isAccessible = true }.invoke(screen)
+                val phone = dialog.window!!.decorView
+                assertTrue(tapText(phone, "Während des Gesprächs alarmieren"))
+                assertTrue(tapText(phone, PhoneDesk.script(g, call).correct))
+                assertTrue(tapText(phone, "P1 · Sofort"))
+                val incident = PhoneDesk.linkedIncident(g, call)!!
+                incidentId = incident.id
+                assertSame(call, PhoneDesk.active(g.state))
+                assertTrue(tapPrefix(a.window.decorView, "Entsenden ("))
+                assertTrue(incident.assignedUnits.isNotEmpty())
+            }
+            screenshot("native-rebuilt-phone-dispatch.png")
+            scenario.onActivity { a ->
+                val g = game(a)
+                invoke(a, "answerNext")
+                val active = PhoneDesk.active(g.state)!!
+                assertEquals(callId, active.id)
+                assertTrue(PhoneDesk.ask(g, active, "eingeklemmt"))
+                val incident = PhoneDesk.linkedIncident(g, active)!!
+                assertEquals(incidentId, incident.id)
+                assertTrue(incident.requiredTypes.contains("FEUERWEHR"))
+            }
+        }
+        MainActivity.phoneDeskDefault = false
+    }
+
+    @Test
     fun incidentDeskProposalAndConfirmedDispatchUseRealStreets() {
         reset()
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->

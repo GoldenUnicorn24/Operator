@@ -4,6 +4,10 @@
 
 [Native Android-APK herunterladen](https://github.com/GoldenUnicorn24/Operator/releases?q=operator-polizeichef) · [Android-Screenshots](docs/evidence/polizeichef/)
 
+## Operator Rebuilt – Entwicklungsvorschau
+
+Der Branch `codex/operator-rebuilt-v020` entwickelt die native Version 0.16 weiter. Die erste Vorschau verbindet Notruf, Einsatzakte und Disposition während eines laufenden Gesprächs. Die Folgeschicht kann offene Notrufe übernehmen. Aktueller Umfang, Testbefunde und offene Meilensteine stehen im [Entwicklungsstand](docs/REBUILT_PROGRESS.md).
+
 ## Lagezentrum und Polizeichef (0.12.0)
 
 Arbeitsbranch `codex/operator-v1-polizeichef`: Live-Lagezentrum mit Handlungsgründen, Frist-/Entscheidungswarnungen und kostenschonenden Dispositionsvorschlägen. Vorschläge berücksichtigen die echten Fähigkeiten, Ausbildung, Gesamtbudget und Straßen-Anfahrt; entsendet wird nach Bestätigung. Dazu Hamburger Bezirksdetailkarte, Streifen/FMS/Sonderrechte, eigene Dienststellen mit Fahrzeug- und Personalverwaltung sowie Wetter, Rückrufe, fünf Speicherplätze und Querformat-Einsatzakte. Native Offline-App, weiterhin ohne Internetberechtigung. [Aktuelle Abnahme](docs/ACCEPTANCE_LAGEZENTRUM.md) · [Vorheriger Stand 0.11](docs/ACCEPTANCE_POLIZEICHEF.md) · [Release-Notizen](docs/RELEASE_POLIZEICHEF.md). Kein v1.0; Tests und Gerätebelege werden auf den jeweils tatsächlich geprüften Commit bezogen.

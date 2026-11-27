@@ -1,6 +1,5 @@
 package de.einsatzleitstelle110
 
-import java.io.File
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Test
@@ -177,15 +176,43 @@ class NativeDispatchTest {
         assertEquals(c.closedAt, restored.closedAt)
     }
 
-    private fun asset(name: String) =
-        listOf(File("src/main/native_assets/$name"), File("app/src/main/native_assets/$name")).firstOrNull { it.isFile }
+    @Test
+    fun failedRedirectPreservesOriginVehicleBudgetAndLogs() {
+        val failures: List<Pair<String, (GameController, UnitState, IncidentState) -> Unit>> = listOf(
+            "Schicht beendet" to { g, _, _ -> g.state.elapsed = 30; g.finishShift() },
+            "Zieleinsatz beendet" to { _, _, target -> target.status = "SOLVED" },
+            "Ungeeignete Kräfte" to { _, _, target -> target.requiredTypes = mutableListOf("RETTUNG") },
+            "Fremde Region" to { _, _, target -> target.region = "DE-HH" },
+            "Außer Dienst" to { _, u, _ -> u.onDuty = false },
+            "Fahrzeug defekt" to { _, u, _ -> u.vehicleCondition = 10 },
+            "Besatzung erschöpft" to { _, u, _ -> u.officers.first().energy = 10 },
+            "Budget fehlt" to { g, _, _ -> g.state.budget = 0 },
+            "Route ungültig" to { _, u, _ -> u.vehicleSpeed = 0.0 },
+            "Ausbildung fehlt" to { g, u, _ ->
+                g.state.trainingRequired = true
+                u.officers.forEach { it.qualifications.clear() }
+            },
+        )
+        for ((label, setup) in failures) {
+            val g = controller()
+            g.startShift()
+            val unit = g.state.units.first { it.type == "SEK" }
+            val old = g.newIncident(IncidentTemplate("Einsatz A", 2, "SEK", 30, ""), GeoPoint(10.0, 53.5))
+            val target = g.newIncident(IncidentTemplate("Einsatz B", 2, "SEK", 15, ""), GeoPoint(10.2, 53.6))
+            assertTrue(label, g.dispatch(old, unit))
+            setup(g, unit, target)
+            val before = GameStore.toJson(g.state).toString()
+            assertFalse(label, g.redirect(unit, target))
+            assertEquals(label, before, GameStore.toJson(g.state).toString())
+        }
+    }
 
     /** The compact APK format carries exactly the data of the open JSON copy. */
     @Test
     fun binaryMapAssetsMatchTheOpenJsonSource() {
         for (code in listOf("DE-HH", "DE-SL")) {
-            val bin = asset("geo/roads-$code.bin") ?: return
-            val json = listOf(File("../data/osm/roads-$code.json"), File("data/osm/roads-$code.json")).firstOrNull { it.isFile } ?: return
+            val bin = NativeTestAssets.bundled("geo/roads-$code.bin")
+            val json = NativeTestAssets.osm("roads-$code.json")
             val a = MapData.parseBinary(code, bin.readBytes())
             val b = MapData.parseState(code, json.readText())
             assertEquals(b.roads.size, a.roads.size)
@@ -209,7 +236,7 @@ class NativeDispatchTest {
             listOf("DE-NI", GeoPoint(9.732, 52.3759), GeoPoint(8.2146, 53.1435), 230.0),
             listOf("DE-BY", GeoPoint(11.5761, 48.1372), GeoPoint(11.0767, 49.4521), 240.0),
         )) {
-            val file = asset("geo/roads-$code.bin") ?: return
+            val file = NativeTestAssets.bundled("geo/roads-$code.bin")
             val t0 = System.nanoTime()
             NativeRouting.install(MapData.parseBinary(code as String, file.readBytes()))
             val built = (System.nanoTime() - t0) / 1e6
@@ -230,11 +257,9 @@ class NativeDispatchTest {
      */
     @Test
     fun fullHamburgEightHourShiftOnRealRoads() {
-        val states = asset("states.geojson") ?: return
+        val states = NativeTestAssets.bundled("states.geojson")
         val hamburg = GeoData.parseStates(states.readText()).first { it.code == "DE-HH" }
-        val map =
-            asset("geo/roads-DE-HH.bin")?.let { MapData.parseBinary("DE-HH", it.readBytes()) }
-                ?: MapData.parseLegacyHamburg(asset("hamburg-roads.json")!!.readText())
+        val map = MapData.parseBinary("DE-HH", NativeTestAssets.bundled("geo/roads-DE-HH.bin").readBytes())
         NativeRouting.install(map)
         val g = GameController(GameState(region = "DE-HH", mode = "CAREER"), listOf(hamburg))
         val places = map.places.filter { hamburg.contains(GeoPoint(it.lon, it.lat)) }

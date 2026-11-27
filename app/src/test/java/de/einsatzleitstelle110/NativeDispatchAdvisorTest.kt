@@ -7,7 +7,7 @@ import org.junit.Test
 class NativeDispatchAdvisorTest {
     private fun game(): GameController {
         val r = GeoRegion("DE-TEST", "Testrevier", listOf(listOf(GeoPoint(9.0,53.0),GeoPoint(11.0,53.0),GeoPoint(11.0,54.0),GeoPoint(9.0,54.0),GeoPoint(9.0,53.0))), emptyList())
-        return GameController(GameState(region = r.code, phase = "RUNNING", fatigueEnabled = false, autoCalls = false, absoluteMinute = 360), listOf(r))
+        return GameController(GameState(region = r.code, mode = "SANDBOX", phase = "RUNNING", fatigueEnabled = false, autoCalls = false, absoluteMinute = 360), listOf(r))
     }
     private fun unit(g: GameController, id: String, type: String = "STREIFE", status: String = "FREE", lon: Double = 10.10): UnitState =
         UnitState(id,id,type,g.state.region,53.60,lon,status = status,officers = mutableListOf(Officer("A"),Officer("B"),Officer("C"),Officer("D"))).also { g.state.units.add(it) }
@@ -107,4 +107,56 @@ class NativeDispatchAdvisorTest {
         g.state.units.first().travelLeft = 5; g.state.units.first().status = "DRIVING"
         assertEquals(0,IncidentDesk.attention(g,late).order)
     }
+    @Test fun careerTaskforceCannotDeclareItsWayIntoSpecialistAssignments() {
+        val g = game()
+        g.state.mode = "CAREER"
+        val taskforce = unit(g, "taskforce")
+        taskforce.customCapabilities.add("SEK")
+        taskforce.equipment.remove("Schutzweste")
+        taskforce.officers.forEach { it.equipment.remove("Schutzweste") }
+        val incident = call(g, "SEK")
+
+        assertFalse(g.canHandle(taskforce, "SEK"))
+        assertTrue(DispatchAdvisor.plan(g, incident).picks.isEmpty())
+        assertFalse(g.dispatch(incident, taskforce))
+        assertTrue(g.lastError.contains("SEK-Fortbildung"))
+
+        taskforce.officers.first().qualifications.add("SEK-Fortbildung")
+        assertFalse(g.dispatch(incident, taskforce))
+        assertTrue(g.lastError.contains("Schutzweste"))
+        taskforce.officers.first().equipment.add("Schutzweste")
+        val relieved = taskforce.officers.removeAt(3)
+        assertFalse(g.dispatch(incident, taskforce))
+        assertTrue(g.lastError.contains("mindestens 4"))
+        taskforce.officers.add(relieved)
+        val proposal = DispatchAdvisor.plan(g, incident)
+        assertEquals(listOf(taskforce.id), proposal.picks.map { it.unitId })
+        assertEquals(g.deploymentCost("SEK"), proposal.fee)
+        val budget = g.state.budget
+        assertTrue(g.dispatch(incident, taskforce))
+        assertEquals(budget - proposal.fee, g.state.budget)
+        assertEquals("SEK", taskforce.operationType)
+    }
+
+    @Test fun sandboxMayPermitCombinedForcesWithoutSpecialistQualifications() {
+        val g = game()
+        val taskforce = unit(g, "custom")
+        taskforce.customCapabilities.add("SEK")
+        assertTrue(g.dispatch(call(g, "SEK"), taskforce))
+    }
+
+    @Test fun incidentFileChangesWhenFreeVehiclesSwapEvenWithSameCount() {
+        val g = game()
+        val previous = unit(g, "first")
+        val replacement = unit(g, "second", status = "REST")
+        val incident = call(g, "STREIFE")
+        val before = DispatchPanelState.capture(g, incident, false)
+        previous.status = "REST"
+        replacement.status = "FREE"
+        val after = DispatchPanelState.capture(g, incident, false)
+        assertEquals(before.candidates.size, after.candidates.size)
+        assertEquals(listOf("second"), after.candidates.map { it.id })
+        assertNotEquals(before, after)
+    }
+
 }

@@ -22,6 +22,7 @@ object GameSnapshots {
                             officers = roster,
                             equipment = u.equipment.toMutableSet(),
                             routePoints = u.routePoints.toMutableList(),
+                            customCapabilities = u.customCapabilities.toMutableSet(),
                             reliefTeams =
                                 u.reliefTeams
                                     .map { it.map(::officer).toMutableList() }
@@ -40,6 +41,7 @@ object GameSnapshots {
                             flags = i.flags.toMutableSet(),
                             notes = i.notes.toMutableList(),
                             surprise = i.surprise.toMutableList(),
+                            phoneTranscript = i.phoneTranscript.toMutableList(),
                         )
                     }
                     .toMutableList(),
@@ -53,9 +55,9 @@ object GameSnapshots {
                     }
                     .toMutableList(),
             reports =
-                s.reports.map { it.copy(trainingDone = it.trainingDone.toList()) }.toMutableList(),
+                s.reports.map { it.copy(trainingDone = it.trainingDone.toList(), phoneHandoffs = it.phoneHandoffs.toList()) }.toMutableList(),
             logs = s.logs.toMutableList(),
-            phones = s.phones.map { it.copy(lines = it.lines.toMutableList(), asked = it.asked.toMutableSet(), advised = it.advised.toMutableSet()) }.toMutableList(),
+            phones = s.phones.map { it.copy(lines = it.lines.toMutableList(), asked = it.asked.toMutableSet(), advised = it.advised.toMutableSet(), spoken = it.spoken.toMutableList()) }.toMutableList(),
             recentScripts = s.recentScripts.toMutableList(),
             unlockedRegions = s.unlockedRegions.toMutableSet(),
             depot = s.depot.toMutableMap(),
