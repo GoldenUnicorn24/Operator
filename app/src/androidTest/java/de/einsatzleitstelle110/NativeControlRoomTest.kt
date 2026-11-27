@@ -265,6 +265,9 @@ class NativeControlRoomTest {
                 val incident = PhoneDesk.linkedIncident(g, call)!!
                 incidentId = incident.id
                 assertSame(call, PhoneDesk.active(g.state))
+                val control = MainActivity::class.java.getDeclaredField("mapAction")
+                    .apply { isAccessible = true }.get(a) as android.widget.TextView
+                assertEquals("Fortsetzen", control.text.toString())
                 assertTrue(tapPrefix(a.window.decorView, "Entsenden ("))
                 assertTrue(incident.assignedUnits.isNotEmpty())
             }
@@ -416,7 +419,13 @@ class NativeControlRoomTest {
                 invoke(a, "openCall", g.state.incidents.first { it.title == "Rückruf bei Nachbarschaftslage" })
             }
             waitForBaseMap(scenario)
-            scenario.onActivity { a -> assertTrue(mapView(a).obstructedRight > 0f) }
+            scenario.onActivity { a ->
+                assertTrue(mapView(a).obstructedRight > 0f)
+                val panel = MainActivity::class.java.getDeclaredField("dispatch")
+                    .apply { isAccessible = true }.get(a) as DispatchPanel
+                val heightDp = panel.root.height / a.resources.displayMetrics.density
+                assertTrue("Einsatzakte im Querformat: $heightDp dp", heightDp >= 180f)
+            }
             screenshot("native-landscape-dispatch.png")
             scenario.onActivity { a -> a.requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT }
         }

@@ -276,7 +276,8 @@ class MainActivity : Activity() {
         val root = column().apply { setBackgroundColor(dark) }
         val header =
             row().apply {
-                setPadding(dp(16), dp(9), dp(8), dp(9))
+                val vertical = if (wideMap()) 3 else 9
+                setPadding(dp(16), dp(vertical), dp(8), dp(vertical))
                 setBackgroundColor(panel)
             }
         val brand = column()
@@ -286,7 +287,7 @@ class MainActivity : Activity() {
         clockView = text("", 12f, mint, true)
         header.addView(clockView)
         header.addView(action("☰") { showSettings() }, LinearLayout.LayoutParams(dp(48), dp(48)))
-        root.addView(header, LinearLayout.LayoutParams(-1, dp(68)))
+        root.addView(header, LinearLayout.LayoutParams(-1, dp(if (wideMap()) 54 else 68)))
         phoneBar = text("", 15f, Color.WHITE, true).apply {
             gravity = Gravity.CENTER
             setPadding(dp(12), dp(10), dp(12), dp(10))
@@ -298,7 +299,7 @@ class MainActivity : Activity() {
         body = FrameLayout(this)
         root.addView(body, LinearLayout.LayoutParams(-1, 0, 1f))
         navigation = row().apply { setBackgroundColor(panel) }
-        root.addView(navigation, LinearLayout.LayoutParams(-1, dp(64)))
+        root.addView(navigation, LinearLayout.LayoutParams(-1, dp(if (wideMap()) 48 else 64)))
         root.setOnApplyWindowInsetsListener { v, insets ->
             v.setPadding(0, insets.systemWindowInsetTop, 0, insets.systemWindowInsetBottom)
             insets
@@ -526,11 +527,11 @@ class MainActivity : Activity() {
         phoneBar.visibility = View.VISIBLE
         if (active != null) {
             val waitingText = if (waiting.isEmpty()) "" else " · ${waiting.size} wartend"
-            phoneBar.text = "☎  GESPRÄCH FORTSETZEN$waitingText"
+            phoneBar.text = "GESPRÄCH FORTSETZEN$waitingText"
             phoneBar.setBackgroundColor(Color.rgb(20, 64, 82))
         } else {
             val left = (PhoneDesk.PATIENCE - waiting.first().waited).coerceAtLeast(0)
-            phoneBar.text = "☎  NOTRUF ANNEHMEN" + (if (waiting.size > 1) " · ${waiting.size} in der Leitung" else "") + " · legt auf in ~$left Min"
+            phoneBar.text = "NOTRUF ANNEHMEN" + (if (waiting.size > 1) " · ${waiting.size} in der Leitung" else "") + " · legt auf in ~$left Min"
             phoneBar.setBackgroundColor(if (ringTick % 4 < 2) Color.rgb(196, 42, 62) else Color.rgb(140, 26, 44))
         }
         if (waiting.isNotEmpty() && ringTick % 16 == 1) audio.cue("CALL")
@@ -564,6 +565,8 @@ class MainActivity : Activity() {
         sheet?.dismiss()
         chiefScreen?.close()
         pendingMapPoint = null
+        phoneScreen?.abandon()
+        phoneScreen = null
         if (::audio.isInitialized) audio.close()
         if (::radio.isInitialized) radio.close()
         if (::voice.isInitialized) voice.close()
@@ -588,24 +591,22 @@ class MainActivity : Activity() {
     }
 
     private fun updateLive() {
-        clockView.text =
-            "TAG ${game.state.day}\n${game.clock()} ${if(game.state.phase=="RUNNING")if(game.state.paused)"Pause" else "×${game.state.speed}" else "Planung"}"
+        clockView.text = "TAG ${game.state.day}\n${game.clock()} " + when (game.state.phase) {
+            "RUNNING" -> if (game.state.paused) "Pause" else effectiveTempo()
+            "DEBRIEF" -> "Übergabe"
+            else -> "Planung"
+        }
         val left = (game.state.duration - game.state.elapsed).coerceAtLeast(0)
-        mapCounter?.text =
-            "${game.openIncidents()} Einsätze · ${game.freeUnits()} frei · ${PhoneDesk.ringing(game.state).size} wartend" +
-                (if (game.state.phase == "RUNNING") "  ·  Schichtende in %d:%02d".format(left / 60, left % 60) else "") +
-                "\n${SimulationConditions.weatherOptions[game.state.weather]} · " +
+        val workload = "${game.openIncidents()} Einsätze · ${game.freeUnits()} frei"
+        val waiting = PhoneDesk.ringing(game.state).size
+        val shiftLeft = if (game.state.phase == "RUNNING") " · Schichtende in %d:%02d".format(left / 60, left % 60) else ""
+        mapCounter?.text = if (wideMap()) "$workload\n$waiting wartend$shiftLeft" else
+            "$workload · $waiting wartend$shiftLeft\n" +
+                "${SimulationConditions.weatherOptions[game.state.weather]} · " +
                 (if (SimulationConditions.trafficFactor(game.hour()) > 1) "Berufsverkehr" else if (SimulationConditions.trafficFactor(game.hour()) < 1) "Freie Straßen" else "Normalverkehr") +
-                " · Präsenz −${(game.patrolPresence() * 100).roundToInt()}% Einbruch/Sachbeschädigung" +
-                (PhoneDesk.event(game.state)?.let { "\n${if (PhoneDesk.surgeActive(game.state)) "⚠ Hochphase: " else "Lagebild: "}${it.title}" } ?: "") +
-                (if (game.state.takeStreak >= 2) "  ·  Serie ${game.state.takeStreak}" else "")
+                (PhoneDesk.event(game.state)?.let { "\n${if (PhoneDesk.surgeActive(game.state)) "Hochphase" else "Lagebild"} · ${it.title}" } ?: "")
         radioView?.text = game.state.logs.firstOrNull()?.substringAfter("] ") ?: ""
-        mapAction?.text =
-            when (game.state.phase) {
-                "PLANNING" -> "Schicht planen"
-                "RUNNING" -> if (game.state.paused) "Fortsetzen" else "Pause"
-                else -> "Tagesbericht"
-            }
+        mapAction?.text = mapActionLabel()
         incomingView?.text =
             game.state.incidents
                 .firstOrNull { it.region == game.state.region && it.status == "OPEN" }
@@ -757,9 +758,24 @@ class MainActivity : Activity() {
         rebuildMapChrome()
     }
 
+    private fun effectiveTempo(): String {
+        val multiplier = simulationRate() * SPEED_DIVISOR
+        return if (multiplier == .5) "×0,5" else "×${multiplier.roundToInt()}"
+    }
+
     private fun speedLabel() =
-        if (game.state.phase != "RUNNING") "×${game.state.speed}"
-        else if (game.state.paused) "▶ ×${game.state.speed}" else "❚❚ ×${game.state.speed}"
+        if (game.state.phase == "RUNNING") effectiveTempo() else "×${game.state.speed}"
+
+    private fun mapActionLabel() = when (game.state.phase) {
+        "PLANNING" -> "Schicht planen"
+        "RUNNING" -> if (game.state.paused) "Fortsetzen" else "Pause"
+        else -> "Tagesbericht"
+    }
+
+    private fun wideFileWidth(): Int {
+        val width = body.width.takeIf { it > 0 } ?: resources.displayMetrics.widthPixels
+        return minOf(dp(390), width * 40 / 100)
+    }
 
     /** Compact controls around the map: top toolbar, zoom, and either queue or dispatch panel. */
     private fun rebuildMapChrome() {
@@ -777,18 +793,20 @@ class MainActivity : Activity() {
         fun tool(label: String, desc: String, w: Int, onClick: () -> Unit) =
             ui.button(label) { onClick() }.apply { contentDescription = desc; textSize = 12f }
                 .also { top.addView(it, LinearLayout.LayoutParams(if (w == 0) 0 else dp(w), dp(44), if (w == 0) 1f else 0f).apply { marginEnd = dp(5) }) }
+        val wide = wideMap()
+        val split = wide && dispatch.isOpen
         tool("▾ ${scopeName()}", "Zuständigkeit wählen", 0) { chooseArea() }
         tool(if (map.filter == "ALLE") "Filter" else map.filter, "Kartenebenen filtern", 74) { chooseFilter() }
-        tool("Land", "Ganzes Bundesland zeigen", 54) {
-            map.fitWholeState()
+        if (!split) {
+            tool("Land", "Ganzes Bundesland zeigen", 54) { map.fitWholeState() }
+            tool(if (map.showLegend) "Legende ✓" else "Legende", "Legende ein- oder ausblenden", 82) {
+                map.showLegend = !map.showLegend
+                rebuildMapChrome()
+            }
         }
-        tool(if (map.showLegend) "Legende ✓" else "Legende", "Legende ein- oder ausblenden", 82) {
-            map.showLegend = !map.showLegend
-            rebuildMapChrome()
-        }
-        val wide = wideMap()
         chrome.addView(top, FrameLayout.LayoutParams(-1, -2, Gravity.TOP).apply {
             if (wide) leftMargin = dp(194)
+            if (split) rightMargin = wideFileWidth() + dp(8)
         })
         lastTutorialStep = game.state.tutorialStep
         if (game.state.tutorialStep in 1..3 && game.state.phase == "RUNNING") {
@@ -869,7 +887,7 @@ class MainActivity : Activity() {
     private fun mapControls(includeQueue: Boolean): LinearLayout {
         val actions = row()
         mapAction =
-            ui.button("", true) {
+            ui.button(mapActionLabel(), true) {
                 when (game.state.phase) {
                     "PLANNING" -> showShiftDialog()
                     "RUNNING" -> {
@@ -903,6 +921,7 @@ class MainActivity : Activity() {
         left.addView(ui.button("Telefon") { showTab("PHONE") })
         queueView = column().also { left.addView(it) }
         left.addView(ui.button("Einsatzliste") { showTab("CALLS") })
+        if (dispatch.isOpen) left.addView(ui.button("Karte") { showMapTools() })
         val rail = ScrollView(this).apply { addView(left) }
         chrome.addView(rail, FrameLayout.LayoutParams(dp(188), -1, Gravity.START).apply {
             setMargins(dp(6), dp(6), 0, dp(6))
@@ -929,11 +948,10 @@ class MainActivity : Activity() {
         map.setContentInsets(62f, 64f)
         if (dispatch.isOpen) {
             (dispatch.root.parent as? ViewGroup)?.removeView(dispatch.root)
-            val width = body.width.takeIf { it > 0 } ?: resources.displayMetrics.widthPixels
-            val panelWidth = minOf(dp(390), width * 40 / 100)
+            val panelWidth = wideFileWidth()
             map.obstructedRight = panelWidth.toFloat() + dp(12)
             chrome.addView(dispatch.root, FrameLayout.LayoutParams(panelWidth, -1, Gravity.END).apply {
-                setMargins(0, dp(58), dp(6), dp(64))
+                setMargins(0, dp(6), dp(6), dp(64))
             })
             dispatch.call?.let { map.reveal(it.lon, it.lat) }
         } else {
@@ -942,6 +960,21 @@ class MainActivity : Activity() {
         }
         updateQueue()
         updateLive()
+    }
+
+    private fun showMapTools() {
+        val tools = column()
+        tools.addView(action("Landesübersicht") {
+            sheet?.dismiss()
+            map.fitWholeState()
+        })
+        gap(tools)
+        tools.addView(action(if (map.showLegend) "Legende ausblenden" else "Legende einblenden") {
+            map.showLegend = !map.showLegend
+            sheet?.dismiss()
+            rebuildMapChrome()
+        })
+        showSheet("Karte", tools)
     }
 
     private fun showRadioLog() {

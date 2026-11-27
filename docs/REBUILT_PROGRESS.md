@@ -41,6 +41,8 @@ python3 -m unittest discover -s tools/tests -v
 python3 scripts/verify_native_apk.py app/build/outputs/apk/debug/app-debug.apk
 ```
 
+Die visuelle Prüfung des ersten Emulatorlaufs zeigte eine kurzzeitig leere Tempo-Schaltfläche und einen zu niedrigen Aktenbereich im Querformat. Der Folgecommit setzt den Schaltflächentext bei der Erstellung und reserviert mehr Höhe für die Akte. Die Android-Tests prüfen beide Fälle.
+
 Der erste lokale Rebuilt-Lauf startete 157 Unit-Tests. 156 waren erfolgreich. Der verpflichtende Vergleich des Binärnetzes mit den eingecheckten Rohdaten meldete den fehlenden lokalen JSON-Export. Die geprüften eingebetteten Assets des Ausgangs-APKs stimmen mit 2.685 Git-Blob-Prüfsummen überein. Sie ersetzen den Rohdatenvergleich nicht. APK, Instrumentation-APK und Lint wurden lokal erfolgreich erzeugt. Der native APK-Prüfer hat keine Web-Dokumente gefunden. Der GitHub-Lauf [46082334536](https://github.com/GoldenUnicorn24/Operator/actions/runs/46082334536) hat Unit-Tests, Build, Lint, Geodatenverträge und Paketprüfung im vollständigen Repository erfolgreich ausgeführt. Der SHA-256-Wert der lokalen Vorschau lautet `3df9d6e07adad53356ff49d48a700b431a823616604e938672bcc3840afc30de`.
 
 Die Android-Instrumentation enthält einen Ablauf für frühe Alarmierung und Rückkehr zum laufenden Anruf. Für eine Geräteprüfung müssen App und Test-APK auf derselben Android-Instanz installiert sein. Die lokale Debug-APK und der archivierte 0.16-CI-Build haben unterschiedliche Zertifikate. Ein direktes Android-Upgrade dieser 0.16-Installation ist mit dem hier geprüften APK deshalb nicht möglich.

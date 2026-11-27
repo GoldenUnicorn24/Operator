@@ -73,7 +73,9 @@ class PhoneScreen(
         outer.addView(panels, LinearLayout.LayoutParams(-1, 0, 1f))
         dialog = Dialog(activity, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
         dialog.setContentView(outer)
-        dialog.setCancelable(false)
+        dialog.setCancelable(true)
+        dialog.setCanceledOnTouchOutside(false)
+        dialog.setOnCancelListener { close() }
         dialog.show()
         render()
         updateStatus()
