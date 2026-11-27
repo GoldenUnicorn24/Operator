@@ -12,6 +12,13 @@ adb shell settings put global anr_show_background 0 || true
 adb shell pm disable-user --user 0 com.android.launcher3 || true
 adb shell am force-stop com.android.launcher3 || true
 adb install -r "${APP_APK:-release/Einsatzleitstelle110-Native-Leitstelle.apk}"
+if [[ -n "${APP_APK:-}" ]]; then
+    adb shell am start -W -n de.einsatzleitstelle110/.MainActivity > runtime/launch.txt
+    grep -q '^Status: ok' runtime/launch.txt
+    adb shell pidof de.einsatzleitstelle110 >> runtime/launch.txt
+    adb exec-out screencap -p > runtime/preview-launch.png
+    adb shell am force-stop de.einsatzleitstelle110
+fi
 adb install -r release/instrumentation.apk
 instrument_status=0
 timeout 40m adb shell am instrument -w -r de.einsatzleitstelle110.test/androidx.test.runner.AndroidJUnitRunner \

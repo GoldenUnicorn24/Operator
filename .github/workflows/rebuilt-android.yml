@@ -2,22 +2,24 @@ name: Rebuilt Android
 on:
   push:
     branches: ['codex/operator-rebuilt-v020']
-  pull_request:
-    branches: ['claude/operator-notruf']
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: rebuilt-${{ github.event.pull_request.number || github.ref }}
+  group: rebuilt-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   verify:
     runs-on: ubuntu-22.04
     timeout-minutes: 60
+    permissions:
+      contents: write
     env:
       APP_APK: release/Einsatzleitstelle110-Operator-v0.20.0-Rebuilt.apk
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -53,6 +55,36 @@ jobs:
           emulator-boot-timeout: 600
           disable-animations: true
           script: bash .github/scripts/native-device-check.sh
+      - name: Publish native development preview after offline launch
+        if: ${{ !cancelled() && github.event_name == 'push' && github.ref_name == 'codex/operator-rebuilt-v020' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          if [[ ! -s runtime/launch.txt || ! -s "$APP_APK" ]] || ! grep -q '^Status: ok' runtime/launch.txt; then
+            echo 'Vorschau erfordert eine APK mit geprüftem Offline-Start.'
+            exit 0
+          fi
+          tag=v0.20.0-rebuilt-preview.1
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo 'Diese Vorschau ist bereits veröffentlicht.'
+            exit 0
+          fi
+          cp docs/REBUILT_PROGRESS.md release/Entwicklungsstand.md
+          cp runtime/launch.txt release/Offline-Start.txt
+          cp runtime/preview-launch.png release/Preview-Start.png
+          if [[ -f runtime/instrumentation.txt ]]; then cp runtime/instrumentation.txt release/Geraetetests.txt; fi
+          tar -czf release/Pruefberichte.tar.gz -C app/build test-results reports
+          assets=("$APP_APK" release/SHA256SUMS.txt release/package-audit.json release/signing.txt
+            release/Entwicklungsstand.md release/Offline-Start.txt release/Preview-Start.png release/Pruefberichte.tar.gz)
+          if [[ -f release/Geraetetests.txt ]]; then assets+=(release/Geraetetests.txt); fi
+          if [[ -d runtime/screens ]]; then
+            tar -czf release/Emulator-Screenshots.tar.gz -C runtime screens
+            assets+=(release/Emulator-Screenshots.tar.gz)
+          fi
+          gh release create "$tag" "${assets[@]}" --target "$GITHUB_SHA" --prerelease \
+            --title 'EINSATZLEITSTELLE 110 – Operator Rebuilt 0.20.0 (Preview 1)' \
+            --notes-file docs/REBUILT_PREVIEW_RELEASE.md
       - name: Upload check results and APK
         if: always()
         continue-on-error: true

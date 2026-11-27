@@ -11,7 +11,7 @@
 
 ## Implementierung
 
-- Schichtübergaben bewahren aktive und klingelnde Anrufe einschließlich Protokoll, Fundstelle und Wartezeit. Der Tagesbericht zeigt die Gesprächs-IDs. Die Telefonleiste bietet die Fortsetzung nach einem Neustart an.
+- Schichtübergaben bewahren aktive und klingelnde Anrufe einschließlich Protokoll, Einsatzort und Wartezeit. Der Tagesbericht zeigt die Gesprächs-IDs. Die Telefonleiste bietet die Fortsetzung nach einem Neustart an.
 - Umdisposition bereitet Rolle, Budget und neue Route vor, bevor sie Fahrzeug und Quellauftrag verändert. Beim Übergang bleibt die verbleibende Ausrückzeit erhalten.
 - Zusätzliche Taskforce-Fähigkeiten werden nach Rolle geprüft. Im Karrieremodus wirken Besatzung, Qualifikation, Ausrüstung und fahrzeugspezifische Grenzen. Spezialfähigkeiten lösen ihre Einsatzpauschale aus. Die Sandbox-Einstellung ermöglicht freie Kombinationen.
 - Die Einsatzakte verwendet eine Werteprojektion mit Fahrzeug-IDs, Rollen, Besatzung und Fahrzuständen. Beide Orientierungen erhalten getrennte Layouts. Das Hochformat bietet drei Größen der Einsatzakte.
@@ -41,7 +41,9 @@ python3 -m unittest discover -s tools/tests -v
 python3 scripts/verify_native_apk.py app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Die Android-Instrumentation enthält einen Ablauf für frühe Alarmierung und Rückkehr zum laufenden Anruf. Für eine Geräteprüfung müssen App und Test-APK auf derselben Android-Instanz installiert sein. Eine native Debug-APK kann eine andere Signatur als frühere Downloads besitzen. Ein direktes Android-Upgrade setzt einen übereinstimmenden Schlüssel voraus.
+Der erste lokale Rebuilt-Lauf startete 157 Unit-Tests. 156 waren erfolgreich. Der verpflichtende Vergleich des Binärnetzes mit den eingecheckten Rohdaten meldete den fehlenden lokalen JSON-Export. Die geprüften eingebetteten Assets des Ausgangs-APKs stimmen mit 2.685 Git-Blob-Prüfsummen überein. Sie ersetzen den Rohdatenvergleich nicht. Der native APK-Prüfer hat für den lokalen Build keine Web-Dokumente gefunden. Der SHA-256-Wert der lokalen Vorschau lautet `3df9d6e07adad53356ff49d48a700b431a823616604e938672bcc3840afc30de`.
+
+Die Android-Instrumentation enthält einen Ablauf für frühe Alarmierung und Rückkehr zum laufenden Anruf. Für eine Geräteprüfung müssen App und Test-APK auf derselben Android-Instanz installiert sein. Die lokale Debug-APK und der archivierte 0.16-CI-Build haben unterschiedliche Zertifikate. Ein direktes Android-Upgrade dieser 0.16-Installation ist mit dem hier geprüften APK deshalb nicht möglich.
 
 ## Nächster Integrationspunkt
 
