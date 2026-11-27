@@ -44,3 +44,12 @@ Aktuell: Android/Kotlin-Host mit lokaler WebView und monolithischer Offline-HTML
 - 8/12/24h in Karriere/Sandbox; Report, offene Übergaben, Trainingsfortschritt und Gehälter exakt einmal beim Abschluss. 24h erfordert interne Personalrotation und Müdigkeit/Ruhephasen.
 - `RegionMap { regionId, polygonGeoJSON, bounds, cityMarkers, roadDetailLevel, facilityLocations }`; Echtzeitpositionen pro `VehicleState` mit lat/lon, route polyline, progress, assignedIncidentId, status. Zoom-out mit marker clustering/priority aggregation; Übersicht aller aktiven Orte/Einheiten auch bei großen Flächen.
 - Siehe `docs/STATEWIDE_MAP_AND_SHIFTS.md` (höhere Priorität bei Widersprüchen).
+
+## Operator Rebuilt – native Übergabepunkte
+
+- `GameController` bereitet Zielroute, Einsatzrolle, Kosten und Ausrückzeit vor. `commitDispatch` übernimmt die geprüfte Disposition und aktualisiert anschließend die Funkmeldung.
+- `PhoneDesk` verbindet den aktiven `PhoneCall` mit derselben `IncidentState`. Die Einsatzakte liest die Zeitpunkte und das gespeicherte Gesprächsprotokoll aus dem Modell.
+- `DispatchPanelState` projiziert die für die offene Einsatzakte sichtbaren Werte. Die Werteprojektion enthält keine veränderlichen Referenzen auf Fahrzeuge oder Einsatzdaten.
+- `RoadGraph` besitzt seine ETA-Felder und synchronisiert deren Cache. Hintergrundvorbereitung nutzt skalare Routing-Eingaben. Die Simulationsmutation läuft weiterhin auf dem UI-Ticker. Der Fortschritt zur neuen Zustandsarchitektur steht in [REBUILT_PROGRESS.md](REBUILT_PROGRESS.md).
+- Autosave und Speicherplätze schreiben validierte Daten mit `writeSaveAtomically`. Schema 7 behandelt die neuen Felder als optional und bewahrt die bestehenden Migrationen.
+- `RadioQueue` trennt Prioritäten, `RadioScript` erzeugt Meldungen aus Simulationsereignissen und `VoicePlayer` wählt gebündeltes Audio oder eine installierte Offline-Stimme.

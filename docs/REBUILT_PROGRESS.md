@@ -41,9 +41,21 @@ python3 -m unittest discover -s tools/tests -v
 python3 scripts/verify_native_apk.py app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Der erste lokale Rebuilt-Lauf startete 157 Unit-Tests. 156 waren erfolgreich. Der verpflichtende Vergleich des Binärnetzes mit den eingecheckten Rohdaten meldete den fehlenden lokalen JSON-Export. Die geprüften eingebetteten Assets des Ausgangs-APKs stimmen mit 2.685 Git-Blob-Prüfsummen überein. Sie ersetzen den Rohdatenvergleich nicht. Der native APK-Prüfer hat für den lokalen Build keine Web-Dokumente gefunden. Der SHA-256-Wert der lokalen Vorschau lautet `3df9d6e07adad53356ff49d48a700b431a823616604e938672bcc3840afc30de`.
+Der erste lokale Rebuilt-Lauf startete 157 Unit-Tests. 156 waren erfolgreich. Der verpflichtende Vergleich des Binärnetzes mit den eingecheckten Rohdaten meldete den fehlenden lokalen JSON-Export. Die geprüften eingebetteten Assets des Ausgangs-APKs stimmen mit 2.685 Git-Blob-Prüfsummen überein. Sie ersetzen den Rohdatenvergleich nicht. APK, Instrumentation-APK und Lint wurden lokal erfolgreich erzeugt. Der native APK-Prüfer hat keine Web-Dokumente gefunden. Der GitHub-Lauf [46082334536](https://github.com/GoldenUnicorn24/Operator/actions/runs/46082334536) hat Unit-Tests, Build, Lint, Geodatenverträge und Paketprüfung im vollständigen Repository erfolgreich ausgeführt. Der SHA-256-Wert der lokalen Vorschau lautet `3df9d6e07adad53356ff49d48a700b431a823616604e938672bcc3840afc30de`.
 
 Die Android-Instrumentation enthält einen Ablauf für frühe Alarmierung und Rückkehr zum laufenden Anruf. Für eine Geräteprüfung müssen App und Test-APK auf derselben Android-Instanz installiert sein. Die lokale Debug-APK und der archivierte 0.16-CI-Build haben unterschiedliche Zertifikate. Ein direktes Android-Upgrade dieser 0.16-Installation ist mit dem hier geprüften APK deshalb nicht möglich.
+
+
+## Provisorische Simulationsmessung
+
+JVM mit Java 21, Hamburger Offline-Routengraph, aktive Fahrzeuge und gleichzeitige Einsätze. Pro Zeile wurden nach einem Aufwärmlauf drei Folgen von jeweils 120 simulierten Minuten gemessen. Die Werte umfassen `advance(1)` ohne Kartenrendering, Audio, ETA-Vorschau oder UI. Laufzeiten auf physischen Geräten und Bildrate sind offen.
+
+| Fahrzeuge | Parallele Einsätze | Median pro Tick | P95 | Spitze |
+| ---: | ---: | ---: | ---: | ---: |
+| 50 | 10 | 0,09 ms | 0,75 ms | 12,59 ms |
+| 100 | 25 | 0,14 ms | 1,37 ms | 22,79 ms |
+| 250 | 50 | 0,49 ms | 6,03 ms | 17,58 ms |
+| 500 | 100 | 0,39 ms | 6,88 ms | 31,75 ms |
 
 ## Nächster Integrationspunkt
 

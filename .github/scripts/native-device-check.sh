@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 mkdir -p runtime
+adb shell cmd connectivity airplane-mode enable
 adb shell svc wifi disable
-adb shell svc data disable
+test "$(adb shell settings get global airplane_mode_on | tr -d '\r')" = 1
 # The emulator's own launcher (Quickstep) sometimes reports an ANR on slow CI hosts; hide such
 # system error dialogs so they do not cover evidence screenshots. App crashes still fail the tests.
 adb shell settings put global hide_error_dialogs 1 || true
