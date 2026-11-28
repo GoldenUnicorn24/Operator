@@ -319,6 +319,57 @@ class NativeGameEngineTest {
     }
 
     @Test
+    fun finishedRoutineTaskSucceedsAcrossRandomSeeds() {
+        for (seed in listOf(7L, 11L, 42L, 1102L, 22109L, 31411L)) {
+            val game = controller()
+            game.startShift()
+            game.state.randomSeed = seed
+            val patrol = game.state.units.first { it.type == "STREIFE" }
+            val call = game.newIncident(
+                IncidentTemplate("Kurze Aufnahme", 3, "STREIFE", 3, "Test"), GeoPoint(patrol.lon, patrol.lat),
+            )
+            assertTrue(game.dispatch(call, patrol, false))
+            game.advance(patrol.travelLeft + patrol.readinessLeft + 2)
+            assertEquals("SOLVED", call.status)
+            assertTrue(call.tasks.single().done)
+        }
+    }
+
+    @Test
+    fun recallingAndResendingItsSupportCannotApplyTheSameBenefitTwice() {
+        val game = controller()
+        game.startShift()
+        val crews = game.state.units.filter { it.type == "STREIFE" }.take(2)
+        val call = game.newIncident(
+            IncidentTemplate("Unterstützte Aufnahme", 3, "STREIFE", 50, "Test"), GeoPoint(crews.first().lon, crews.first().lat),
+        )
+        fun arrive(crew: UnitState) {
+            assertTrue(game.dispatch(call, crew, false))
+            crew.readinessLeft = 0
+            crew.travelLeft = 1
+            game.advance(1)
+        }
+        arrive(crews[0])
+        arrive(crews[1])
+        val firstBoost = call.tasks.single()
+        assertEquals(crews[1].id, firstBoost.supportUnitId)
+        assertTrue(firstBoost.supportApplied)
+        assertTrue(game.recall(crews[1]))
+        arrive(crews[1])
+        assertEquals(firstBoost.minutesLeft - 1, call.tasks.single().minutesLeft)
+    }
+
+    @Test
+    fun oldLongRunningIncidentCanStillRecordATimeChangingDecision() {
+        val game = controller()
+        game.startShift()
+        val incident = game.newIncident(IncidentTemplate("Langer offener Vorgang", 3, "STREIFE", 50, "Test"))
+        incident.age = 1441
+        assertTrue(game.choose(incident, "ask"))
+        assertEquals(1440, incident.deadline)
+    }
+
+    @Test
     fun trainingExactlyTwoCompletedManagementDays() {
         for (h in listOf(8, 12, 24)) {
             val g = controller()

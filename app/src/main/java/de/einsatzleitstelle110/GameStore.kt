@@ -347,7 +347,8 @@ object GameStore {
                     .put("tasks", JSONArray().also { tasks ->
                         i.tasks.forEach { task ->
                             tasks.put(JSONObject().put("role", task.role).put("minutesLeft", task.minutesLeft)
-                                .put("unitId", task.unitId).put("requestedAtAge", task.requestedAtAge))
+                                .put("unitId", task.unitId).put("requestedAtAge", task.requestedAtAge)
+                                .put("supportUnitId", task.supportUnitId).put("supportApplied", task.supportApplied))
                         }
                     })
             },
@@ -861,7 +862,10 @@ object GameStore {
                 require(role in GameController.TYPES && work in 0..600 && (work > 0 || unitId.isNotBlank())) {
                     "Ungültige Einsatzaufgabe"
                 }
-                IncidentTask(role, work, unitId, task.optInt("requestedAtAge", -1).coerceIn(-1, i.age.coerceAtMost(Int.MAX_VALUE - 45)))
+                val support = task.optString("supportUnitId").take(120)
+                require(support.isEmpty() || support != unitId)
+                IncidentTask(role, work, unitId, task.optInt("requestedAtAge", -1).coerceIn(-1, i.age.coerceAtMost(Int.MAX_VALUE - 45)),
+                    support, task.optBoolean("supportApplied"))
             }
             require(i.tasks.mapNotNull { it.unitId.takeIf(String::isNotEmpty) }.let { it.size == it.toSet().size }) {
                 "Einsatzaufgaben verwenden dieselbe Einheit mehrfach"

@@ -591,7 +591,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
             IncidentWork.changeDuration(call, e.work)
             state.units.filter { it.incidentId == call.id && it.status == "WORKING" }.forEach { it.workLeft = (it.workLeft + e.work).coerceAtLeast(1) }
         }
-        if (e.time != 0) call.deadline = (call.deadline + e.time).coerceIn(call.age + 5, 1440)
+        if (e.time != 0) call.deadline = (call.deadline + e.time).coerceIn(call.age.coerceAtMost(1435) + 5, 1440)
         if (e.add.isNotEmpty()) call.requiredTypes.addAll(e.add.filter { it in TYPES }.take((7 - call.requiredTypes.size).coerceAtLeast(0)))
         if (e.prio in 1..3) call.priority = e.prio
         if (e.rep != 0) state.reputation = (state.reputation + e.rep).coerceIn(0, 100)
@@ -1374,20 +1374,13 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         call.assignedUnits.remove(u.id)
         if (call.assignedUnit == u.id) call.assignedUnit = call.assignedUnits.lastOrNull() ?: ""
         val remaining = call.assignedUnits.mapNotNull { id -> state.units.find { it.id == id } }
-        if (IncidentWork.enabled(call)) {
-            call.tasks = call.tasks.map { task ->
-                if (!task.done && task.unitId == u.id) task.copy(unitId = "") else task
-            }
-            if (remaining.none { it.status == "ON_SCENE" || it.status == "WORKING" }) {
-                call.status = if (remaining.isEmpty()) "OPEN" else "DRIVING"
-            }
-        } else if (remaining.isEmpty()) {
-            call.status = "OPEN"
-        } else if (call.status == "WORKING" && remainingTypes(call).isNotEmpty()) {
-            // Without the required forces the work pauses until a replacement arrives.
-            call.status = "DRIVING"
-            remaining.forEach { if (it.status == "WORKING") it.status = "ON_SCENE" }
+        call.tasks = call.tasks.map { task ->
+            if (task.done) task
+            else task.copy(unitId = task.unitId.takeUnless { it == u.id }.orEmpty(),
+                supportUnitId = task.supportUnitId.takeUnless { it == u.id }.orEmpty())
         }
+        if (remaining.none { it.status == "ON_SCENE" || it.status == "WORKING" })
+            call.status = if (remaining.isEmpty()) "OPEN" else "DRIVING"
     }
 
     /** Prepare the destination before touching the original incident or the vehicle. */
@@ -1557,9 +1550,8 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
     }
 
     /**
-     * Explainable success chance: response time against the deadline, fitting forces, training
-     * and equipment, fatigue, reinforcement, danger and management decisions. Chance remains only
-     * a small uncertainty on top of these factors.
+     * Normalized preparedness indicator for a given roster and set of decisions.
+     * Task completion determines the actual outcome.
      */
     fun assess(call: IncidentState, units: List<UnitState>): Pair<Double, List<String>> {
         val reasons = mutableListOf<String>()
@@ -1623,7 +1615,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         }
         if (call.notes.any { it.startsWith("⏱") }) reasons.add("Entscheidung verpasst")
         if (misusedSpecialists(call, units)) reasons.add("Spezialkräfte für Routinelage gebunden")
-        return p.coerceIn(.3, .97) to reasons
+        return p.coerceIn(.3, 1.0) to reasons
     }
 
     /** Gains shrink near 100, late arrival costs trust even when the call is solved. */
@@ -1789,90 +1781,13 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                     dispatch(call, u, false)
                 }
             }
-            for (call in state.incidents.toList().filter { it.region == state.region }) {
-                if (call.pending.isNotBlank() && call.status in listOf("OPEN", "DRIVING", "WORKING") && call.age - call.pendingAge >= DECISION_TIMEOUT) {
+            for (call in state.incidents.toList()) {
+                if (call.region != state.region || call.status !in listOf("OPEN", "DRIVING", "WORKING")) continue
+                if (call.pending.isNotBlank() && call.age - call.pendingAge >= DECISION_TIMEOUT)
                     choose(call, pendingStage(call)?.default ?: "", auto = true)
-                }
-                if (IncidentWork.enabled(call) && call.status in listOf("OPEN", "DRIVING", "WORKING")) {
-                    call.age++
-                    PhoneDesk.pressure(this, call)
-                    advanceIncidentTasks(call)
-                    continue
-                }
-                if (call.status == "WORKING") call.age++
+                call.age++
                 PhoneDesk.pressure(this, call)
-                if (call.status in listOf("OPEN", "DRIVING")) {
-                    call.age++
-                    if (call.age > call.deadline) {
-                        call.outcome =
-                            if (call.assignedUnits.isEmpty()) "Fehlschlag: Frist abgelaufen, keine Kräfte entsandt"
-                            else "Fehlschlag: Frist abgelaufen, benötigte Kräfte nicht rechtzeitig vollständig vor Ort"
-                        call.status = "FAILED"
-                        call.closedAt = state.absoluteMinute
-                        state.shiftFailed++
-                        state.reputation = (state.reputation - failurePenalty(call)).coerceAtLeast(0)
-                        call.pending = ""
-                        release(call)
-                        branch(call, false)
-                        if ("tutorial" !in call.flags) scenarioFollowUps(call, false)
-                        tutorialProgress(call)
-                        continue
-                    }
-                }
-                val assigned =
-                    call.assignedUnits.mapNotNull { id -> state.units.find { it.id == id } }
-                if (
-                    call.status == "DRIVING" &&
-                        remainingTypes(call).isEmpty() &&
-                        assigned.all { it.status == "ON_SCENE" }
-                ) {
-                    call.status = "WORKING"
-                    assigned.forEach {
-                        it.status = "WORKING"
-                        it.workLeft = call.duration
-                    }
-                }
-                if (call.status == "WORKING") {
-                    val joining = assigned.filter { it.status == "ON_SCENE" }
-                    if (joining.isNotEmpty()) {
-                        // Reinforcement on scene shortens the remaining work for everybody.
-                        val left =
-                            assigned.filter { it.status == "WORKING" }.maxOfOrNull { it.workLeft }
-                                ?: call.duration
-                        val shortened = (left * .75).roundToInt().coerceAtLeast(1)
-                        assigned
-                            .filter { it.status == "WORKING" || it.status == "ON_SCENE" }
-                            .forEach {
-                                it.status = "WORKING"
-                                it.workLeft = shortened
-                            }
-                        emit("Verstärkung eingetroffen", call.title, incident = call)
-                    }
-                    val working = assigned.filter { it.status == "WORKING" }
-                    working.forEach { if (it.workLeft > 0) it.workLeft-- }
-                    if ("work" !in call.stagesDone && working.isNotEmpty() && working.maxOf { it.workLeft } <= call.duration / 2)
-                        trigger(call, "WORK")
-                    var rolesComplete = remainingTypes(call).isEmpty()
-                    if (working.isNotEmpty() && working.all { it.workLeft <= 0 } && !rolesComplete) {
-                        // Requested reinforcement never came: after 45 minutes the scene is closed
-                        // with what is there, at a clearly higher risk.
-                        if (call.waitSince < 0) call.waitSince = call.age
-                        else if (call.age - call.waitSince >= 45) {
-                            call.riskDelta += .15
-                            call.notes.add("Nachforderung nicht erfüllt – Lage mit vorhandenen Kräften abgeschlossen")
-                            rolesComplete = true
-                        }
-                    }
-                    if (working.isNotEmpty() && working.all { it.workLeft <= 0 } && rolesComplete) {
-                        // A decision nobody answered is taken by default before the result.
-                        if (call.pending.isNotBlank()) choose(call, pendingStage(call)?.default ?: "", auto = true)
-                        val (probability, reasons) = assess(call, working)
-                        val success = rnd() < probability
-                        val outcome = "${if (success) "Erfolg" else "Fehlschlag"} bei ${(probability * 100).roundToInt()} % Chance: " +
-                            reasons.joinToString(" · ").ifEmpty { "Standardlage" }
-                        closeIncident(call, if (success) "SOLVED" else "FAILED", outcome, working)
-                    }
-                }
+                advanceIncidentTasks(call)
             }
             if (
                 state.autoCalls &&
@@ -1893,8 +1808,11 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
     private fun advanceIncidentTasks(call: IncidentState) {
         val scene = call.assignedUnits.mapNotNull { id -> state.units.find { it.id == id } }
             .filter { it.incidentId == call.id && it.status in listOf("ON_SCENE", "WORKING") }
-        val finished = IncidentWork.advance(call, scene, ::canHandle)
-        for (task in finished) {
+        val progress = IncidentWork.advance(call, scene, ::canHandle)
+        progress.supportArrived?.let { crew ->
+            emit("Verstärkung eingetroffen", "${crew.callsign} · ${call.title}", unit = crew, incident = call)
+        }
+        for (task in progress.finished) {
             val unit = scene.first { it.id == task.unitId }
             emit("Teilaufgabe erledigt", "${unit.callsign} · ${IncidentWork.label(task.role)} · ${call.title}",
                 unit = unit, incident = call)
@@ -1906,7 +1824,8 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
             if (call.pending.isNotBlank()) choose(call, pendingStage(call)?.default ?: "", auto = true)
             val current = IncidentWork.tasks(call)
             if (current.all(IncidentTask::done)) {
-                closeIncident(call, "SOLVED", "Vollständig abgeschlossen · ${current.size} von ${current.size} Aufgaben erledigt", scene)
+                val completion = if (current.size == 1) "Aufgabe erledigt" else "${current.size} von ${current.size} Aufgaben erledigt"
+                closeIncident(call, "SOLVED", "Vollständig abgeschlossen · $completion", scene)
             }
             return
         }
@@ -1930,7 +1849,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         when {
             success -> {
                 state.shiftSolved++
-                val quality = if (call.tasks.isEmpty()) 0 else when {
+                val quality = when {
                     call.riskDelta <= -.05 -> 1
                     call.riskDelta >= .05 -> -1
                     else -> 0

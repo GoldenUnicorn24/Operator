@@ -41,7 +41,7 @@ internal object RadioOperations {
             "DRIVING" -> if (unit.readinessLeft > 0) "Ausrücken läuft · ${unit.readinessLeft + unit.travelLeft} Min bis vor Ort"
                 else "Auf Anfahrt · ${unit.travelLeft} Min bis vor Ort"
             "WORKING" -> {
-                val task = call.tasks.firstOrNull { it.unitId == unit.id }
+                val task = call.tasks.firstOrNull { it.unitId == unit.id || it.supportUnitId == unit.id }
                 when {
                     task?.done == true -> "${IncidentWork.label(task.role)} erledigt · vor Ort"
                     task != null -> "${IncidentWork.label(task.role)} · noch ${task.minutesLeft} Min"

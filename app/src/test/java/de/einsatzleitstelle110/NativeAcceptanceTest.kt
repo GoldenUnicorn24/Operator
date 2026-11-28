@@ -37,11 +37,9 @@ class NativeAcceptanceTest {
                 val st = g.pendingStage(call) ?: continue
                 st.options.filter { g.optionAvailable(call, it).first && it.effect.cost <= g.state.budget }.minByOrNull { it.effect.risk }?.let { g.choose(call, it.id) }
             }
-            if (call.status == "WORKING" && g.remainingTypes(call).isEmpty()) continue
-            for (need in g.remainingTypes(call)) {
-                val c = g.candidates(call).firstOrNull { (u, _) -> u.type == need } ?: g.candidates(call).firstOrNull { (u, _) -> g.canHandle(u, need) && u.type !in listOf("SEK", "MEK") }
-                if (c != null) g.dispatch(call, c.first)
-            }
+            val plan = DispatchAdvisor.plan(g, call)
+            val byId = g.state.units.associateBy(UnitState::id)
+            g.dispatchAll(call, plan.picks.mapNotNull { byId[it.unitId] })
         }
     }
 

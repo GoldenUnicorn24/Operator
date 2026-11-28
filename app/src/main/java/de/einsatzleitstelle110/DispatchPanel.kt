@@ -276,7 +276,9 @@ class DispatchPanel(
                     c.status in listOf("PARTIAL", "FAILED") -> "Offen geblieben"
                     else -> "${ui.roleName(task.role)} benötigt · ${task.minutesLeft} Min Arbeit"
                 }
-                body.addView(ui.text("${IncidentWork.label(task.role)} · $detail", 12f,
+                val helper = game.state.units.firstOrNull { it.id == task.supportUnitId }?.callsign
+                val support = helper?.let { " · Unterstützung $it" }.orEmpty()
+                body.addView(ui.text("${IncidentWork.label(task.role)} · $detail$support", 12f,
                     if (task.done) ui.mint else if (task.unitId.isEmpty()) ui.amber else ui.ink)
                     .apply { setPadding(0, 0, 0, ui.dp(4)) })
             }

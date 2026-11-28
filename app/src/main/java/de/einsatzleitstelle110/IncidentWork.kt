@@ -1,18 +1,24 @@
 package de.einsatzleitstelle110
 
+import kotlin.math.roundToInt
+
 /** One crew works one required role at a time. The incident retains work already done on each role. */
 data class IncidentTask(
     val role: String,
     val minutesLeft: Int,
     val unitId: String = "",
     val requestedAtAge: Int = -1,
+    val supportUnitId: String = "",
+    val supportApplied: Boolean = false,
 ) {
     val done get() = minutesLeft == 0
 }
 
 internal object IncidentWork {
-    fun enabled(call: IncidentState) = call.tasks.isNotEmpty() ||
-        (call.requiredTypes.size > 1 && call.status in listOf("OPEN", "DRIVING", "WORKING", "HANDED"))
+    fun enabled(call: IncidentState) =
+        call.tasks.isNotEmpty() || call.status in listOf("OPEN", "DRIVING", "WORKING", "HANDED")
+
+    data class Progress(val finished: List<IncidentTask>, val supportArrived: UnitState?)
 
     /** Match role occurrences in order. Added requirements get their own arrival window. */
     fun tasks(call: IncidentState): List<IncidentTask> {
@@ -46,7 +52,7 @@ internal object IncidentWork {
     }
 
     /** Arrived crews start their own tasks. Matching retains progress when a crew is replaced. */
-    fun advance(call: IncidentState, scene: List<UnitState>, canHandle: (UnitState, String) -> Boolean): List<IncidentTask> {
+    fun advance(call: IncidentState, scene: List<UnitState>, canHandle: (UnitState, String) -> Boolean): Progress {
         val before = tasks(call)
         val oldSave = call.tasks.isEmpty() && call.status == "WORKING"
         val credited = before.filter(IncidentTask::done).mapTo(mutableSetOf(), IncidentTask::unitId)
@@ -54,6 +60,7 @@ internal object IncidentWork {
         val open = before.indices.filter { !before[it].done }
         val incumbents = open.map { before[it] }.groupBy(IncidentTask::role)
         val finishedNow = mutableListOf<IncidentTask>()
+        var supportArrived: UnitState? = null
         val matches = RoleMatching.assign(open.map { before[it].role }, freeCrew, canHandle, preference = { unit, role ->
             when {
                 incumbents[role]?.any { it.unitId == unit.id } == true -> 0
@@ -65,24 +72,37 @@ internal object IncidentWork {
             val crew = matches[index]
             when {
                 task.done -> task
-                crew == null -> if (task.unitId.isEmpty()) task else task.copy(unitId = "")
+                crew == null -> task.copy(unitId = "", supportUnitId = "")
                 else -> {
-                    val work = if (oldSave && crew.status == "WORKING") minOf(task.minutesLeft, crew.workLeft)
+                    val nominal = if (oldSave && crew.status == "WORKING") minOf(task.minutesLeft, crew.workLeft)
                         else task.minutesLeft
-                    task.copy(minutesLeft = (work - 1).coerceAtLeast(0), unitId = crew.id).also {
+                    val helper = if (before.size == 1) {
+                        freeCrew.firstOrNull { it.id != crew.id && canHandle(it, task.role) &&
+                            (it.id == task.supportUnitId || !task.supportApplied) }
+                    } else null
+                    val appliesSupport = helper != null && !task.supportApplied
+                    if (appliesSupport) supportArrived = helper
+                    val work = if (appliesSupport) (nominal * .75).roundToInt().coerceAtLeast(1) else nominal
+                    task.copy(minutesLeft = (work - 1).coerceAtLeast(0), unitId = crew.id,
+                        supportUnitId = helper?.id.orEmpty(), supportApplied = task.supportApplied || appliesSupport).also {
                         if (work == 1) finishedNow.add(it)
                     }
                 }
             }
         }
-        val worked = call.tasks.filter { it.unitId.isNotEmpty() }.associateBy(IncidentTask::unitId)
+        val worked = buildMap {
+            call.tasks.forEach { task ->
+                if (task.unitId.isNotEmpty()) put(task.unitId, task)
+                if (call.tasks.size == 1 && task.supportUnitId.isNotEmpty()) put(task.supportUnitId, task)
+            }
+        }
         for (crew in scene) {
             val task = worked[crew.id]
             crew.status = if (task != null) "WORKING" else "ON_SCENE"
             crew.workLeft = task?.minutesLeft ?: 0
         }
         if (worked.isNotEmpty()) call.status = "WORKING"
-        return finishedNow
+        return Progress(finishedNow, supportArrived)
     }
 
     fun label(role: String) = when (role) {
