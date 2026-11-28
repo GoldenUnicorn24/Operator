@@ -11,6 +11,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.TimeUnit
 import org.junit.Assert.*
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.rules.Timeout
