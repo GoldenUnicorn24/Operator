@@ -5,9 +5,9 @@
 | Ausgangsbranch | `claude/operator-notruf` |
 | Ausgangscommit | `eb88d29e11977717771a61cdb0153a1723ad14c7` |
 | Entwicklungsbranch | `codex/operator-rebuilt-v020` |
-| App-Version | `0.20.0-rebuilt-preview.6`, VersionCode 123 |
+| App-Version | `0.20.0-rebuilt-preview.7`, VersionCode 124 |
 | Anwendung | `de.einsatzleitstelle110`, minSdk 26 |
-| Abnahme | Entwicklungsstand für Vorschau 6 |
+| Abnahme | Entwicklungsstand für Vorschau 7 |
 
 ## Implementierung
 
@@ -68,6 +68,12 @@ Die Prüfung des echten Vorschau-4-Screenshots zeigte die falsche Einzahl „1 K
 - Der Statusabruf im Funkarchiv erzeugt eine tatsächliche Rückmeldung mit FMS-Status, Ausrückzeit, verbleibender Anfahrt oder konkreter Arbeitsaufgabe. Alte Einträge adressieren keine inzwischen umdisponierten Fahrzeuge. Dieselbe Besatzung antwortet pro Simulationsminute höchstens einmal zum jeweiligen Einsatz.
 - Aus dem Funkprotokoll lässt sich die zugehörige Einsatzakte öffnen. Die gespeicherten Rufnamen, die tatsächliche Fahrzeug-ID und der Einsatzbezug bleiben beim Laden erhalten. Ältere Funkarchive ohne Fahrzeug-ID bleiben lesbar.
 
+## Vorschau 7
+
+- Einzelrollen- und Mehrrollen-Einsätze verwenden denselben Aufgabenablauf. Die Abschlussphase verwendet den tatsächlichen Aufgabenstatus. Die vorherige pauschale Zufallsberechnung entfällt bei vollständiger Arbeit.
+- Eine zusätzliche passende Besatzung unterstützt eine Einzelaufgabe und kann ihre Restarbeit einmal verkürzen. Der Bonus und abgeschlossene Arbeit bleiben bei Ablösung und in Spielständen erhalten. Die Besatzung bleibt bei einer später hinzugefügten anderen Anforderung für eine eigene Aufgabe verfügbar.
+- Die Abnahme für vollständige Schichten nutzt die tatsächlichen Dispositionsvorschläge. Eine weit entfernte Fachkraft hat damit keinen automatischen Vorrang vor einer passenden schnelleren Besatzung. Die Mindestquote vollständig abgeschlossener Einsätze bleibt bei 60 % je geprüfter Schicht.
+
 ## Meilensteine
 
 | Meilenstein | Status |
@@ -76,7 +82,7 @@ Die Prüfung des echten Vorschau-4-Screenshots zeigte die falsche Einzahl „1 K
 | M1 | Stabilitätskorrekturen und Regressionstests implementiert. Die Umstellung des Simulationsbesitzes und des vollständigen UI-Datenflusses steht aus. |
 | M2 | Hauptmenü, primäre Navigation, Telefonwarteschlange, größenverstellbare Einsatzakte und Querformat-Leitstelle umgesetzt. Ein einheitlicher Umbau der Verwaltungsansichten sowie animierter Menü-Hintergrund stehen aus. |
 | M3 | Vorläufige Alarmierung, Gesprächsfortsetzung, Einsatzprotokoll, priorisierte Wiedergabe und lokale dynamische Sprache umgesetzt. Das durchsuchbare Funkarchiv ist eingebaut. Die acht Fragekategorien sind eingebaut. Quittierung und Statusabfrage sind eingebaut. Weitere Funkaufträge, Delegation und weitere Anruferzustände stehen aus. |
-| M4 | Die vier Dispositionsmodi sind eingebaut. Mehrrollen-Einsätze nutzen speicherbare parallele Arbeiten und Teilabschlüsse. Die Erweiterung auf Einzelrollen, Welt-Ereignisse und weitere Abdeckungslogik stehen aus. |
+| M4 | Die vier Dispositionsmodi sind eingebaut. Einsätze nutzen speicherbare parallele Arbeiten und Teilabschlüsse. Welt-Ereignisse und weitere Abdeckungslogik stehen aus. |
 | M5 | Gruppen-Taskforces, Management- und Wirtschaftsumbau, neue Karriere und KI-Mitarbeiter stehen aus. |
 | M6 | Erweiterte Editoren, Inhaltspakete, Statistiken und vollständige Asset-Überarbeitung stehen aus. |
 | M7 | Die erste Kandidaten-APK hat 11 Geräteprüfungen absolviert. Zusätzliche Geräteabläufe, physische Leistungsmessungen, vollständiger visueller Satz und Vollfreigabe stehen aus. |
@@ -156,4 +162,4 @@ Die bestätigte Vorschau ist der Ausgangspunkt. Die Bestätigung beim Neuanlegen
 
 Vorschau 5 mit acht Fragethemen und früher Alarmierung ist freigegeben. Vorschau 6 ergänzt Funkaktionen, die auf tatsächliche Fahrzeugzuordnungen zugreifen.
 
-Die Simulation benötigt weiterhin eindeutigen Zustandsbesitz durch einen Dispatcher und unveränderliche Werte für Hauptmenü, Karte, Telefon und Einsatzakte. Ein geeigneter Einstieg ist ein getesteter Zeitgeber mit serialisierter Befehlsübergabe. Vor dem Verschieben des Ticks müssen UI-Zugriffe, Audioereignisse, Ladevorgänge und Speicher-Snapshots vom veränderlichen Spielzustand getrennt sein. Die Aufgabenbearbeitung für Mehrrollen-Einsätze ist umgesetzt. Die nächste Erweiterung betrifft Einzelrollen-Einsätze sowie vor Ort aktiv ausgelöste Folgeaufgaben. Der Draft-PR #7 bleibt auf `claude/operator-notruf` gerichtet.
+Die Simulation benötigt weiterhin eindeutigen Zustandsbesitz durch einen Dispatcher und unveränderliche Werte für Hauptmenü, Karte, Telefon und Einsatzakte. Ein geeigneter Einstieg ist ein getesteter Zeitgeber mit serialisierter Befehlsübergabe. Vor dem Verschieben des Ticks müssen UI-Zugriffe, Audioereignisse, Ladevorgänge und Speicher-Snapshots vom veränderlichen Spielzustand getrennt sein. Einzel- und Mehrrollen-Einsätze nutzen einen gemeinsamen Aufgabenablauf. Die nächste Erweiterung betrifft aktiv ausgelöste Folgeaufgaben und längerfristige Managementkonsequenzen. Der Draft-PR #7 bleibt auf `claude/operator-notruf` gerichtet.

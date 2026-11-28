@@ -198,3 +198,7 @@ Funkaktionen verwenden den gespeicherten Einsatzbezug und die zugehörige Fahrze
 ### Abnahme Fragethemen
 
 Vorschau 5 auf `4518f5d` veröffentlicht. CI 46135950765: 177 JVM- und 14 Android-Tests, Paketprüfung, Offline-Kaltstart und 37 Emulatorbilder. Der Geräteablauf findet die Nachforderung über die native Fragegruppe „Verletzungen“. Für einen vollständigen Gesprächsscreenshot wartet Vorschau 6 ausdrücklich auf die fertig eingeblendete Antwort. Der Pausezustand und das tatsächlich gewählte Gesprächsstempo sind in der Statuszeile erkennbar.
+
+## Operator Rebuilt · Vorschau 7 · Einheitlicher Aufgabenablauf
+
+Die gemeinsame Aufgabenlogik ersetzt auch den separaten Einzelrollen-Timer und dessen Zufallsergebnis. Optionale Unterstützung der Einzelaufgabe bleibt erhalten. Der erste Langlauf ergab für einen Niedersachsen-Seed 13 von 23 Abschlüssen. Der Test bevorzugte eine Fachkraft ohne Rücksicht auf die Frist. Der neue Lauf nutzt die produktive Disposition und behält die geforderte Abschlussquote unverändert. Er erreichte 16 von 24 vollständigen Abschlüssen in Niedersachsen, 16 von 21 in Hamburg und 12 von 13 in Bayern. Der Vier-Schichten-Karrierevergleich erzielte aktiv 96,5 %, passiv 94,9 % und Ruf 94 gegenüber 89.

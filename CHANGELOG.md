@@ -1,3 +1,8 @@
+## 0.20.0-rebuilt-preview.7
+
+- Auch Einzelrollen-Einsätze über den Aufgabenfortschritt abschließen und passende Unterstützung sichtbar berücksichtigen.
+- Eine Bearbeitung mit vollständigem Aufgabenabschluss endet zuverlässig. Fristen und Risikobewertung bleiben wirksam.
+
 ## 0.20.0-rebuilt-preview.6
 
 - Funkmeldungen quittieren und den laufenden Status des zugewiesenen Fahrzeugs anfordern.

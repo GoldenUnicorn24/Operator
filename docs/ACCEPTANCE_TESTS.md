@@ -72,6 +72,8 @@ Verbindlicher Detailvertrag: [STATEWIDE_MAP_AND_SHIFTS.md](STATEWIDE_MAP_AND_SHI
 | Simulationsuhr behält Tempo bei unregelmäßigen Ticks und pausiert bei Hintergrundwechsel | `SimulationClockTest` |
 | Erste Besatzung arbeitet vor der Ankunft weiterer Dienste | `NativeGameEngineTest.crewsStartIndependentWorkBeforeTheOtherServiceArrives` und der native Einsatzakten-Ablauf |
 | Restarbeit überlebt Speichern, Neustart und eine neue Besatzung | `NativeGameEngineTest.runningTaskSurvivesSavingRecallAndAReplacementCrew` |
+| Routineeinsatz endet bei erledigter Arbeit über mehrere Seeds zuverlässig | `NativeGameEngineTest.finishedRoutineTaskSucceedsAcrossRandomSeeds` |
+| Eine abgezogene und wieder alarmierte Unterstützung wiederholt ihren Arbeitsbonus nicht | `NativeGameEngineTest.recallingAndResendingItsSupportCannotApplyTheSameBenefitTwice` |
 | Alte laufende Mehrrollen-Einsätze setzen die gespeicherte Arbeitszeit fort | `NativeGameEngineTest.aLegacyWorkingMultiRoleIncidentResumesItsRemainingMinutes` |
 | Teilabschlüsse erscheinen im Schichtbericht, aktive Entscheidungen behalten ihren Wert | `NativeGameEngineTest.completedLocalWorkCountsAsPartialWhenOtherServiceNeverArrives`, `NativeCareerTest.engagedPlayBeatsPassivePlay` |
 | Allgemeine Rückfragen verändern geskriptete Wendungen und offene Nachforderungen nur bei neuem Fallwissen | `NativePhoneDeskTest.theCommonQuestionGuidePreservesScriptedRevelations` und der Geräteablauf für frühe Alarmierung |

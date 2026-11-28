@@ -50,7 +50,7 @@ Alpha 0.2: Android/Kotlin-Host mit lokaler WebView und monolithischer Offline-HT
 Die APK verwendet Kotlin, native Android-Views, SoundPool und eine Canvas-Karte. Die Assets für Karte und Sprache werden in das Paket aufgenommen. Lint, Paketprüfung und Offline-Start laufen auf dem tatsächlichen Android-Build.
 
 - `SimulationClock` verwendet monotone Zeit, teilt die Temporegel mit Anzeige und Kartenanimation und begrenzt nachzuholende Ticks. Ein Hintergrundwechsel pausiert die Spielzeit.
-- Bei mehreren Rollen speichert `IncidentWork` je Anforderung Restarbeit und Fahrzeug-ID. Der Rollenabgleich ordnet einer Besatzung höchstens eine Aufgabe zu. Eine Ablösung übernimmt die Restarbeit. Abgeschlossene Aufgaben gehen als strukturierte Funkereignisse ins Archiv ein.
+- `IncidentWork` speichert je Rollenanforderung Restarbeit und Fahrzeug-IDs. Der Rollenabgleich ordnet einer Besatzung höchstens eine Aufgabe zu. Eine Ablösung übernimmt die Restarbeit. Abgeschlossene Aufgaben gehen als strukturierte Funkereignisse ins Archiv ein.
 - `CallQuestions` ordnet Originalskripte acht Fragethemen zu. Zusatzfragen belegen Zeit im Gespräch und können sich auf die Auswertung auswirken. Nur die Originalfragen können geskriptete Wendungen auslösen oder deren Detailkenntnisse liefern.
 - `RadioOperations` prüft Quittierungen und Statusabfragen gegen den gespeicherten Einsatzbezug und die aktuelle Zuordnung. Das Archiv speichert bis zu 2.000 Meldungen einschließlich Text, Priorität und Kontext. Antworten auf ältere Meldungen werden anhand der aktuellen Lage validiert.
 - `GameController` bereitet Zielroute, Einsatzrolle, Kosten und Ausrückzeit vor. `commitDispatch` übernimmt die geprüfte Disposition und aktualisiert anschließend die Funkmeldung.
