@@ -7,7 +7,7 @@
 | Entwicklungsbranch | `codex/operator-rebuilt-v020` |
 | App-Version | `0.20.0-rebuilt-preview.2`, VersionCode 119 |
 | Anwendung | `de.einsatzleitstelle110`, minSdk 26 |
-| Abnahme | Entwicklungsstand für Vorschau 2 |
+| Abnahme | Vorschau 2 veröffentlicht |
 
 ## Implementierung
 
@@ -76,6 +76,21 @@ Die Android-Instrumentation enthält einen Ablauf für frühe Alarmierung und R�
 
 Auch das Zertifikat der veröffentlichten APK weicht vom Zertifikat der archivierten 0.16-APK ab. Der Test der Spielstanddaten und die Freigabe eines direkt installierbaren Updates sind damit getrennte Abnahmepunkte.
 
+## Veröffentlichte Vorschau 2
+
+| Prüfung | Ergebnis |
+| --- | --- |
+| Verifizierter Code | [bf75b7c](https://github.com/GoldenUnicorn24/Operator/commit/bf75b7c6cfae0584aca7df1907b7b6b166eb6ef8) |
+| Unit-Tests | 163 bestanden |
+| Android-35-Emulator | 12 bestanden, einschließlich Rückruf/Querformat und Autosave-Schutz am ersten Tag |
+| Paket und Offline-Start | Native Paketprüfung bestanden, VersionCode 119, Kaltstart im Flugmodus nach 5.355 ms |
+| Lint | 0 Fehler, 63 Warnungen |
+| SHA-256 der veröffentlichten APK | `51eca93b5c001d08832a9ae72fa703e0c2291d78e6d028e6596a1a1daf9389c6` |
+| Prüfnachweise | [CI-Lauf 46132381958](https://github.com/GoldenUnicorn24/Operator/actions/runs/46132381958) und 34 Emulatorbilder |
+| Download | [GitHub-Pre-Release](https://github.com/GoldenUnicorn24/Operator/releases/tag/v0.20.0-rebuilt-preview.2) |
+
+Der erste Wiederanlauf stoppte beim fehlenden JUnit-Import für die Zeitgrenze. Anschließend kompilierten beide APKs und Lint lokal. Der vollständige GitHub-Lauf prüfte alle 12 Abläufe erfolgreich. Die Release-APK trägt weiterhin eine Debug-Signatur.
+
 ## Provisorische Simulationsmessung
 
 JVM mit Java 21, Hamburger Offline-Routengraph, aktive Fahrzeuge und gleichzeitige Einsätze. Pro Zeile wurden nach einem Aufwärmlauf drei Folgen von jeweils 120 simulierten Minuten gemessen. Die Werte umfassen `advance(1)` ohne Kartenrendering, Audio, ETA-Vorschau oder UI. Laufzeiten auf physischen Geräten und Bildrate sind offen. Im Android-35-Emulator benötigte die Detailkarte im separaten Software-Canvas-Test durchschnittlich 24,58 ms je Zeichenvorgang und 31,10 ms am P95. Im veröffentlichten Prüflauf waren es durchschnittlich 36,50 ms und 38,15 ms am P95. Beide Werte beschreiben Software-Canvas-Zeichenvorgänge im Emulator.
@@ -86,6 +101,8 @@ JVM mit Java 21, Hamburger Offline-Routengraph, aktive Fahrzeuge und gleichzeiti
 | 100 | 25 | 0,14 ms | 1,37 ms | 22,79 ms |
 | 250 | 50 | 0,49 ms | 6,03 ms | 17,58 ms |
 | 500 | 100 | 0,39 ms | 6,88 ms | 31,75 ms |
+
+Der entsprechende Lauf mit der gemeinsam indexierten Route auf dem Code der zweiten Vorschau ergab für 50, 100, 250 und 500 Fahrzeuge P95-Tickzeiten von 0,44, 1,07, 3,26 und 5,81 ms. Die jeweils parallelen Einsatzmengen entsprechen der Tabelle. Das sind JVM-Messwerte ohne Kartenrendering oder physisches Gerät.
 
 ## Zweite Durchsicht
 
@@ -99,5 +116,7 @@ JVM mit Java 21, Hamburger Offline-Routengraph, aktive Fahrzeuge und gleichzeiti
 Die bestätigte Vorschau ist der Ausgangspunkt. Die Bestätigung beim Neuanlegen einer Partie benötigt noch einen Prüffall mit reiner Personal- oder Wachplanung am ersten Tag. Die direkten Zugriffe der Dialoge und der Kartendarstellung auf den veränderlichen Simulationszustand in klar definierte Befehle und unveränderliche Anzeigezustände überführen. Erst danach den Simulationsbesitz auf einen separaten Dispatcher verlagern. Die bestehende Abschnittsfolge M2 bis M7 und die ursprünglichen Abnahmekriterien bleiben die Referenz.
 
 ## Nächster Entwicklungsabschnitt
+
+Die Spieluhr und das durchsuchbare Funkarchiv liegen als [geprüfter lokaler Entwicklungsstand](https://github.com/GoldenUnicorn24/Operator/commit/b6e82545b0b5954704119e8672b68284cc0a6663) für Vorschau 3 vor. Auf diesem Stand liefen lokal 71 ausgewählte Unit-Tests, beide APK-Builds und Lint erfolgreich. Die vollständige Prüfung auf GitHub und die Geräteprüfung des neuen Funkarchivs folgen. Dieser Entwicklungsstand basiert auf der Korrektur für Vorschau 2 und muss vor einem Branch-Update mit dem veröffentlichten Branchstand abgeglichen werden.
 
 Die Simulation benötigt weiterhin eindeutigen Zustandsbesitz durch einen Dispatcher und unveränderliche Werte für Hauptmenü, Karte, Telefon und Einsatzakte. Ein geeigneter Einstieg ist ein getesteter Zeitgeber mit serialisierter Befehlsübergabe. Vor dem Verschieben des Ticks müssen UI-Zugriffe, Audioereignisse, Ladevorgänge und Speicher-Snapshots vom veränderlichen Spielzustand getrennt sein. Anschließend folgt die pro Einsatz speicherbare Aufgabenbearbeitung mit Regressionen für Teilfortschritt und Abschluss. Der Draft-PR #7 bleibt auf `claude/operator-notruf` gerichtet.

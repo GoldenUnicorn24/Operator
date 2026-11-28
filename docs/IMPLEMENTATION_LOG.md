@@ -166,3 +166,7 @@ Diagnose am Stand `db57263`: Viele Systeme, aber keine Spannung. ×4 lief 4 Spie
 ## Operator Rebuilt · Vorschau 2 · 2026-11-28
 
 Ein Autosave mit ausschließlicher Verwaltungsarbeit konnte am ersten Tag in der Planung überschrieben werden. Der neue Geräteablauf legt eine Wache an, speichert sie, öffnet nacheinander Karriere und Sandbox und bricht die Überschreibabfrage ab. Die bestehende Partie und Wache müssen erhalten bleiben. Die Dispositionsmodi erweitern den bisherigen budgetbeschränkten Rollenabgleich. Simulation und Kartenanimation teilen die vorberechnete Routengeometrie. Der Release-Workflow bestimmt den Vorschautag aus der APK und wartet auf die Geräteprüfung. Der vollständige Prüflauf wird im [Entwicklungsstand](REBUILT_PROGRESS.md) nachgetragen.
+
+### Geräteprüfung und Veröffentlichung · Vorschau 2
+
+Vollständiger CI-Lauf 46132381958 auf `bf75b7c`: 163 JVM- und 12 Android-Tests, Paketprüfung, Offline-Kaltstart und 34 Emulatorbilder. Lint meldete 0 Fehler und 63 Warnungen. Die erste Android-Prüfung hatte vor dem Rückruf-Screenshot das Zeitlimit erreicht. Die Pausenmarkierung zeichnet seit dem Korrekturcommit keine fortlaufenden Pulse. Die Geräteprüfung verwendet eine Hauptthread-Barriere vor dem Screenshot und eine begrenzte Laufzeit je Test. Die App wurde als Vorschau 2 im Release-Bereich veröffentlicht.
