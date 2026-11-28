@@ -5,9 +5,9 @@
 | Ausgangsbranch | `claude/operator-notruf` |
 | Ausgangscommit | `eb88d29e11977717771a61cdb0153a1723ad14c7` |
 | Entwicklungsbranch | `codex/operator-rebuilt-v020` |
-| App-Version | `0.20.0-rebuilt-preview.2`, VersionCode 119 |
+| App-Version | `0.20.0-rebuilt-preview.3`, VersionCode 120 |
 | Anwendung | `de.einsatzleitstelle110`, minSdk 26 |
-| Abnahme | Entwicklungsstand für Vorschau 2 |
+| Abnahme | Entwicklungsstand für Vorschau 3 |
 
 ## Implementierung
 
@@ -31,6 +31,12 @@
 
 [CI-Lauf 46086676763](https://github.com/GoldenUnicorn24/Operator/actions/runs/46086676763) hat Build, JVM-Tests, Lint, Datenverträge, Paketprüfung und Offline-Kaltstart abgeschlossen. Von zwölf Gerätetests liefen fünf erfolgreich durch. Der sechste Test blieb vor seiner ersten Aufnahme im Rückrufablauf hängen. Das Schlussbild zeigt die geöffnete Einsatzakte bei pausierter Simulation. Der Emulator zeichnete während des Hängers fortlaufend Frames. Nach 40 Minuten beendete die Pipeline den unvollständigen Lauf und übersprang die Veröffentlichung. Die Wiederholung friert Auswahlpulse während der Pause ein, nutzt für Screenshots eine Hauptthread-Barriere und begrenzt jeden Gerätetest auf vier Minuten mit Stackdiagnose.
 
+## Vorschau 3
+
+- Die monotone Spieluhr berechnet Minuten und Fahranimation aus derselben Temporegel. Anzeige und Auswahl unterscheiden tatsächliches und gewähltes Tempo. Bei längeren Unterbrechungen holt die Uhr je Tick höchstens eine reale Sekunde nach. Hintergrundzeit und Zeit einer anderen Partie laufen nicht weiter.
+- Das Funkarchiv speichert bis zu 2.000 der jüngsten tatsächlichen Übertragungen mit Spielzeit, Organisation, Rufname, Priorität und Einsatz-ID, soweit der Funkanlass einem Einsatz zugeordnet ist. Suche, Prioritätsfilter und erneute Audiowiedergabe sind über „Mehr“ erreichbar. Bestehende Textprotokolle bleiben im Tagesprotokoll lesbar. Variable Audioinhalte benötigen eine installierte lokale deutsche Stimme.
+- 71 ausgewählte lokale Unit-Tests, Build beider APKs und Lint waren auf dem Entwicklungsstand vor Zusammenführung mit dem Korrekturcommit für Vorschau 2 erfolgreich. Eine vollständige CI- und Geräteprüfung dieses Kandidaten steht aus.
+
 ## Meilensteine
 
 | Meilenstein | Status |
@@ -38,7 +44,7 @@
 | M0 | [Ausgangsaudit](REBUILT_AUDIT.md) und Branchvergleich durchgeführt. |
 | M1 | Stabilitätskorrekturen und Regressionstests implementiert. Die Umstellung des Simulationsbesitzes und des vollständigen UI-Datenflusses steht aus. |
 | M2 | Hauptmenü, primäre Navigation, Telefonwarteschlange, größenverstellbare Einsatzakte und Querformat-Leitstelle umgesetzt. Ein einheitlicher Umbau der Verwaltungsansichten sowie animierter Menü-Hintergrund stehen aus. |
-| M3 | Vorläufige Alarmierung, Gesprächsfortsetzung, Einsatzprotokoll, priorisierte Wiedergabe und lokale dynamische Sprache umgesetzt. Breite Fragekategorien, Delegation und das neue interaktive Funkarchiv stehen aus. |
+| M3 | Vorläufige Alarmierung, Gesprächsfortsetzung, Einsatzprotokoll, priorisierte Wiedergabe und lokale dynamische Sprache umgesetzt. Das durchsuchbare Funkarchiv ist eingebaut. Breite Fragekategorien, Delegation und spielwirksame Funkantworten stehen aus. |
 | M4 | Die vier Dispositionsmodi sind eingebaut. Aufgabenbasierte Einsatzengine, Welt-Ereignisse und Erweiterung der Abdeckungslogik stehen aus. |
 | M5 | Gruppen-Taskforces, Management- und Wirtschaftsumbau, neue Karriere und KI-Mitarbeiter stehen aus. |
 | M6 | Erweiterte Editoren, Inhaltspakete, Statistiken und vollständige Asset-Überarbeitung stehen aus. |

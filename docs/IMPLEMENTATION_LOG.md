@@ -166,3 +166,7 @@ Diagnose am Stand `db57263`: Viele Systeme, aber keine Spannung. ×4 lief 4 Spie
 ## Operator Rebuilt · Vorschau 2 · 2026-11-28
 
 Ein Autosave mit ausschließlicher Verwaltungsarbeit konnte am ersten Tag in der Planung überschrieben werden. Der neue Geräteablauf legt eine Wache an, speichert sie, öffnet nacheinander Karriere und Sandbox und bricht die Überschreibabfrage ab. Die bestehende Partie und Wache müssen erhalten bleiben. Die Dispositionsmodi erweitern den bisherigen budgetbeschränkten Rollenabgleich. Simulation und Kartenanimation teilen die vorberechnete Routengeometrie. Der Release-Workflow bestimmt den Vorschautag aus der APK und wartet auf die Geräteprüfung. Der vollständige Prüflauf wird im [Entwicklungsstand](REBUILT_PROGRESS.md) nachgetragen.
+
+### Fortsetzung · Vorschau 3
+
+Eine monotone Uhr vereinheitlicht effektives Tempo und Fahranimation. Das persistierte Funkarchiv übernimmt tatsächliche Übertragungen durch den GameController vor der Audiowiedergabe. Schema 7 akzeptiert ältere Spielstände ohne das neue Archiv samt bisherigem Textprotokoll. Lokal 71 ausgewählte Tests erfolgreich, beide Android-APKs gebaut und Lint abgeschlossen. Der zusätzliche Geräteablauf überprüft die Anzeige einer tatsächlichen Entsendung und ihre Suche.
