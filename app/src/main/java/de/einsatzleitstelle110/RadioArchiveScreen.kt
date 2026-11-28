@@ -19,6 +19,7 @@ internal class RadioArchiveScreen(
     activity: Activity,
     private val state: GameState,
     private val onReplay: (RadioEntry) -> Unit,
+    private val onActions: (RadioEntry) -> Unit,
 ) {
     private val ui = UiKit(activity)
     val dialog = Dialog(activity)
@@ -94,8 +95,8 @@ internal class RadioArchiveScreen(
         dialog.window?.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
     }
 
-    fun refresh() {
-        if (dialog.isShowing && lastEntry !== state.radioArchive.lastOrNull()) updateResults(false)
+    fun refresh(force: Boolean = false) {
+        if (dialog.isShowing && (force || lastEntry !== state.radioArchive.lastOrNull())) updateResults(false)
     }
 
     private fun updateResults(resetScroll: Boolean) {
@@ -107,7 +108,9 @@ internal class RadioArchiveScreen(
         adapter.notifyDataSetChanged()
         if (resetScroll) list.setSelection(0)
         else if (firstVisible != null) {
-            val position = adapter.entries.indexOfFirst { it === firstVisible }
+            val position = adapter.entries.indexOfFirst {
+                it === firstVisible || (it.acknowledged && !firstVisible.acknowledged && it.copy(acknowledged = false) == firstVisible)
+            }
             if (position >= 0) list.setSelectionFromTop(position, offset)
         }
     }
@@ -128,15 +131,23 @@ internal class RadioArchiveScreen(
                 })
                 addView(ui.text("", 14f, ui.ink, true))
                 addView(ui.text("", 13f, ui.ink))
+                addView(ui.button("Funkaktionen") {})
             }
             val entry = getItem(position)
             val heading = row.getChildAt(0) as LinearLayout
             (heading.getChildAt(0) as android.widget.TextView).apply {
-                text = listOfNotNull("Tag ${entry.day} · ${entry.clock}", RadioArchive.label(entry.priority), entry.incidentId).joinToString(" · ")
+                text = listOfNotNull("Tag ${entry.day} · ${entry.clock}", RadioArchive.label(entry.priority), entry.incidentId,
+                    "Quittiert".takeIf { entry.acknowledged }).joinToString(" · ")
                 setTextColor(if (entry.priority == RadioPriority.URGENT) ui.red else ui.muted)
             }
             (row.getChildAt(1) as android.widget.TextView).text = listOfNotNull(entry.callsign, entry.organisation, entry.title).joinToString(" · ")
-            (row.getChildAt(2) as android.widget.TextView).text = entry.message
+            (row.getChildAt(2) as android.widget.TextView).text =
+                entry.callsign?.let { entry.message.removePrefix("$it · ") } ?: entry.message
+            row.getChildAt(3).apply {
+                contentDescription = "Funkaktionen · ${entry.title}"
+                visibility = if (entry.incidentId != null) View.VISIBLE else View.GONE
+                setOnClickListener { onActions(entry) }
+            }
             heading.getChildAt(1).apply {
                 contentDescription = "Anhören · ${entry.title}"
                 setOnClickListener { onReplay(entry) }

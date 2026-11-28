@@ -198,6 +198,29 @@ class NativeControlRoomTest {
             assertTrue(window.findAccessibilityNodeInfosByText("Peter 24/1 · Polizei · Einheit unterwegs").isNotEmpty())
             assertTrue(window.findAccessibilityNodeInfosByText("Schicht begonnen").none { it.isVisibleToUser })
             assertTrue(window.findAccessibilityNodeInfosByText("Anhören").any { it.isVisibleToUser })
+
+            fun issueRadioAction(label: String) {
+                scenario.onActivity { activity ->
+                    val archive = MainActivity::class.java.getDeclaredField("sheet").apply { isAccessible = true }
+                        .get(activity) as android.app.Dialog
+                    val controls = ArrayList<View>()
+                    archive.window!!.decorView.findViewsWithText(controls, "Funkaktionen · Einheit unterwegs",
+                        View.FIND_VIEWS_WITH_CONTENT_DESCRIPTION)
+                    assertTrue(controls.single().performClick())
+                }
+                instrument.waitForIdleSync()
+                val dialog = instrument.uiAutomation.rootInActiveWindow
+                val action = dialog.findAccessibilityNodeInfosByText(label).first { it.isVisibleToUser }
+                assertTrue(action.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK))
+                instrument.waitForIdleSync()
+            }
+            issueRadioAction("Meldung quittieren")
+            issueRadioAction("Aktuellen Status anfordern")
+            scenario.onActivity { activity ->
+                val archive = game(activity).state.radioArchive
+                assertTrue(archive.any { it.title == "Einheit unterwegs" && it.callsign == "Peter 24/1" && it.acknowledged })
+                assertTrue(archive.any { it.title == "Statusrückmeldung" && it.callsign == "Peter 24/1" && "Min bis vor Ort" in it.message })
+            }
             screenshot("native-radio-archive.png")
         }
     }

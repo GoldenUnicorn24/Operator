@@ -192,7 +192,8 @@ object GameStore {
                 s.radioArchive.forEach { entry ->
                     archive.put(JSONObject().put("day", entry.day).put("clock", entry.clock)
                         .put("title", entry.title).put("message", entry.message).put("priority", entry.priority.name)
-                        .put("callsign", entry.callsign).put("organisation", entry.organisation).put("incidentId", entry.incidentId))
+                        .put("callsign", entry.callsign).put("organisation", entry.organisation).put("incidentId", entry.incidentId)
+                        .put("unitId", entry.unitId).put("acknowledged", entry.acknowledged))
                 }
             })
             .put("chief", PoliceChiefCodec.write(s.chief))
@@ -599,6 +600,8 @@ object GameStore {
                 entry.optString("callsign").take(100).ifBlank { null },
                 entry.optString("organisation").take(100).ifBlank { null },
                 entry.optString("incidentId").take(30).ifBlank { null },
+                entry.optString("unitId").take(120).ifBlank { null },
+                entry.optBoolean("acknowledged"),
             ))
         }
         val phones = array(root, "phones", 128)

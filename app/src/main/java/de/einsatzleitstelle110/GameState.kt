@@ -2441,7 +2441,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
             state.radioArchive.add(
                 RadioEntry(
                     state.day, time, title, message, lines.first().priority,
-                    unit?.callsign, organisation, incident?.id,
+                    unit?.callsign, organisation, incident?.id, unit?.id,
                 ),
             )
             if (state.radioArchive.size > RadioArchive.MAX_ENTRIES) state.radioArchive.removeAt(0)

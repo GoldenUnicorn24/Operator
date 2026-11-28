@@ -989,7 +989,7 @@ class MainActivity : Activity() {
 
     private fun showRadioLog() {
         sheet?.dismiss()
-        val screen = RadioArchiveScreen(this, game.state) { entry ->
+        val screen = RadioArchiveScreen(this, game.state, onReplay = { entry ->
             val s = game.state
             if (s.mute || s.masterVolume == 0f || s.radioVolume == 0f) {
                 toast("Der Funkton ist stummgeschaltet.")
@@ -997,10 +997,35 @@ class MainActivity : Activity() {
                 radio.say(entry.lines().map { it.copy(priority = RadioPriority.ROUTINE) })
                 toast("Funkmeldung zur Wiedergabe vorgemerkt.")
             }
-        }
+        }, onActions = ::showRadioActions)
         archiveScreen = screen
         sheet = screen.dialog
         screen.dialog.setOnDismissListener { if (archiveScreen === screen) archiveScreen = null }
+    }
+
+    private fun showRadioActions(entry: RadioEntry) {
+        val actions = RadioOperations.actions(game, entry)
+        if (actions.isEmpty()) {
+            toast("Die zugehörige Einsatzakte ist nicht verfügbar.")
+            return
+        }
+        AlertDialog.Builder(this)
+            .setTitle(entry.title)
+            .setItems(actions.map(RadioAction::label).toTypedArray()) { _, index ->
+                when (actions[index]) {
+                    RadioAction.OPEN_INCIDENT -> RadioOperations.incident(game, entry)?.let(::openCall)
+                    RadioAction.ACKNOWLEDGE, RadioAction.REQUEST_STATUS -> {
+                        val success = if (actions[index] == RadioAction.ACKNOWLEDGE) RadioOperations.acknowledge(game, entry)
+                            else RadioOperations.requestStatus(game, entry)
+                        if (success) {
+                            save()
+                            archiveScreen?.refresh(force = true)
+                        } else toast("Die Funkaktion ist nicht mehr verfügbar.")
+                    }
+                }
+            }
+            .setNegativeButton("Schließen", null)
+            .show()
     }
 
     /** Up to three most urgent calls as tappable rows under the map. */

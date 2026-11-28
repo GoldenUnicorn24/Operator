@@ -10,6 +10,8 @@ data class RadioEntry(
     val callsign: String? = null,
     val organisation: String? = null,
     val incidentId: String? = null,
+    val unitId: String? = null,
+    val acknowledged: Boolean = false,
 ) {
     fun lines() = RadioScript.event(title, message, callsign)
 }

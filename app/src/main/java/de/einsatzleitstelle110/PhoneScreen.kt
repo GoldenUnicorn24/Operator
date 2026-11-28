@@ -84,8 +84,13 @@ class PhoneScreen(
     /** Called by the live ticker. */
     fun updateStatus() {
         val waiting = PhoneDesk.ringing(game.state).size
-        status.text = game.clock() + (if (call != null) " · Gespräch läuft, die Zeit vergeht langsamer" else " · Gespräch beendet") +
-            if (waiting > 0) " · $waiting weitere in der Leitung" else ""
+        val line = when {
+            call == null -> "Gespräch beendet"
+            game.state.phase != "RUNNING" -> "Gespräch wird übergeben"
+            game.state.paused -> "Pause · Gespräch aktiv"
+            else -> "Gespräch aktiv · ×0,5"
+        }
+        status.text = "${game.clock()} · $line" + if (waiting > 0) " · $waiting weitere in der Leitung" else ""
         status.setTextColor(if (waiting > 0) ui.amber else ui.muted)
     }
 
