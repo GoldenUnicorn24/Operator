@@ -190,3 +190,7 @@ Der Frageleitfaden zeigt acht allgemeine Themen und ordnet vorhandene Fragen zu.
 ### Abnahme Mehrrollen-Einsätze
 
 Vorschau 4 ist auf `f6808ac` veröffentlicht. CI 46134969095: 175 JVM- und 14 Android-Tests, Paketprüfung, Android-Offline-Kaltstart und 36 Emulatorbilder. Der geprüfte Screenshot zeigt die arbeitende Streife und den ausstehenden Rettungsdienst. Die Einzahl im Dispositionsvorschlag wurde in Vorschau 5 korrigiert.
+
+## Operator Rebuilt · Vorschau 6 · Funkantworten
+
+Funkaktionen verwenden den gespeicherten Einsatzbezug und die zugehörige Fahrzeug-ID. Der Auftrag wird vor Ausführung gegen die aktuelle Zuordnung geprüft. Quittierung und Statusmeldung werden als wirkliche Funkereignisse gespeichert. Der bestehende Geräteablauf führt beide Aktionen über das native Funkarchiv aus.

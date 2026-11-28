@@ -5,9 +5,9 @@
 | Ausgangsbranch | `claude/operator-notruf` |
 | Ausgangscommit | `eb88d29e11977717771a61cdb0153a1723ad14c7` |
 | Entwicklungsbranch | `codex/operator-rebuilt-v020` |
-| App-Version | `0.20.0-rebuilt-preview.5`, VersionCode 122 |
+| App-Version | `0.20.0-rebuilt-preview.6`, VersionCode 123 |
 | Anwendung | `de.einsatzleitstelle110`, minSdk 26 |
-| Abnahme | Entwicklungsstand für Vorschau 5 |
+| Abnahme | Entwicklungsstand für Vorschau 6 |
 
 ## Implementierung
 
@@ -60,6 +60,12 @@ Bei 50, 100, 250 und 500 Fahrzeugen sowie 10, 25, 50 und 100 Mehrrollen-Einsätz
 
 Die Prüfung des echten Vorschau-4-Screenshots zeigte die falsche Einzahl „1 Kräfte“. Vorschau 5 zeigt im selben Ablauf „1 Kraft“. Der Instrumentationstest prüft die genaue Beschriftung.
 
+## Vorschau 6
+
+- Aktive Funkmeldungen lassen sich quittieren. Die Quittung wird zum ursprünglichen Eintrag gespeichert und als Rückmeldung der Leitstelle gesendet.
+- Der Statusabruf im Funkarchiv erzeugt eine tatsächliche Rückmeldung mit FMS-Status, Ausrückzeit, verbleibender Anfahrt oder konkreter Arbeitsaufgabe. Alte Einträge adressieren keine inzwischen umdisponierten Fahrzeuge. Dieselbe Besatzung antwortet pro Simulationsminute höchstens einmal zum jeweiligen Einsatz.
+- Aus dem Funkprotokoll lässt sich die zugehörige Einsatzakte öffnen. Die gespeicherten Rufnamen, die tatsächliche Fahrzeug-ID und der Einsatzbezug bleiben beim Laden erhalten. Ältere Funkarchive ohne Fahrzeug-ID bleiben lesbar.
+
 ## Meilensteine
 
 | Meilenstein | Status |
@@ -67,7 +73,7 @@ Die Prüfung des echten Vorschau-4-Screenshots zeigte die falsche Einzahl „1 K
 | M0 | [Ausgangsaudit](REBUILT_AUDIT.md) und Branchvergleich durchgeführt. |
 | M1 | Stabilitätskorrekturen und Regressionstests implementiert. Die Umstellung des Simulationsbesitzes und des vollständigen UI-Datenflusses steht aus. |
 | M2 | Hauptmenü, primäre Navigation, Telefonwarteschlange, größenverstellbare Einsatzakte und Querformat-Leitstelle umgesetzt. Ein einheitlicher Umbau der Verwaltungsansichten sowie animierter Menü-Hintergrund stehen aus. |
-| M3 | Vorläufige Alarmierung, Gesprächsfortsetzung, Einsatzprotokoll, priorisierte Wiedergabe und lokale dynamische Sprache umgesetzt. Das durchsuchbare Funkarchiv ist eingebaut. Die acht Fragekategorien sind eingebaut. Delegation, weitere Anruferzustände und spielwirksame Funkantworten stehen aus. |
+| M3 | Vorläufige Alarmierung, Gesprächsfortsetzung, Einsatzprotokoll, priorisierte Wiedergabe und lokale dynamische Sprache umgesetzt. Das durchsuchbare Funkarchiv ist eingebaut. Die acht Fragekategorien sind eingebaut. Quittierung und Statusabfrage sind eingebaut. Weitere Funkaufträge, Delegation und weitere Anruferzustände stehen aus. |
 | M4 | Die vier Dispositionsmodi sind eingebaut. Mehrrollen-Einsätze nutzen speicherbare parallele Arbeiten und Teilabschlüsse. Die Erweiterung auf Einzelrollen, Welt-Ereignisse und weitere Abdeckungslogik stehen aus. |
 | M5 | Gruppen-Taskforces, Management- und Wirtschaftsumbau, neue Karriere und KI-Mitarbeiter stehen aus. |
 | M6 | Erweiterte Editoren, Inhaltspakete, Statistiken und vollständige Asset-Überarbeitung stehen aus. |

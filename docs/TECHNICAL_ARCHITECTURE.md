@@ -1,9 +1,9 @@
 # Technische Architektur – Alpha 0.2 → v1.0
 
-## Baseline / Migration
-Aktuell: Android/Kotlin-Host mit lokaler WebView und monolithischer Offline-HTML-Simulation. Referenz `prototype/alpha-0.2-offline.html` ist unabhängig lauffähig und bewahrt die Grafiken. Siehe auch `app/src/main/assets/index.html`. Der bestehende Android-Host lädt die Assets lokal.
+## Historischer Ausgangsstand und Migration
+Alpha 0.2: Android/Kotlin-Host mit lokaler WebView und monolithischer Offline-HTML-Simulation. Referenz `prototype/alpha-0.2-offline.html` ist unabhängig lauffähig und bewahrt die Grafiken. Siehe auch `app/src/main/assets/index.html`. Der bestehende Android-Host lädt die Assets lokal.
 
-## Empfohlene v1.0-Architektur (inkrementell)
+## Historischer Architekturentwurf für die Alpha
 - **Android Shell** (Kotlin, Android 26+, target SDK aktualisieren): Activity, Dateiauswahl und Export via SAF, AudioFocus, Vibration, Immersive/Window-Inset Support; keine unnötigen Berechtigungen. WebViewAssetLoader statt file:// und sichere Origin-Bridge bevorzugen; externe Navigation blockieren.
 - **Client App**: TypeScript in kleine Module, Vite für Build, UI als HTML/CSS/Canvas oder schlankes Framework falls begründet. Responsive für Touch.
 - **Domain Engine**: vollständig von UI getrennt, deterministisches Simulations-Clock/Tick-Verhalten; keine API-Abhängigkeit. Funktionen als reine Reducer/State-Transitions, seeded PRNG für Tests.
@@ -47,6 +47,12 @@ Aktuell: Android/Kotlin-Host mit lokaler WebView und monolithischer Offline-HTML
 
 ## Operator Rebuilt – native Übergabepunkte
 
+Die APK verwendet Kotlin, native Android-Views, SoundPool und eine Canvas-Karte. Die Assets für Karte und Sprache werden in das Paket aufgenommen. Lint, Paketprüfung und Offline-Start laufen auf dem tatsächlichen Android-Build.
+
+- `SimulationClock` verwendet monotone Zeit, teilt die Temporegel mit Anzeige und Kartenanimation und begrenzt nachzuholende Ticks. Ein Hintergrundwechsel pausiert die Spielzeit.
+- Bei mehreren Rollen speichert `IncidentWork` je Anforderung Restarbeit und Fahrzeug-ID. Der Rollenabgleich ordnet einer Besatzung höchstens eine Aufgabe zu. Eine Ablösung übernimmt die Restarbeit. Abgeschlossene Aufgaben gehen als strukturierte Funkereignisse ins Archiv ein.
+- `CallQuestions` ordnet Originalskripte acht Fragethemen zu. Zusatzfragen belegen Zeit im Gespräch und können sich auf die Auswertung auswirken. Nur die Originalfragen können geskriptete Wendungen auslösen oder deren Detailkenntnisse liefern.
+- `RadioOperations` prüft Quittierungen und Statusabfragen gegen den gespeicherten Einsatzbezug und die aktuelle Zuordnung. Das Archiv speichert bis zu 2.000 Meldungen einschließlich Text, Priorität und Kontext. Antworten auf ältere Meldungen werden anhand der aktuellen Lage validiert.
 - `GameController` bereitet Zielroute, Einsatzrolle, Kosten und Ausrückzeit vor. `commitDispatch` übernimmt die geprüfte Disposition und aktualisiert anschließend die Funkmeldung.
 - `PhoneDesk` verbindet den aktiven `PhoneCall` mit derselben `IncidentState`. Die Einsatzakte liest die Zeitpunkte und das gespeicherte Gesprächsprotokoll aus dem Modell.
 - `DispatchPanelState` projiziert die für die offene Einsatzakte sichtbaren Werte. Die Werteprojektion enthält keine veränderlichen Referenzen auf Fahrzeuge oder Einsatzdaten.

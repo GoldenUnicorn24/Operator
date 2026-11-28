@@ -1,7 +1,8 @@
-# Operator Rebuilt 0.20.0 – Entwicklungsvorschau 5
+# Operator Rebuilt 0.20.0 – Entwicklungsvorschau 6
 
-Die native Offline-Vorschau verwendet VersionCode 122. Grundlage ist Operator 0.16 auf `eb88d29`. Ein nachgewiesener APK-Start ohne WLAN und mobile Daten ist Voraussetzung für diese Veröffentlichung.
+Die native Offline-Vorschau verwendet VersionCode 123. Grundlage ist Operator 0.16 auf `eb88d29`. Ein nachgewiesener APK-Start ohne WLAN und mobile Daten ist Voraussetzung für diese Veröffentlichung.
 
+- Funkmeldungen quittieren, den tatsächlichen Fahrzeugstatus nachfragen und die zugehörige Einsatzakte öffnen.
 - Notrufe haben acht Fragethemen und fallübergreifende Rückfragen. Die vorhandenen Drehbücher liefern konkrete Erkenntnisse. Unnötige Zusatzfragen wirken sich auf die Aufnahmebewertung aus.
 - Geeignete Kräfte beginnen bei Mehrrollen-Einsätzen sofort mit eigenen Aufgaben. Weitere Besatzungen bearbeiten ihre Aufgaben parallel.
 - Einsatzakte und Funkarchiv zeigen den tatsächlichen Teilfortschritt. Der Tagesbericht führt Teilabschlüsse getrennt. Spielstände und Ablösungen behalten die Restarbeit.

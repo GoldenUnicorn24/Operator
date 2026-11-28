@@ -1,3 +1,8 @@
+## 0.20.0-rebuilt-preview.6
+
+- Funkmeldungen quittieren und den laufenden Status des zugewiesenen Fahrzeugs anfordern.
+- Einsatzakten aus dem Funkarchiv öffnen.
+
 ## 0.20.0-rebuilt-preview.5
 
 - Notrufe nach acht Fragethemen befragen, mit weiterhin erreichbarer früher Alarmierung.

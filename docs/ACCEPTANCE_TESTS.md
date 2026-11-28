@@ -69,6 +69,13 @@ Verbindlicher Detailvertrag: [STATEWIDE_MAP_AND_SHIFTS.md](STATEWIDE_MAP_AND_SHI
 | Gleichzeitige ETA-Abfragen bleiben mit den Routen konsistent | `NativeDirectedRoutingTest.concurrentDetailEtaReadsAgreeWithTheRoutedJourneys` |
 | Routinemeldungen verdrängen dringende Funkmeldungen nicht | `NativeRadioQueueTest.routineOverflowDoesNotDiscardUrgentOrIncidentTraffic` |
 | Fehlende Pflichtdaten führen zu einer erklärenden Fehlermeldung | `NativeTestAssets` in Geografie-, Telefon- und Schichttests |
-| Vorschau erscheint erst nach nachgewiesenem Offline-Start | [Rebuilt Android](../.github/workflows/rebuilt-android.yml) |
+| Simulationsuhr behält Tempo bei unregelmäßigen Ticks und pausiert bei Hintergrundwechsel | `SimulationClockTest` |
+| Erste Besatzung arbeitet vor der Ankunft weiterer Dienste | `NativeGameEngineTest.crewsStartIndependentWorkBeforeTheOtherServiceArrives` und der native Einsatzakten-Ablauf |
+| Restarbeit überlebt Speichern, Neustart und eine neue Besatzung | `NativeGameEngineTest.runningTaskSurvivesSavingRecallAndAReplacementCrew` |
+| Alte laufende Mehrrollen-Einsätze setzen die gespeicherte Arbeitszeit fort | `NativeGameEngineTest.aLegacyWorkingMultiRoleIncidentResumesItsRemainingMinutes` |
+| Teilabschlüsse erscheinen im Schichtbericht, aktive Entscheidungen behalten ihren Wert | `NativeGameEngineTest.completedLocalWorkCountsAsPartialWhenOtherServiceNeverArrives`, `NativeCareerTest.engagedPlayBeatsPassivePlay` |
+| Allgemeine Rückfragen verändern geskriptete Wendungen und offene Nachforderungen nur bei neuem Fallwissen | `NativePhoneDeskTest.theCommonQuestionGuidePreservesScriptedRevelations` und der Geräteablauf für frühe Alarmierung |
+| Funkstatus antwortet für die tatsächlich eingesetzte Besatzung, Quittierungen bleiben erhalten | `NativeRadioArchiveTest.radioCommandsArePersistedAndDoNotControlAReassignedVehicle` und der native Funkarchiv-Ablauf |
+| Vorschau erscheint nach erfolgreicher Paketprüfung, Geräteprüfung und Offline-Start | [Rebuilt Android](../.github/workflows/rebuilt-android.yml) |
 
 Die vollständige Rebuilt-Freigabe erfordert darüber hinaus die laut [Entwicklungsstand](REBUILT_PROGRESS.md) offenen System-, Geräte- und Leistungsprüfungen.
