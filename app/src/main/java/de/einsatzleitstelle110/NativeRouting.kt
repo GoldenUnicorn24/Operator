@@ -658,22 +658,6 @@ object NativeRouting {
     }
 
     /** Distance-weighted interpolation supports the irregular road-geometry vertices. */
-    fun position(points: List<GeoPoint>, progress: Double): GeoPoint {
-        require(points.size >= 2 && progress.isFinite())
-        if (progress <= 0) return points.first()
-        if (progress >= 1) return points.last()
-        val lengths = points.zipWithNext { a, b -> GeoData.km(a, b) }
-        var remaining = lengths.sum() * progress
-        for (i in lengths.indices) {
-            if (remaining <= lengths[i] || i == lengths.lastIndex) {
-                val f = if (lengths[i] > 0) remaining / lengths[i] else 0.0
-                return GeoPoint(
-                    points[i].lon + (points[i + 1].lon - points[i].lon) * f,
-                    points[i].lat + (points[i + 1].lat - points[i].lat) * f,
-                )
-            }
-            remaining -= lengths[i]
-        }
-        return points.last()
-    }
+    fun position(points: List<GeoPoint>, progress: Double): GeoPoint =
+        RouteGeometry(points).position(progress)
 }

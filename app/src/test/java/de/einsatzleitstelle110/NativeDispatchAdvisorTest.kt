@@ -88,10 +88,66 @@ class NativeDispatchAdvisorTest {
     @Test fun lowerDeploymentFeeWinsBeforeTravelTimeButLateArrivalIsExplained() {
         val g = game(); unit(g,"costly","SEK"); unit(g,"free",lon = 9.1)
         val c = call(g,"STREIFE"); c.deadline = 1
-        val p = DispatchAdvisor.plan(g,c)
+        val p = DispatchAdvisor.plan(g,c, mode = DispatchMode.ECONOMICAL)
         assertEquals("free",p.picks.single().unitId); assertEquals(0,p.fee)
         assertTrue(p.warnings.any { it.contains("Frist") })
     }
+    @Test fun balancedBuysSpeedOnlyWhenTheCheaperCrewWouldBeLate() {
+        val g = game()
+        unit(g, "near", "SEK")
+        unit(g, "far", lon = 9.1)
+        val c = call(g, "STREIFE")
+        c.deadline = 200
+        assertEquals("far", DispatchAdvisor.plan(g, c).picks.single().unitId)
+        assertEquals("near", DispatchAdvisor.plan(g, c, mode = DispatchMode.FASTEST).picks.single().unitId)
+
+        c.deadline = 25
+        val balanced = DispatchAdvisor.plan(g, c)
+        assertEquals("near", balanced.picks.single().unitId)
+        assertTrue(balanced.fee > 0)
+        assertTrue(balanced.arrival!! <= c.deadline)
+    }
+
+    @Test fun p1AlwaysPrefersEarlierArrivalWithinBudgetAndManualLeavesControlToPlayer() {
+        val g = game()
+        unit(g, "near", "SEK")
+        unit(g, "far", lon = 9.1)
+        val c = call(g, "STREIFE").also { it.priority = 1 }
+        val fastest = DispatchAdvisor.plan(g, c, mode = DispatchMode.ECONOMICAL)
+        assertEquals("near", fastest.picks.single().unitId)
+
+        g.state.budget = 10
+        val affordable = DispatchAdvisor.plan(g, c, mode = DispatchMode.FASTEST)
+        assertEquals("far", affordable.picks.single().unitId)
+        assertTrue(affordable.fee <= g.state.budget)
+
+        val manual = DispatchAdvisor.plan(g, c, mode = DispatchMode.MANUAL)
+        assertTrue(manual.picks.isEmpty())
+        assertTrue(c.assignedUnits.isEmpty())
+        assertEquals(10, g.state.budget)
+    }
+
+    @Test fun fastestPlanKeepsAllAffordableRolesAndWarnsWhenItExhaustsPatrolCoverage() {
+        val g = game()
+        g.state.budget = 4200
+        unit(g, "near-specialist", "SEK")
+        unit(g, "other-specialist", "SEK", status = "REST")
+        unit(g, "patrol", lon = 9.1)
+        val c = call(g, "SEK", "STREIFE").also { it.priority = 1 }
+        val advice = DispatchAdvisor.plan(g, c, mode = DispatchMode.FASTEST)
+        assertEquals(setOf("near-specialist", "patrol"), advice.picks.map { it.unitId }.toSet())
+        assertTrue(advice.missing.isEmpty())
+        assertEquals(4200, advice.fee)
+        assertTrue(advice.warnings.any { it.contains("keine freie Streife") })
+    }
+
+    @Test fun saveRoundTripKeepsDispatchModeAndOldSavesDefaultToBalanced() {
+        val json = GameStore.toJson(GameState(dispatchMode = DispatchMode.MANUAL))
+        assertEquals(DispatchMode.MANUAL, GameStore.fromJson(json).dispatchMode)
+        json.remove("dispatchMode")
+        assertEquals(DispatchMode.BALANCED, GameStore.fromJson(json).dispatchMode)
+    }
+
     @Test fun deskPrioritizesDecisionAndMissingForcesAndRemovesCompletedFromAction() {
         val g = game()
         val working = call(g,"STREIFE").copy(id = "working",status = "WORKING",assignedUnits = mutableListOf("scene"))

@@ -21,7 +21,7 @@ object GameSnapshots {
                             officer = roster.firstOrNull() ?: officer(u.officer),
                             officers = roster,
                             equipment = u.equipment.toMutableSet(),
-                            routePoints = u.routePoints.toMutableList(),
+                            routePoints = u.routePoints.toList(),
                             customCapabilities = u.customCapabilities.toMutableSet(),
                             reliefTeams =
                                 u.reliefTeams

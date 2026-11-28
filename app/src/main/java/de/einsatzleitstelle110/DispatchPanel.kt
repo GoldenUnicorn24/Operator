@@ -1,6 +1,7 @@
 package de.einsatzleitstelle110
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
@@ -467,28 +468,46 @@ class DispatchPanel(
     private fun adviceCard(c: IncidentState) {
         if (game.state.phase != "RUNNING" || c.status !in listOf("OPEN", "DRIVING", "WORKING")) return
         if (game.remainingTypes(c).isEmpty()) return
-        val advice = DispatchAdvisor.plan(game, c, specialRights)
+        val mode = game.state.dispatchMode.forPriority(c.priority)
         val card = ui.column().apply {
             setPadding(ui.dp(10), ui.dp(8), ui.dp(10), ui.dp(8))
             background = ui.bg(Color.rgb(14, 39, 48), ui.cyan, 10)
         }
-        card.addView(ui.text("Kostenschonender Vorschlag", 13f, ui.cyan, true))
+        val modes = if (c.priority == 1) listOf(DispatchMode.FASTEST, DispatchMode.MANUAL)
+            else DispatchMode.entries
+        card.addView(ui.button("Disposition · ${mode.label}") {
+            AlertDialog.Builder(activity)
+                .setTitle("Dispositionsmodus")
+                .setSingleChoiceItems(modes.map { it.label }.toTypedArray(), modes.indexOf(mode)) { dialog, index ->
+                    game.state.dispatchMode = modes[index]
+                    dialog.dismiss()
+                    onChanged()
+                    render()
+                }
+                .setNegativeButton("Abbrechen", null)
+                .show()
+        })
+        body.addView(card, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8); bottomMargin = ui.dp(8) })
+        if (mode == DispatchMode.MANUAL) return
+
+        val advice = DispatchAdvisor.plan(game, c, specialRights, mode)
         val summary = if (advice.picks.isEmpty()) "Keine passende freie Besetzung verfügbar."
-            else "${advice.picks.size} Kräfte · alle vorgeschlagenen vor Ort in ${advice.arrival} Min · ${advice.fee} € Einsatzkosten"
+            else "${advice.picks.size} Kräfte · vor Ort in bis zu ${advice.arrival} Min · ${advice.fee} €"
         card.addView(ui.text(summary, 12f, ui.ink))
-        card.addView(ui.text("Zuerst Bedarf abdecken, dann Einsatzkosten sparen; bei gleichen Kosten kurze Anfahrt und passende Fachkräfte. Keine automatische Entsendung.", 11f, ui.muted))
         if (advice.missing.isNotEmpty()) card.addView(ui.text("Weiter offen: " + advice.missing.joinToString { ui.roleName(it) }, 12f, ui.amber, true))
         for (warning in advice.warnings) card.addView(ui.text(warning, 12f, ui.amber))
         if (advice.picks.isNotEmpty()) {
-            val names = advice.picks.mapNotNull { p -> game.state.units.find { it.id == p.unitId }?.let { "${it.callsign}: ${p.eta} Min" } }
-            card.addView(ui.text(names.joinToString(" · "), 11f, ui.muted))
+            val units = game.state.units.associateBy { it.id }
+            advice.picks.forEach { pick ->
+                val unit = units[pick.unitId] ?: return@forEach
+                card.addView(ui.text("${unit.callsign} · ${ui.roleName(pick.role)} · ${pick.eta} Min · ${pick.fee} €", 11f, ui.muted))
+            }
             card.addView(ui.button("Vorschlag auswählen · ${advice.picks.size} Kräfte") {
                 selected.clear()
                 selected.addAll(DispatchAdvisor.plan(game, c, specialRights).picks.map { it.unitId })
                 render()
             })
         }
-        body.addView(card, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8); bottomMargin = ui.dp(8) })
     }
 
     private fun send(c: IncidentState, units: List<UnitState>) {

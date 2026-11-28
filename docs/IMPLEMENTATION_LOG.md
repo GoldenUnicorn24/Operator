@@ -162,3 +162,7 @@ Die abschließende Sichtprüfung bestätigt den echten Fortschritt zusätzlich i
 
 ## Notrufleitung · 2026-11-05
 Diagnose am Stand `db57263`: Viele Systeme, aber keine Spannung. ×4 lief 4 Spielminuten pro Sekunde, Einsätze entstanden ohne Anruf, Optionen zeigten ihre Wirkung vorab, Fristen waren für P1/P2 zu großzügig. Umgesetzt in `PhoneDesk.kt`, `CallScripts.kt`, `PhoneScreen.kt`; die bestehende Engine bleibt, `phoneEnabled` schaltet zwischen Telefon und alter Direktmeldung. Lokal ohne Android-SDK: Engine und 143 JVM-Tests über den Kotlin-Compiler aus Gradle, alle grün außer 5 `NativeMapFormatTest`, die im lokalen Behelfsaufbau keine Testressourcen fanden. Oberfläche nur in CI kompilierbar.
+
+## Operator Rebuilt · Vorschau 2 · 2026-11-28
+
+Ein Autosave mit ausschließlicher Verwaltungsarbeit konnte am ersten Tag in der Planung überschrieben werden. Der neue Geräteablauf legt eine Wache an, speichert sie, öffnet nacheinander Karriere und Sandbox und bricht die Überschreibabfrage ab. Die bestehende Partie und Wache müssen erhalten bleiben. Die Dispositionsmodi erweitern den bisherigen budgetbeschränkten Rollenabgleich. Simulation und Kartenanimation teilen die vorberechnete Routengeometrie. Der Release-Workflow bestimmt den Vorschautag aus der APK und wartet auf die Geräteprüfung. Der vollständige Prüflauf wird im [Entwicklungsstand](REBUILT_PROGRESS.md) nachgetragen.

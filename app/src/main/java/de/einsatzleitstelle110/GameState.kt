@@ -55,7 +55,7 @@ data class UnitState(
     var readinessLeft: Int = 0,
     var onDuty: Boolean = true,
     var scope: String = "STATE",
-    var routePoints: MutableList<GeoPoint> = mutableListOf(),
+    var routePoints: List<GeoPoint> = emptyList(),
     var routeBasis: String = "DISTANCE_APPROXIMATION",
     var patrolMode: String = "WATCH",
     var patrolScope: String = scope,
@@ -68,6 +68,23 @@ data class UnitState(
     var customCapabilities: MutableSet<String> = mutableSetOf(),
     var operationType: String = "",
 ) {
+    private var indexedRoute: RouteGeometry? = null
+
+    internal fun routeGeometry(): RouteGeometry {
+        val cached = indexedRoute
+        val points = routePoints
+        if (points.size >= 2) {
+            if (cached != null && cached.points === points) return cached
+            return RouteGeometry(points).also { indexedRoute = it }
+        }
+        val direct = cached?.points
+        if (cached != null && direct?.size == 2 &&
+            direct[0].lon == startLon && direct[0].lat == startLat &&
+            direct[1].lon == destLon && direct[1].lat == destLat) return cached
+        return RouteGeometry(listOf(GeoPoint(startLon, startLat), GeoPoint(destLon, destLat)))
+            .also { indexedRoute = it }
+    }
+
     /** Public FMS meanings, kept separate from the simulation's finer-grained states. */
     val fmsStatus: Int get() = when {
         !onDuty || vehicleCondition < 20 || status in listOf("TRAINING", "REST", "OFF_DUTY") -> 6
@@ -285,6 +302,7 @@ data class GameState(
     var shiftTakes: Int = 0,
     var shiftTakeTotal: Int = 0,
     var takeStreak: Int = 0,
+    var dispatchMode: DispatchMode = DispatchMode.BALANCED,
 )
 
 object GameContent {
@@ -694,7 +712,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         }
         u.startLon = u.lon; u.startLat = u.lat
         u.destLon = route.points.last().lon; u.destLat = route.points.last().lat
-        u.routePoints = route.points.toMutableList(); u.routeBasis = route.basis
+        u.routePoints = route.points.toList(); u.routeBasis = route.basis
         u.travelTotal = travelMinutes(route.durationMinutes); u.travelLeft = u.travelTotal; u.readinessLeft = 0
         u.specialSignal = false; u.status = "PATROLLING"
         radioStatus(u)
@@ -1213,7 +1231,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                 val u = state.units.find { it.id == id && it.incidentId == call.id } ?: continue
                 val route = NativeRouting.routeFor(u, GeoPoint(call.lon, call.lat))
                 u.startLon = u.lon; u.startLat = u.lat; u.destLon = call.lon; u.destLat = call.lat
-                u.routePoints = route.points.toMutableList(); u.routeBasis = route.basis
+                u.routePoints = route.points.toList(); u.routeBasis = route.basis
                 u.travelTotal = travelMinutes(route.durationMinutes, u.specialSignal); u.travelLeft = u.travelTotal
                 u.readinessLeft = 0; u.status = "DRIVING"; radioStatus(u)
             }
@@ -1296,7 +1314,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         if (limited()) state.budget -= fee
         state.shiftSpecialCost += fee
         u.specialSignal = specialRights
-        u.routePoints = route.points.toMutableList()
+        u.routePoints = route.points.toList()
         u.routeBasis = route.basis
         if (call.status == "OPEN") call.status = "DRIVING"
         call.assignedUnit = u.id
@@ -1377,7 +1395,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         u.destLon = u.homeLon
         u.readinessLeft = 0
         val route = NativeRouting.routeFor(u, GeoPoint(u.homeLon, u.homeLat))
-        u.routePoints = route.points.toMutableList()
+        u.routePoints = route.points.toList()
         u.routeBasis = route.basis
         u.travelTotal = travelMinutes(route.durationMinutes)
         u.travelLeft = u.travelTotal
@@ -1417,17 +1435,11 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         val previousProgress = if (u.travelTotal <= 0) 1.0 else 1.0 - u.travelLeft.toDouble() / u.travelTotal
         u.travelLeft = (u.travelLeft - 1).coerceAtLeast(0)
         val t = if (u.travelTotal <= 0) 1.0 else 1.0 - u.travelLeft.toDouble() / u.travelTotal
-        val pos =
-            NativeRouting.position(
-                u.routePoints.ifEmpty {
-                    listOf(GeoPoint(u.startLon, u.startLat), GeoPoint(u.destLon, u.destLat))
-                },
-                t,
-            )
+        val route = u.routeGeometry()
+        val pos = route.position(t)
         u.lat = pos.lat
         u.lon = pos.lon
-        val geometry = u.routePoints.ifEmpty { listOf(GeoPoint(u.startLon, u.startLat), GeoPoint(u.destLon, u.destLat)) }
-        val driven = geometry.zipWithNext { a, b -> GeoData.km(a, b) }.sum() * (t - previousProgress).coerceAtLeast(0.0)
+        val driven = route.lengthKm * (t - previousProgress).coerceAtLeast(0.0)
         u.distanceDrivenKm += driven; u.shiftDrivenKm += driven
         recordChiefTravel(u, driven)
         if (u.specialSignal && u.status == "DRIVING") {

@@ -5,9 +5,9 @@
 | Ausgangsbranch | `claude/operator-notruf` |
 | Ausgangscommit | `eb88d29e11977717771a61cdb0153a1723ad14c7` |
 | Entwicklungsbranch | `codex/operator-rebuilt-v020` |
-| App-Version | `0.20.0-rebuilt-preview.1`, VersionCode 118 |
+| App-Version | `0.20.0-rebuilt-preview.2`, VersionCode 119 |
 | Anwendung | `de.einsatzleitstelle110`, minSdk 26 |
-| Abnahme | Entwicklungsstand für die erste Vorschau |
+| Abnahme | Entwicklungsstand für Vorschau 2 |
 
 ## Implementierung
 
@@ -20,6 +20,13 @@
 - ETA-Felder werden pro Straßengraph synchronisiert und bei Netzwechsel mit dem Graph ersetzt. Ein begrenzter ETA-Worker übernimmt die vorbereitende Berechnung.
 - Automatische Sicherungen und die fünf manuellen Speicherplätze teilen atomare Dateiersetzung. Felder für Notrufstatus, Übergaben, Einsatzverknüpfung und Zeitpunkte ergänzen Schema 7. Ältere Einträge ohne gespeicherten Status werden als klingelnd geladen.
 
+## Vorschau 2
+
+- Eine neue Karriere oder Sandbox verlangt stets eine ausdrückliche Bestätigung, sobald bereits eine Partie aktiv ist. Das schützt auch reine Planung am ersten Tag, etwa eine neu gebaute Wache. Ein Geräteablauf prüft das Abbrechen beider Menüpunkte und den unveränderten Autosave.
+- Der Dispositionsassistent bietet Schnellste Hilfe, Ausgewogen, Wirtschaftlich und Manuell. Bei P1 haben in den unterstützten Modi die schnellsten budgetierbaren Kräfte Vorrang. Bei den Vorschlägen stehen Rolle, ETA und Kosten. Beim Einsatz der letzten freien Streife einer Zuordnung erscheint eine Abdeckungswarnung.
+- Simulation und Karte nutzen dasselbe Distanzprofil. Die kumulierten Distanzen werden einmal pro aktiver Geometrie berechnet. Routenwechsel mit derselben Punktzahl und denselben Endpunkten laden auch bei veränderter Zwischenstrecke neu.
+- Vorschau-Releases leiten ihren Tag aus der tatsächlich gebauten APK ab. Die Veröffentlichung erfordert eine vollständig erfolgreiche Build-, Paket- und Geräteprüfung.
+
 ## Meilensteine
 
 | Meilenstein | Status |
@@ -28,7 +35,7 @@
 | M1 | Stabilitätskorrekturen und Regressionstests implementiert. Die Umstellung des Simulationsbesitzes und des vollständigen UI-Datenflusses steht aus. |
 | M2 | Hauptmenü, primäre Navigation, Telefonwarteschlange, größenverstellbare Einsatzakte und Querformat-Leitstelle umgesetzt. Ein einheitlicher Umbau der Verwaltungsansichten sowie animierter Menü-Hintergrund stehen aus. |
 | M3 | Vorläufige Alarmierung, Gesprächsfortsetzung, Einsatzprotokoll, priorisierte Wiedergabe und lokale dynamische Sprache umgesetzt. Breite Fragekategorien, Delegation und das neue interaktive Funkarchiv stehen aus. |
-| M4 | Aufgabenbasierte Einsatzengine, Welt-Ereignisse und überarbeiteter Dispositionsassistent stehen aus. |
+| M4 | Die vier Dispositionsmodi sind eingebaut. Aufgabenbasierte Einsatzengine, Welt-Ereignisse und Erweiterung der Abdeckungslogik stehen aus. |
 | M5 | Gruppen-Taskforces, Management- und Wirtschaftsumbau, neue Karriere und KI-Mitarbeiter stehen aus. |
 | M6 | Erweiterte Editoren, Inhaltspakete, Statistiken und vollständige Asset-Überarbeitung stehen aus. |
 | M7 | Die erste Kandidaten-APK hat 11 Geräteprüfungen absolviert. Zusätzliche Geräteabläufe, physische Leistungsmessungen, vollständiger visueller Satz und Vollfreigabe stehen aus. |
@@ -86,3 +93,7 @@ JVM mit Java 21, Hamburger Offline-Routengraph, aktive Fahrzeuge und gleichzeiti
 ## Nächster Integrationspunkt
 
 Die bestätigte Vorschau ist der Ausgangspunkt. Die Bestätigung beim Neuanlegen einer Partie benötigt noch einen Prüffall mit reiner Personal- oder Wachplanung am ersten Tag. Die direkten Zugriffe der Dialoge und der Kartendarstellung auf den veränderlichen Simulationszustand in klar definierte Befehle und unveränderliche Anzeigezustände überführen. Erst danach den Simulationsbesitz auf einen separaten Dispatcher verlagern. Die bestehende Abschnittsfolge M2 bis M7 und die ursprünglichen Abnahmekriterien bleiben die Referenz.
+
+## Nächster Entwicklungsabschnitt
+
+Die Simulation benötigt weiterhin eindeutigen Zustandsbesitz durch einen Dispatcher und unveränderliche Werte für Hauptmenü, Karte, Telefon und Einsatzakte. Ein geeigneter Einstieg ist ein getesteter Zeitgeber mit serialisierter Befehlsübergabe. Vor dem Verschieben des Ticks müssen UI-Zugriffe, Audioereignisse, Ladevorgänge und Speicher-Snapshots vom veränderlichen Spielzustand getrennt sein. Anschließend folgt die pro Einsatz speicherbare Aufgabenbearbeitung mit Regressionen für Teilfortschritt und Abschluss. Der Draft-PR #7 bleibt auf `claude/operator-notruf` gerichtet.

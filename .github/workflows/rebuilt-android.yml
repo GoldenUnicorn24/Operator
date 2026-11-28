@@ -56,7 +56,7 @@ jobs:
           disable-animations: true
           script: bash .github/scripts/native-device-check.sh
       - name: Publish native development preview after offline launch
-        if: ${{ !cancelled() && github.event_name == 'push' && github.ref_name == 'codex/operator-rebuilt-v020' }}
+        if: ${{ success() && github.event_name == 'push' && github.ref_name == 'codex/operator-rebuilt-v020' }}
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -65,7 +65,13 @@ jobs:
             echo 'Vorschau erfordert eine APK mit geprüftem Offline-Start.'
             exit 0
           fi
-          tag=v0.20.0-rebuilt-preview.1
+          version=$("$ANDROID_HOME/build-tools/35.0.0/aapt2" dump badging "$APP_APK" | sed -n "s/^package:.*versionName='\([^']*\)'.*/\1/p")
+          if [[ ! "$version" =~ ^0[.]20[.]0-rebuilt-preview[.]([0-9]+)$ ]]; then
+            echo "Ungültige Rebuilt-Vorschauversion: $version" >&2
+            exit 1
+          fi
+          tag="v$version"
+          preview="${BASH_REMATCH[1]}"
           if gh release view "$tag" >/dev/null 2>&1; then
             echo 'Diese Vorschau ist bereits veröffentlicht.'
             exit 0
@@ -83,7 +89,7 @@ jobs:
             assets+=(release/Emulator-Screenshots.tar.gz)
           fi
           gh release create "$tag" "${assets[@]}" --target "$GITHUB_SHA" --prerelease \
-            --title 'EINSATZLEITSTELLE 110 – Operator Rebuilt 0.20.0 (Preview 1)' \
+            --title "EINSATZLEITSTELLE 110 – Operator Rebuilt 0.20.0 (Preview $preview)" \
             --notes-file docs/REBUILT_PREVIEW_RELEASE.md
       - name: Upload check results and APK
         if: always()

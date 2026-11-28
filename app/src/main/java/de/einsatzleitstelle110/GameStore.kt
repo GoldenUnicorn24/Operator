@@ -201,6 +201,7 @@ object GameStore {
             .put("shiftTakes", s.shiftTakes)
             .put("shiftTakeTotal", s.shiftTakeTotal)
             .put("takeStreak", s.takeStreak)
+            .put("dispatchMode", s.dispatchMode.name)
             .put("phones", jsonArray(s.phones) { value ->
                 val c = value as PhoneCall
                 JSONObject().put("id", c.id).put("scriptId", c.scriptId).put("lat", c.lat).put("lon", c.lon)
@@ -567,6 +568,8 @@ object GameStore {
                 shiftTakes = n(root, "shiftTakes", 0),
                 shiftTakeTotal = n(root, "shiftTakeTotal", 0),
                 takeStreak = n(root, "takeStreak", 0),
+                dispatchMode = DispatchMode.entries.firstOrNull { it.name == root.optString("dispatchMode") }
+                    ?: DispatchMode.BALANCED,
             )
         val phones = array(root, "phones", 128)
         for (j in 0 until phones.length()) {
@@ -692,7 +695,7 @@ object GameStore {
                     n(v, "readinessLeft", 0),
                     v.optBoolean("onDuty", true),
                     v.optString("scope", "STATE"),
-                    mutableListOf(),
+                    emptyList(),
                     v.optString("routeBasis", "DISTANCE_APPROXIMATION"),
                 )
             u.taskforceName = v.optString("taskforceName", "")
@@ -709,10 +712,10 @@ object GameStore {
                 (u.patrolScope == "STATE" || u.region == "DE-HH" && u.patrolScope in listOf("WANDSBEK", "MITTE", "ALTONA", "NORD", "EIMSBÜTTEL", "HARBURG", "BERGEDORF")) &&
                 u.distanceDrivenKm.isFinite() && u.distanceDrivenKm >= 0 && u.shiftDrivenKm.isFinite() && u.shiftDrivenKm >= 0)
             val points = array(v, "routePoints", 5000)
-            for (k in 0 until points.length()) {
-                val a = points.getJSONArray(k)
-                require(a.length() == 2 && a.getDouble(0).isFinite() && a.getDouble(1).isFinite())
-                u.routePoints.add(GeoPoint(a.getDouble(0), a.getDouble(1)))
+            u.routePoints = List(points.length()) { index ->
+                val point = points.getJSONArray(index)
+                require(point.length() == 2 && point.getDouble(0).isFinite() && point.getDouble(1).isFinite())
+                GeoPoint(point.getDouble(0), point.getDouble(1))
             }
             require(
                 u.status in

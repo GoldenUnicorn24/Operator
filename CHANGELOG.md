@@ -1,3 +1,9 @@
+## 0.20.0-rebuilt-preview.2
+
+- Autosaves am ersten Spieltag beim Neuanlegen einer Partie ausdrücklich schützen.
+- Disposition zwischen schneller Hilfe, ausgewogener Planung, Wirtschaftlichkeit und manueller Auswahl umschalten.
+- Route, Fahrzeugposition und Reststrecke aus derselben indexierten Geometrie ermitteln.
+
 ## 0.20.0-rebuilt-preview.1
 
 - Notrufe mit Gesprächsverlauf an die Folgeschicht übergeben und nach dem Laden fortsetzen.
