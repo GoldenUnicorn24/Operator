@@ -158,6 +158,49 @@ class NativeControlRoomTest {
         }
     }
 
+    @Test
+    fun nativeRadioArchiveSearchesAndFiltersRecordedDispatch() {
+        reset()
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                dismiss(activity)
+                val controller = game(activity)
+                controller.state.autoCalls = false
+                controller.startShift()
+                controller.state.paused = true
+                val unit = controller.state.units.first { it.type == "STREIFE" && controller.dispatchable(it) }
+                unit.callsign = "Peter 24/1"
+                val incident = controller.newIncident(
+                    IncidentTemplate("Testlage im Funkarchiv", 2, "STREIFE", 8, "Simulierter Einsatz"),
+                    GeoPoint(unit.lon, unit.lat),
+                )
+                assertTrue(controller.dispatch(incident, unit, false))
+                assertTrue(tapText(activity.window.decorView, "Mehr"))
+                assertTrue(tapText(activity.window.decorView, "Funkarchiv"))
+            }
+            instrument.runOnMainSync {}
+            scenario.onActivity { activity ->
+                val dialog = MainActivity::class.java.getDeclaredField("sheet").apply { isAccessible = true }
+                    .get(activity) as android.app.Dialog
+                val root = dialog.window!!.decorView
+                fun findSearch(view: View): android.widget.EditText? {
+                    if (view is android.widget.EditText) return view
+                    if (view !is ViewGroup) return null
+                    for (index in 0 until view.childCount) findSearch(view.getChildAt(index))?.let { return it }
+                    return null
+                }
+                val search = requireNotNull(findSearch(root))
+                search.setText("Einheit unterwegs Peter 24/1")
+            }
+            instrument.runOnMainSync {}
+            val window = instrument.uiAutomation.rootInActiveWindow
+            assertTrue(window.findAccessibilityNodeInfosByText("Peter 24/1 · Polizei · Einheit unterwegs").isNotEmpty())
+            assertTrue(window.findAccessibilityNodeInfosByText("Schicht begonnen").none { it.isVisibleToUser })
+            assertTrue(window.findAccessibilityNodeInfosByText("Anhören").any { it.isVisibleToUser })
+            screenshot("native-radio-archive.png")
+        }
+    }
+
     /** Measured on the emulator (not a physical device): written next to the screenshots. */
     private fun perf(line: String) {
         android.util.Log.i("NativePerf", line)

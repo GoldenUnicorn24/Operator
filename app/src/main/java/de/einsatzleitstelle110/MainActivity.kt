@@ -69,6 +69,7 @@ class MainActivity : Activity() {
     private var liveTick = 0
     private var ringTick = 0
     private var radioView: TextView? = null
+    private var archiveScreen: RadioArchiveScreen? = null
     private lateinit var radio: RadioChannel
     private lateinit var voice: VoicePlayer
     private val SAVE = 701
@@ -399,8 +400,10 @@ class MainActivity : Activity() {
     }
 
     private fun installNotifications() {
+        game.transmit = { lines ->
+            if (::radio.isInitialized) radio.say(lines)
+        }
         game.notify = { name, message ->
-            if (::radio.isInitialized) radio.say(RadioScript.event(name, message))
             when {
                 name == "Tutorial abgeschlossen" -> {
                     audio.cue("SUCCESS")
@@ -611,7 +614,9 @@ class MainActivity : Activity() {
                 "${SimulationConditions.weatherOptions[game.state.weather]} · " +
                 (if (SimulationConditions.trafficFactor(game.hour()) > 1) "Berufsverkehr" else if (SimulationConditions.trafficFactor(game.hour()) < 1) "Freie Straßen" else "Normalverkehr") +
                 (PhoneDesk.event(game.state)?.let { "\n${if (PhoneDesk.surgeActive(game.state)) "Hochphase" else "Lagebild"} · ${it.title}" } ?: "")
-        radioView?.text = game.state.logs.firstOrNull()?.substringAfter("] ") ?: ""
+        radioView?.text = game.state.radioArchive.lastOrNull()?.let { "${it.title} · ${it.message}" }
+            ?: game.state.logs.firstOrNull()?.substringAfter("] ") ?: ""
+        archiveScreen?.refresh()
         mapAction?.text = mapActionLabel()
         incomingView?.text =
             game.state.incidents
@@ -737,7 +742,7 @@ class MainActivity : Activity() {
         gap(panel)
         val entries = listOf<Pair<String, () -> Unit>>(
             "Einsätze" to { showTab("CALLS") },
-            "Funkprotokoll" to ::showRadioLog,
+            "Funkarchiv" to ::showRadioLog,
             "Speicherstände" to { SaveSlotsScreen(this, game, ::restoreState).show() },
             "Kreativmodus" to { showTab("EDITOR") },
             "Einstellungen" to ::showSettings,
@@ -982,10 +987,19 @@ class MainActivity : Activity() {
     }
 
     private fun showRadioLog() {
-        val log = ui.column()
-        game.state.logs.take(150).forEach { log.addView(text(it, 12f, ink).apply { setPadding(0, dp(5), 0, dp(5)) }) }
         sheet?.dismiss()
-        sheet = showShiftScreenDialog(this, "Funkprotokoll", log)
+        val screen = RadioArchiveScreen(this, game.state) { entry ->
+            val s = game.state
+            if (s.mute || s.masterVolume == 0f || s.radioVolume == 0f) {
+                toast("Der Funkton ist stummgeschaltet.")
+            } else {
+                radio.say(entry.lines().map { it.copy(priority = RadioPriority.ROUTINE) })
+                toast("Funkmeldung zur Wiedergabe vorgemerkt.")
+            }
+        }
+        archiveScreen = screen
+        sheet = screen.dialog
+        screen.dialog.setOnDismissListener { if (archiveScreen === screen) archiveScreen = null }
     }
 
     /** Up to three most urgent calls as tappable rows under the map. */
@@ -2146,19 +2160,7 @@ class MainActivity : Activity() {
         gap(c)
         c.addView(action("Spielstand importieren") { importSave() })
         gap(c)
-        c.addView(
-            action("Funkprotokoll") {
-                val log = column()
-                title(log, "Funkprotokoll")
-                gap(log)
-                log.addView(
-                    text(game.state.logs.joinToString("\n\n"), 13f, muted).apply {
-                        setTextIsSelectable(true)
-                    }
-                )
-                showSheet("Textfunk", log)
-            }
-        )
+        c.addView(action("Funkarchiv") { showRadioLog() })
         gap(c)
         c.addView(
             action("Quellen und Lizenzen") {
@@ -2413,7 +2415,6 @@ class MainActivity : Activity() {
 
     companion object {
         const val TICK_MS = 250L
-        /** Speed ÷ this = simulated minutes per real second. ×4 plays an 8h shift in 10 minutes. */
         /** Only Hamburg can be played for now; device tests of other states switch this off. */
         @JvmField var hamburgOnly = true
         /** New games take calls by phone. Device tests of the map flow switch this off. */

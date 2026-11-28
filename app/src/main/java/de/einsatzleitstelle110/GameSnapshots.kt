@@ -57,6 +57,7 @@ object GameSnapshots {
             reports =
                 s.reports.map { it.copy(trainingDone = it.trainingDone.toList(), phoneHandoffs = it.phoneHandoffs.toList()) }.toMutableList(),
             logs = s.logs.toMutableList(),
+            radioArchive = s.radioArchive.toMutableList(),
             phones = s.phones.map { it.copy(lines = it.lines.toMutableList(), asked = it.asked.toMutableSet(), advised = it.advised.toMutableSet(), spoken = it.spoken.toMutableList()) }.toMutableList(),
             recentScripts = s.recentScripts.toMutableList(),
             unlockedRegions = s.unlockedRegions.toMutableSet(),
