@@ -174,3 +174,7 @@ Vollständiger CI-Lauf 46132381958 auf `bf75b7c`: 163 JVM- und 12 Android-Tests,
 ### Fortsetzung · Vorschau 3
 
 Eine monotone Uhr vereinheitlicht effektives Tempo und Fahranimation. Das persistierte Funkarchiv übernimmt tatsächliche Übertragungen durch den GameController vor der Audiowiedergabe. Schema 7 akzeptiert ältere Spielstände ohne das neue Archiv samt bisherigem Textprotokoll. Lokal 71 ausgewählte Tests erfolgreich, beide Android-APKs gebaut und Lint abgeschlossen. Der zusätzliche Geräteablauf überprüft die Anzeige einer tatsächlichen Entsendung und ihre Suche.
+
+## Operator Rebuilt · Vorschau 4 · Mehrrollen-Einsätze
+
+Die ersten beiden Regressionstests reproduzierten die alte Wartezeit und den vollständigen Fehlschlag trotz möglicher Teilarbeit. Die neue Aufgabenlogik erzeugt je Rollenanforderung eine eigene Arbeit. Dieselbe Besatzung kann nur einer Arbeit gleichzeitig zugeordnet sein und nur eine Aufgabe desselben Einsatzes abschließen. Fertige Aufgaben bleiben bei einer Ablösung stehen. Teilabschlüsse sind im Funk, Bericht und in der Bewertung abgebildet. Schema 7 enthält die zusätzlichen optionalen Felder. Der neue Emulatorablauf öffnet eine reale Einsatzakte mit arbeitender Streife und ausstehendem Rettungsdienst. Die vollständige CI-Abnahme folgt.

@@ -1,3 +1,9 @@
+## 0.20.0-rebuilt-preview.4
+
+- Passende Besatzungen bearbeiten Aufgaben bei Mehrrollen-Einsätzen ab Ankunft parallel.
+- Offene Aufgaben, Restzeiten, Ablösungen, Funkmeldungen und Teilabschlüsse sind Bestandteil der Einsatzbearbeitung.
+- Aufgabenfortschritt im laufenden Spielstand erhalten und alte Arbeitszeit übernehmen.
+
 ## 0.20.0-rebuilt-preview.3
 
 - Tatsächliche Funkübertragungen speichern, durchsuchen, filtern und erneut anhören.

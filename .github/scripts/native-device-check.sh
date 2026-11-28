@@ -39,12 +39,13 @@ import re
 from pathlib import Path
 text = Path('runtime/instrumentation.txt').read_text()
 result = re.search(r"^OK \((\d+) tests?\)$", text, re.M)
-expected_minimum = 13 if os.getenv("APP_APK") else 10
+expected_minimum = 14 if os.getenv("APP_APK") else 10
 assert result and int(result[1]) >= expected_minimum and 'FAILURES!!!' not in text and 'INSTRUMENTATION_FAILED' not in text, text
 for name in ['phone-ringing','phone-call','phone-result','incident-desk','dispatch-advice','incident-desk-dispatched','caller-callback','save-slots','landscape-dispatch','chief-station','chief-fleet','chief-personnel','chief-reloaded','wandsbek-patrol','signal-comparison','fms-radio','wandsbek-overview','wandsbek-street-names','wandsbek-oneway-drive','wandsbek','officer','equipment','24h-report','niedersachsen','bayern','hamburg-live','dispatch-panel','vehicle-route','hamburg-8h-report','career','editor','tutorial']:
     p = Path(f'runtime/screens/native-{name}.png')
     assert p.read_bytes().startswith(b'\x89PNG\r\n\x1a\n'), f'Missing actual screenshot: {p}'
 if os.getenv("APP_APK"):
-    archive = Path("runtime/screens/native-radio-archive.png")
-    assert archive.read_bytes().startswith(b'\x89PNG\r\n\x1a\n'), f'Missing actual screenshot: {archive}'
+    for name in ("radio-archive", "parallel-incident"):
+        evidence = Path(f"runtime/screens/native-{name}.png")
+        assert evidence.read_bytes().startswith(b'\x89PNG\r\n\x1a\n'), f'Missing actual screenshot: {evidence}'
 PY

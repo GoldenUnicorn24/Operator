@@ -5,9 +5,9 @@
 | Ausgangsbranch | `claude/operator-notruf` |
 | Ausgangscommit | `eb88d29e11977717771a61cdb0153a1723ad14c7` |
 | Entwicklungsbranch | `codex/operator-rebuilt-v020` |
-| App-Version | `0.20.0-rebuilt-preview.3`, VersionCode 120 |
+| App-Version | `0.20.0-rebuilt-preview.4`, VersionCode 121 |
 | Anwendung | `de.einsatzleitstelle110`, minSdk 26 |
-| Abnahme | Entwicklungsstand für Vorschau 3 |
+| Abnahme | Entwicklungsstand für Vorschau 4 |
 
 ## Implementierung
 
@@ -37,6 +37,13 @@
 - Das Funkarchiv speichert bis zu 2.000 der jüngsten tatsächlichen Übertragungen mit Spielzeit, Organisation, Rufname, Priorität und Einsatz-ID, soweit der Funkanlass einem Einsatz zugeordnet ist. Suche, Prioritätsfilter und erneute Audiowiedergabe sind über „Mehr“ erreichbar. Bestehende Textprotokolle bleiben im Tagesprotokoll lesbar. Variable Audioinhalte benötigen eine installierte lokale deutsche Stimme.
 - 71 ausgewählte lokale Unit-Tests, Build beider APKs und Lint waren auf dem Entwicklungsstand vor Zusammenführung mit dem Korrekturcommit für Vorschau 2 erfolgreich. Eine vollständige CI- und Geräteprüfung dieses Kandidaten steht aus.
 
+## Vorschau 4
+
+- Einsätze mit mehreren benötigten Kräften besitzen eigene Aufgaben je Rollenanforderung. Eintreffende Besatzungen arbeiten sofort und parallel. Ein Mehrzweckfahrzeug zählt je Einsatz nur für eine abgeschlossene Aufgabe. Wird eine Besatzung abgezogen, übernimmt eine geeignete Ablösung die Restarbeit.
+- Die Akte zeigt erledigte, laufende und offene Aufgaben samt Restzeit und Rufname. Erledigte Aufgaben werden als tatsächliche Einsatzereignisse gefunkt und im Funkarchiv geführt. Bleibt nach Ablauf der Ankunftsfrist eine Anforderung unversorgt und ist keine andere Arbeit möglich, bilanziert der Tagesbericht den Teilabschluss separat.
+- Vollständig erledigte Mehrrollen-Einsätze erhalten einen eindeutigen Abschluss. Die erfassten Szenarioentscheidungen, Folgeeinsätze und Spielkosten bleiben in den Ablauf eingebunden. Einzelrollen-Einsätze verwenden in dieser Ausbaustufe weiterhin ihre bisherige Bearbeitungs- und Erfolgslogik.
+- Schema 7 speichert Aufgabenfortschritt und Tagesbilanz. Ältere aktive Mehrrollen-Einsätze übernehmen die gespeicherte Restarbeitszeit ihrer Besatzungen. Bei bereits geschlossenen älteren Einsätzen wird keine Aufgabenhistorie ergänzt.
+
 ## Meilensteine
 
 | Meilenstein | Status |
@@ -45,7 +52,7 @@
 | M1 | Stabilitätskorrekturen und Regressionstests implementiert. Die Umstellung des Simulationsbesitzes und des vollständigen UI-Datenflusses steht aus. |
 | M2 | Hauptmenü, primäre Navigation, Telefonwarteschlange, größenverstellbare Einsatzakte und Querformat-Leitstelle umgesetzt. Ein einheitlicher Umbau der Verwaltungsansichten sowie animierter Menü-Hintergrund stehen aus. |
 | M3 | Vorläufige Alarmierung, Gesprächsfortsetzung, Einsatzprotokoll, priorisierte Wiedergabe und lokale dynamische Sprache umgesetzt. Das durchsuchbare Funkarchiv ist eingebaut. Breite Fragekategorien, Delegation und spielwirksame Funkantworten stehen aus. |
-| M4 | Die vier Dispositionsmodi sind eingebaut. Aufgabenbasierte Einsatzengine, Welt-Ereignisse und Erweiterung der Abdeckungslogik stehen aus. |
+| M4 | Die vier Dispositionsmodi sind eingebaut. Mehrrollen-Einsätze nutzen speicherbare parallele Arbeiten und Teilabschlüsse. Die Erweiterung auf Einzelrollen, Welt-Ereignisse und weitere Abdeckungslogik stehen aus. |
 | M5 | Gruppen-Taskforces, Management- und Wirtschaftsumbau, neue Karriere und KI-Mitarbeiter stehen aus. |
 | M6 | Erweiterte Editoren, Inhaltspakete, Statistiken und vollständige Asset-Überarbeitung stehen aus. |
 | M7 | Die erste Kandidaten-APK hat 11 Geräteprüfungen absolviert. Zusätzliche Geräteabläufe, physische Leistungsmessungen, vollständiger visueller Satz und Vollfreigabe stehen aus. |
@@ -125,4 +132,4 @@ Die bestätigte Vorschau ist der Ausgangspunkt. Die Bestätigung beim Neuanlegen
 
 Der Kandidat für Vorschau 3 übernimmt die geprüfte Korrektur aus Vorschau 2. Der Funkarchiv-Ablauf ist Teil der vollständigen Geräteprüfung.
 
-Die Simulation benötigt weiterhin eindeutigen Zustandsbesitz durch einen Dispatcher und unveränderliche Werte für Hauptmenü, Karte, Telefon und Einsatzakte. Ein geeigneter Einstieg ist ein getesteter Zeitgeber mit serialisierter Befehlsübergabe. Vor dem Verschieben des Ticks müssen UI-Zugriffe, Audioereignisse, Ladevorgänge und Speicher-Snapshots vom veränderlichen Spielzustand getrennt sein. Anschließend folgt die pro Einsatz speicherbare Aufgabenbearbeitung mit Regressionen für Teilfortschritt und Abschluss. Der Draft-PR #7 bleibt auf `claude/operator-notruf` gerichtet.
+Die Simulation benötigt weiterhin eindeutigen Zustandsbesitz durch einen Dispatcher und unveränderliche Werte für Hauptmenü, Karte, Telefon und Einsatzakte. Ein geeigneter Einstieg ist ein getesteter Zeitgeber mit serialisierter Befehlsübergabe. Vor dem Verschieben des Ticks müssen UI-Zugriffe, Audioereignisse, Ladevorgänge und Speicher-Snapshots vom veränderlichen Spielzustand getrennt sein. Die Aufgabenbearbeitung für Mehrrollen-Einsätze ist umgesetzt. Die nächste Erweiterung betrifft Einzelrollen-Einsätze sowie vor Ort aktiv ausgelöste Folgeaufgaben. Der Draft-PR #7 bleibt auf `claude/operator-notruf` gerichtet.
