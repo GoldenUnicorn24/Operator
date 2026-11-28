@@ -2,11 +2,11 @@
 
 **Native Android-Leitstellensimulation.** Die entwickelte Spielversion wird als Kotlin-App mit nativen Views, Canvas-Karte und SoundPool weitergeführt. Die installierbare App enthält keine HTML-, JavaScript- oder CSS-Dateien, keine WebView und benötigt weder Internet noch eine eigene Domäne.
 
-[Operator Rebuilt Vorschau 2 herunterladen](https://github.com/GoldenUnicorn24/Operator/releases/tag/v0.20.0-rebuilt-preview.2) · [Emulatorbilder der Vorschau](https://github.com/GoldenUnicorn24/Operator/releases/download/v0.20.0-rebuilt-preview.2/Emulator-Screenshots.tar.gz)
+[Operator Rebuilt Vorschau 3 herunterladen](https://github.com/GoldenUnicorn24/Operator/releases/tag/v0.20.0-rebuilt-preview.3) · [Emulatorbilder der Vorschau](https://github.com/GoldenUnicorn24/Operator/releases/download/v0.20.0-rebuilt-preview.3/Emulator-Screenshots.tar.gz)
 
 ## Operator Rebuilt – Entwicklungsvorschau
 
-Der Branch `codex/operator-rebuilt-v020` entwickelt die native Version 0.16 weiter. Rebuilt verbindet Notruf, Einsatzakte und Disposition im laufenden Gespräch. Die Folgeschicht kann offene Notrufe übernehmen. Vorschau 2 schützt den Autosave beim Neuanlegen einer Partie und ergänzt vier Dispositionsmodi. Aktueller Umfang, Testbefunde und offene Meilensteine stehen im [Entwicklungsstand](docs/REBUILT_PROGRESS.md).
+Der Branch `codex/operator-rebuilt-v020` entwickelt die native Version 0.16 weiter. Rebuilt verbindet Notruf, Einsatzakte und Disposition im laufenden Gespräch. Die Folgeschicht kann offene Notrufe übernehmen. Vorschau 3 ergänzt das durchsuchbare Funkarchiv und die abgestimmte Spieluhr. Im nächsten Kandidaten beginnen Besatzungen bei Mehrrollen-Einsätzen mit eigenen Aufgaben, sobald sie eintreffen. Aktueller Umfang, Testbefunde und offene Meilensteine stehen im [Entwicklungsstand](docs/REBUILT_PROGRESS.md).
 
 ## Lagezentrum und Polizeichef (0.12.0)
 
@@ -38,7 +38,7 @@ python3 scripts/verify_native_apk.py app/build/outputs/apk/debug/app-debug.apk
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Rebuilt-Vorschau **0.20.0-rebuilt-preview.2**, VersionCode 119, minSdk 26, targetSdk 35. Kein Release-Signing-Schlüssel im Repository. `app/src/main/native_assets` und die Bildressourcen sind die einzigen APK-Assetquellen. Frühere Alpha-/Webquellen bleiben als Entwicklungs- und Migrationsreferenz erhalten; sie werden nicht mit dem Spiel ausgeführt oder als Web-App ausgeliefert.
+Aktueller Rebuilt-Kandidat **0.20.0-rebuilt-preview.4**, VersionCode 121, minSdk 26, targetSdk 35. Kein Release-Signing-Schlüssel im Repository. `app/src/main/native_assets` und die Bildressourcen sind die einzigen APK-Assetquellen. Frühere Alpha-/Webquellen bleiben als Entwicklungs- und Migrationsreferenz erhalten; sie werden nicht mit dem Spiel ausgeführt oder als Web-App ausgeliefert.
 
 Der CI-Workflow baut das APK, führt Unit-Tests/Lint/Paketprüfung aus und startet einen nativen Android-Emulatorablauf inklusive Wandsbek, P99, Spezialkräfte-Disposition,24h, Folgetag und Screenshots. Ein verifizierter Preview-Build wird als APK-Artefakt und separater GitHub-Preview-Download bereitgestellt. [Actions](https://github.com/GoldenUnicorn24/Operator/actions/workflows/android-ci.yml).
 

@@ -35,7 +35,7 @@
 
 - Die monotone Spieluhr berechnet Minuten und Fahranimation aus derselben Temporegel. Anzeige und Auswahl unterscheiden tatsächliches und gewähltes Tempo. Bei längeren Unterbrechungen holt die Uhr je Tick höchstens eine reale Sekunde nach. Hintergrundzeit und Zeit einer anderen Partie laufen nicht weiter.
 - Das Funkarchiv speichert bis zu 2.000 der jüngsten tatsächlichen Übertragungen mit Spielzeit, Organisation, Rufname, Priorität und Einsatz-ID, soweit der Funkanlass einem Einsatz zugeordnet ist. Suche, Prioritätsfilter und erneute Audiowiedergabe sind über „Mehr“ erreichbar. Bestehende Textprotokolle bleiben im Tagesprotokoll lesbar. Variable Audioinhalte benötigen eine installierte lokale deutsche Stimme.
-- 71 ausgewählte lokale Unit-Tests, Build beider APKs und Lint waren auf dem Entwicklungsstand vor Zusammenführung mit dem Korrekturcommit für Vorschau 2 erfolgreich. Eine vollständige CI- und Geräteprüfung dieses Kandidaten steht aus.
+- [Vorschau 3](https://github.com/GoldenUnicorn24/Operator/releases/tag/v0.20.0-rebuilt-preview.3) ist veröffentlicht. [CI-Lauf 46133578431](https://github.com/GoldenUnicorn24/Operator/actions/runs/46133578431) bestätigt 169 Unit-Tests, 13 Gerätetests, einen Offline-Kaltstart und 35 Emulatorbilder. Lint meldete 0 Fehler und 64 Warnungen. SHA-256 der APK: `2f58390ab8f6c8224a6baef64db06c74fd6a0c638edabebd33d0da480e8737ab`.
 
 ## Vorschau 4
 
@@ -43,6 +43,12 @@
 - Die Akte zeigt erledigte, laufende und offene Aufgaben samt Restzeit und Rufname. Erledigte Aufgaben werden als tatsächliche Einsatzereignisse gefunkt und im Funkarchiv geführt. Bleibt nach Ablauf der Ankunftsfrist eine Anforderung unversorgt und ist keine andere Arbeit möglich, bilanziert der Tagesbericht den Teilabschluss separat.
 - Vollständig erledigte Mehrrollen-Einsätze erhalten einen eindeutigen Abschluss. Die erfassten Szenarioentscheidungen, Folgeeinsätze und Spielkosten bleiben in den Ablauf eingebunden. Einzelrollen-Einsätze verwenden in dieser Ausbaustufe weiterhin ihre bisherige Bearbeitungs- und Erfolgslogik.
 - Schema 7 speichert Aufgabenfortschritt und Tagesbilanz. Ältere aktive Mehrrollen-Einsätze übernehmen die gespeicherte Restarbeitszeit ihrer Besatzungen. Bei bereits geschlossenen älteren Einsätzen wird keine Aufgabenhistorie ergänzt.
+
+### Regressionen und Lastmessung
+
+Der erste [CI-Lauf für Vorschau 4](https://github.com/GoldenUnicorn24/Operator/actions/runs/46134433611) reproduzierte eine Balance-Regression: Der aktive Karriere-Test endete mit 89 Ruf, passive Spielweise mit 93. Vollständig erledigte Einsatzaufgaben bleiben zuverlässig abgeschlossen. Die Bewertung berücksichtigt den dokumentierten Risikoverlauf beim Ruf. Der Karriere-Test entsendet verfügbare Ergänzungskräfte auch, wenn vor Ort bereits erste Aufgaben laufen. Lokal endete der Vier-Schichten-Vergleich nach der Korrektur mit 94,3 % vollständig abgeschlossenen Einsätzen bei aktiver und 91,2 % bei passiver Spielweise, beide mit Ruf 94.
+
+Bei 50, 100, 250 und 500 Fahrzeugen sowie 10, 25, 50 und 100 Mehrrollen-Einsätzen betrugen die P95-Zeiten 0,71, 1,43, 3,60 und 9,04 ms pro Tick. Pro Laststufe ergaben drei Läufe à 120 Spielminuten nach einem Aufwärmlauf die Messwerte. Gemessen wurde auf der JVM mit dem Hamburger Straßennetz, ohne Kartenrendering und ohne physisches Android-Gerät.
 
 ## Meilensteine
 
@@ -130,6 +136,6 @@ Die bestätigte Vorschau ist der Ausgangspunkt. Die Bestätigung beim Neuanlegen
 
 ## Nächster Entwicklungsabschnitt
 
-Der Kandidat für Vorschau 3 übernimmt die geprüfte Korrektur aus Vorschau 2. Der Funkarchiv-Ablauf ist Teil der vollständigen Geräteprüfung.
+Vorschau 3 ist freigegeben. Für Vorschau 4 gehört ein eigener Ablauf zur parallelen Aufgabenbearbeitung zur Geräteabnahme.
 
 Die Simulation benötigt weiterhin eindeutigen Zustandsbesitz durch einen Dispatcher und unveränderliche Werte für Hauptmenü, Karte, Telefon und Einsatzakte. Ein geeigneter Einstieg ist ein getesteter Zeitgeber mit serialisierter Befehlsübergabe. Vor dem Verschieben des Ticks müssen UI-Zugriffe, Audioereignisse, Ladevorgänge und Speicher-Snapshots vom veränderlichen Spielzustand getrennt sein. Die Aufgabenbearbeitung für Mehrrollen-Einsätze ist umgesetzt. Die nächste Erweiterung betrifft Einzelrollen-Einsätze sowie vor Ort aktiv ausgelöste Folgeaufgaben. Der Draft-PR #7 bleibt auf `claude/operator-notruf` gerichtet.

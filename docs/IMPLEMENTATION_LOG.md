@@ -178,3 +178,7 @@ Eine monotone Uhr vereinheitlicht effektives Tempo und Fahranimation. Das persis
 ## Operator Rebuilt · Vorschau 4 · Mehrrollen-Einsätze
 
 Die ersten beiden Regressionstests reproduzierten die alte Wartezeit und den vollständigen Fehlschlag trotz möglicher Teilarbeit. Die neue Aufgabenlogik erzeugt je Rollenanforderung eine eigene Arbeit. Dieselbe Besatzung kann nur einer Arbeit gleichzeitig zugeordnet sein und nur eine Aufgabe desselben Einsatzes abschließen. Fertige Aufgaben bleiben bei einer Ablösung stehen. Teilabschlüsse sind im Funk, Bericht und in der Bewertung abgebildet. Schema 7 enthält die zusätzlichen optionalen Felder. Der neue Emulatorablauf öffnet eine reale Einsatzakte mit arbeitender Streife und ausstehendem Rettungsdienst. Die vollständige CI-Abnahme folgt.
+
+### Freigabe Vorschau 3 und Karriereprüfung Vorschau 4
+
+Vorschau 3 wurde am Stand `e20ac5e` veröffentlicht. Der vollständige CI-Lauf 46133578431 bestand mit 169 JVM- und 13 Android-Tests. Eine Sichtprüfung des Funkarchiv-Screenshots bestätigte die Darstellung von Rufname, Priorität, Einsatznummer und Wiedergabe. Der erste CI-Lauf für Vorschau 4 fand eine Karriere-Regression. Die Aufgabenbewertung berücksichtigt seither Risikoverlauf und Ruf. Im angepassten Test kann auch eine bereits arbeitende Lage weitere Kräfte erhalten.

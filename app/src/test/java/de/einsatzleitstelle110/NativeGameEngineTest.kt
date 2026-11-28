@@ -288,6 +288,37 @@ class NativeGameEngineTest {
     }
 
     @Test
+    fun completeTaskOutcomeReflectsRiskWithoutRandomFailure() {
+        fun finish(risk: Double): Pair<GameController, IncidentState> {
+            val game = controller()
+            game.startShift()
+            game.state.reputation = 70
+            val patrol = game.state.units.first { it.type == "STREIFE" }
+            val rescue = game.state.units.first { it.type == "RETTUNG" }
+            val call = game.newIncident(
+                IncidentTemplate("Koordinierte Hilfe", 2, "STREIFE", 3, "Test",
+                    requiredTypes = listOf("STREIFE", "RETTUNG")),
+                GeoPoint(patrol.lon, patrol.lat),
+            )
+            call.pending = ""
+            call.riskDelta = risk
+            for (crew in listOf(patrol, rescue)) {
+                assertTrue(game.dispatch(call, crew, false))
+                crew.readinessLeft = 0
+                crew.travelLeft = 1
+            }
+            game.advance(3)
+            assertEquals("SOLVED", call.status)
+            return game to call
+        }
+        val (safer, saferCall) = finish(-.08)
+        val (riskier, riskierCall) = finish(.08)
+        assertEquals(2, safer.state.reputation - riskier.state.reputation)
+        assertTrue(saferCall.outcome.contains("Risiko im Verlauf gesenkt"))
+        assertTrue(riskierCall.outcome.contains("Erhöhtes Risiko im Verlauf"))
+    }
+
+    @Test
     fun trainingExactlyTwoCompletedManagementDays() {
         for (h in listOf(8, 12, 24)) {
             val g = controller()

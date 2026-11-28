@@ -1930,7 +1930,14 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         when {
             success -> {
                 state.shiftSolved++
-                state.reputation = (state.reputation + reputationGain(call)).coerceAtMost(100)
+                val quality = if (call.tasks.isEmpty()) 0 else when {
+                    call.riskDelta <= -.05 -> 1
+                    call.riskDelta >= .05 -> -1
+                    else -> 0
+                }
+                if (quality > 0) call.outcome += " · Risiko im Verlauf gesenkt"
+                if (quality < 0) call.outcome += " · Erhöhtes Risiko im Verlauf"
+                state.reputation = (state.reputation + reputationGain(call) + quality).coerceIn(0, 100)
                 state.shiftIncome += call.reward
                 if (limited()) state.budget += call.reward
             }

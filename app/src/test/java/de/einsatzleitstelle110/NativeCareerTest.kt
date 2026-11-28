@@ -20,7 +20,8 @@ class NativeCareerTest {
                 val pick = st?.options?.filter { g.optionAvailable(call, it).first }?.minByOrNull { it.effect.risk }
                 if (pick != null) g.choose(call, pick.id)
             }
-            if (call.status == "WORKING") continue
+            // Independent tasks can be underway before all required forces are assigned.
+            if (call.status == "WORKING" && !IncidentWork.enabled(call)) continue
             for (need in g.remainingTypes(call)) {
                 val c = g.candidates(call).firstOrNull { (u, _) -> u.type == need } ?: g.candidates(call).firstOrNull { (u, _) -> g.canHandle(u, need) && u.type !in listOf("SEK", "MEK") }
                 if (c != null) g.dispatch(call, c.first)
@@ -79,6 +80,7 @@ class NativeCareerTest {
         val a = active.state.reports.sumOf { it.solved }.toDouble() / active.state.reports.sumOf { it.served }
         val p = passive.state.reports.sumOf { it.solved }.toDouble() / passive.state.reports.sumOf { it.served }
         println("aktive Quote $a, passive Quote $p, Ruf ${active.state.reputation} vs ${passive.state.reputation}")
+        assertTrue("active completion rate $a vs $p", a >= p)
         assertTrue(active.state.reputation >= passive.state.reputation)
     }
 }
