@@ -507,8 +507,9 @@ class DispatchPanel(
         if (mode == DispatchMode.MANUAL) return
 
         val advice = DispatchAdvisor.plan(game, c, specialRights, mode)
+        val crewCount = if (advice.picks.size == 1) "1 Kraft" else "${advice.picks.size} Kräfte"
         val summary = if (advice.picks.isEmpty()) "Keine passende freie Besetzung verfügbar."
-            else "${advice.picks.size} Kräfte · vor Ort in bis zu ${advice.arrival} Min · ${advice.fee} €"
+            else "$crewCount · vor Ort in bis zu ${advice.arrival} Min · ${advice.fee} €"
         card.addView(ui.text(summary, 12f, ui.ink))
         if (advice.missing.isNotEmpty()) card.addView(ui.text("Weiter offen: " + advice.missing.joinToString { ui.roleName(it) }, 12f, ui.amber, true))
         for (warning in advice.warnings) card.addView(ui.text(warning, 12f, ui.amber))
@@ -518,7 +519,7 @@ class DispatchPanel(
                 val unit = units[pick.unitId] ?: return@forEach
                 card.addView(ui.text("${unit.callsign} · ${ui.roleName(pick.role)} · ${pick.eta} Min · ${pick.fee} €", 11f, ui.muted))
             }
-            card.addView(ui.button("Vorschlag auswählen · ${advice.picks.size} Kräfte") {
+            card.addView(ui.button("Vorschlag auswählen · $crewCount") {
                 selected.clear()
                 selected.addAll(DispatchAdvisor.plan(game, c, specialRights).picks.map { it.unitId })
                 render()

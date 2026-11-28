@@ -186,3 +186,7 @@ Vorschau 3 wurde am Stand `e20ac5e` veröffentlicht. Der vollständige CI-Lauf 4
 ## Operator Rebuilt · Vorschau 5 · Notrufgespräch
 
 Der Frageleitfaden zeigt acht allgemeine Themen und ordnet vorhandene Fragen zu. Rückfragen ohne nutzbare Antwort werden nach mehrmaliger Verwendung in der Bewertung erklärt. Sie verändern weder die Reihenfolge geskripteter Wendungen noch das Auffinden der Adresse. Der Geräteablauf öffnet nach früher Alarmierung die Fragegruppe „Verletzungen“ und prüft die ausgelöste Nachforderung über die native Telefonoberfläche.
+
+### Abnahme Mehrrollen-Einsätze
+
+Vorschau 4 ist auf `f6808ac` veröffentlicht. CI 46134969095: 175 JVM- und 14 Android-Tests, Paketprüfung, Android-Offline-Kaltstart und 36 Emulatorbilder. Der geprüfte Screenshot zeigt die arbeitende Streife und den ausstehenden Rettungsdienst. Die Einzahl im Dispositionsvorschlag wurde in Vorschau 5 korrigiert.

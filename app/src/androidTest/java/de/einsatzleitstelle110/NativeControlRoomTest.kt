@@ -230,6 +230,9 @@ class NativeControlRoomTest {
                 assertTrue(tapPrefix(root, "Einsatzaufgaben · 0/2"))
                 assertTrue(tapPrefix(root, "Lage sichern · ${patrol.callsign} · noch 8 Min"))
                 assertTrue(tapPrefix(root, "Medizinische Versorgung · Rettungsdienst benötigt"))
+                val recommendation = ArrayList<View>()
+                root.findViewsWithText(recommendation, "Vorschlag auswählen", View.FIND_VIEWS_WITH_TEXT)
+                assertTrue(recommendation.any { (it as? android.widget.TextView)?.text == "Vorschlag auswählen · 1 Kraft" })
             }
             waitForBaseMap(scenario)
             screenshot("native-parallel-incident.png")

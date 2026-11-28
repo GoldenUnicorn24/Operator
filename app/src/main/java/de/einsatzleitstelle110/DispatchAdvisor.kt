@@ -151,8 +151,12 @@ object IncidentDesk {
             .filter { it.status == "DRIVING" }.maxOfOrNull { it.travelLeft + it.readinessLeft }
         if ((call.status != "WORKING" || arrivalWindow != null) && (left == 0 || arrival != null && arrival > left))
             return IncidentAttention(0, left, "Frist gefährdet · noch $left Min")
-        if (missing > 0) return IncidentAttention(1, left,
-            if (call.assignedUnits.isEmpty()) "$missing Kräfte fehlen · noch $left Min" else "Verstärkung fehlt · $missing Kräfte" + (arrivalWindow?.let { " · $it Min" } ?: ""))
+        if (missing > 0) {
+            val lacking = if (missing == 1) "1 Kraft fehlt" else "$missing Kräfte fehlen"
+            val result = if (call.assignedUnits.isEmpty()) "$lacking · noch $left Min"
+                else "Verstärkung · $lacking" + (arrivalWindow?.let { " · $it Min" } ?: "")
+            return IncidentAttention(1, left, result)
+        }
         val tasks = IncidentWork.tasks(call)
         val status = when {
             call.status != "WORKING" -> "Kräfte auf Anfahrt · ${arrival ?: 0} Min"

@@ -2,11 +2,11 @@
 
 **Native Android-Leitstellensimulation.** Die entwickelte Spielversion wird als Kotlin-App mit nativen Views, Canvas-Karte und SoundPool weitergeführt. Die installierbare App enthält keine HTML-, JavaScript- oder CSS-Dateien, keine WebView und benötigt weder Internet noch eine eigene Domäne.
 
-[Operator Rebuilt Vorschau 3 herunterladen](https://github.com/GoldenUnicorn24/Operator/releases/tag/v0.20.0-rebuilt-preview.3) · [Emulatorbilder der Vorschau](https://github.com/GoldenUnicorn24/Operator/releases/download/v0.20.0-rebuilt-preview.3/Emulator-Screenshots.tar.gz)
+[Operator Rebuilt Vorschau 4 herunterladen](https://github.com/GoldenUnicorn24/Operator/releases/tag/v0.20.0-rebuilt-preview.4) · [Emulatorbilder der Vorschau](https://github.com/GoldenUnicorn24/Operator/releases/download/v0.20.0-rebuilt-preview.4/Emulator-Screenshots.tar.gz)
 
 ## Operator Rebuilt – Entwicklungsvorschau
 
-Der Branch `codex/operator-rebuilt-v020` entwickelt die native Version 0.16 weiter. Rebuilt verbindet Notruf, Einsatzakte und Disposition im laufenden Gespräch. Die Folgeschicht kann offene Notrufe übernehmen. Vorschau 3 ergänzt das durchsuchbare Funkarchiv und die abgestimmte Spieluhr. Im nächsten Kandidaten beginnen Besatzungen bei Mehrrollen-Einsätzen mit eigenen Aufgaben, sobald sie eintreffen. Aktueller Umfang, Testbefunde und offene Meilensteine stehen im [Entwicklungsstand](docs/REBUILT_PROGRESS.md).
+Der Branch `codex/operator-rebuilt-v020` entwickelt die native Version 0.16 weiter. Rebuilt verbindet Notruf, Einsatzakte und Disposition im laufenden Gespräch. Die Folgeschicht kann offene Notrufe übernehmen. Vorschau 3 ergänzt das durchsuchbare Funkarchiv und die abgestimmte Spieluhr. Seit Vorschau 4 beginnen Besatzungen bei Mehrrollen-Einsätzen mit eigenen Aufgaben, sobald sie eintreffen. Aktueller Umfang, Testbefunde und offene Meilensteine stehen im [Entwicklungsstand](docs/REBUILT_PROGRESS.md).
 
 ## Lagezentrum und Polizeichef (0.12.0)
 

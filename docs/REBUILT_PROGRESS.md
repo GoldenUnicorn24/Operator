@@ -44,6 +44,8 @@
 - Vollständig erledigte Mehrrollen-Einsätze erhalten einen eindeutigen Abschluss. Die erfassten Szenarioentscheidungen, Folgeeinsätze und Spielkosten bleiben in den Ablauf eingebunden. Einzelrollen-Einsätze verwenden in dieser Ausbaustufe weiterhin ihre bisherige Bearbeitungs- und Erfolgslogik.
 - Schema 7 speichert Aufgabenfortschritt und Tagesbilanz. Ältere aktive Mehrrollen-Einsätze übernehmen die gespeicherte Restarbeitszeit ihrer Besatzungen. Bei bereits geschlossenen älteren Einsätzen wird keine Aufgabenhistorie ergänzt.
 
+[Vorschau 4](https://github.com/GoldenUnicorn24/Operator/releases/tag/v0.20.0-rebuilt-preview.4) ist veröffentlicht. [CI-Lauf 46134969095](https://github.com/GoldenUnicorn24/Operator/actions/runs/46134969095) bestätigt 175 Unit-Tests, 14 Gerätetests, den Offline-Kaltstart und 36 Emulatorbilder. Lint meldete 0 Fehler und 64 Warnungen. SHA-256: `3660d67c0b871591cfc30570c0d4338668474627051a829d915ed1f23442ede2`.
+
 ### Regressionen und Lastmessung
 
 Der erste [CI-Lauf für Vorschau 4](https://github.com/GoldenUnicorn24/Operator/actions/runs/46134433611) reproduzierte eine Balance-Regression: Der aktive Karriere-Test endete mit 89 Ruf, passive Spielweise mit 93. Vollständig erledigte Einsatzaufgaben bleiben zuverlässig abgeschlossen. Die Bewertung berücksichtigt den dokumentierten Risikoverlauf beim Ruf. Der Karriere-Test entsendet verfügbare Ergänzungskräfte auch, wenn vor Ort bereits erste Aufgaben laufen. Lokal endete der Vier-Schichten-Vergleich nach der Korrektur mit 94,3 % vollständig abgeschlossenen Einsätzen bei aktiver und 91,2 % bei passiver Spielweise, beide mit Ruf 94.
@@ -55,6 +57,8 @@ Bei 50, 100, 250 und 500 Fahrzeugen sowie 10, 25, 50 und 100 Mehrrollen-Einsätz
 - Acht Fragethemen stehen bei allen Notrufen zur Auswahl. Anlassbezogene Antworten, unangekündigte Gesprächsverläufe und die Entdeckung von Nachforderungen bleiben an die Originalskripte gekoppelt. Erfundene Zusatzinformationen werden durch glaubhafte Unsicherheit vermieden.
 - Standort und vorläufige Alarmierung bleiben im Hauptbild des Gesprächs. Unergiebige Zusatzfragen beeinflussen die Bewertung erst bei wiederholter Nachfrage. Gesprächsverlauf und gestellte Fragen bleiben im Spielstand.
 - Der bestehende Geräteablauf für parallele Alarmierung öffnet nach dem Wiederaufnehmen des Gesprächs die Fragegruppe „Verletzungen“ und weist die aus der Antwort folgende Nachforderung nach.
+
+Die Prüfung des echten Vorschau-4-Screenshots zeigte die falsche Einzahl „1 Kräfte“. Vorschau 5 zeigt im selben Ablauf „1 Kraft“. Der Instrumentationstest prüft die genaue Beschriftung.
 
 ## Meilensteine
 
@@ -142,6 +146,6 @@ Die bestätigte Vorschau ist der Ausgangspunkt. Die Bestätigung beim Neuanlegen
 
 ## Nächster Entwicklungsabschnitt
 
-Vorschau 3 ist freigegeben. Für Vorschau 4 gehört ein eigener Ablauf zur parallelen Aufgabenbearbeitung zur Geräteabnahme.
+Vorschau 4 mit paralleler Aufgabenbearbeitung ist freigegeben. In Vorschau 5 werden die Fragethemen beim Geräteablauf für frühe Alarmierung geprüft.
 
 Die Simulation benötigt weiterhin eindeutigen Zustandsbesitz durch einen Dispatcher und unveränderliche Werte für Hauptmenü, Karte, Telefon und Einsatzakte. Ein geeigneter Einstieg ist ein getesteter Zeitgeber mit serialisierter Befehlsübergabe. Vor dem Verschieben des Ticks müssen UI-Zugriffe, Audioereignisse, Ladevorgänge und Speicher-Snapshots vom veränderlichen Spielzustand getrennt sein. Die Aufgabenbearbeitung für Mehrrollen-Einsätze ist umgesetzt. Die nächste Erweiterung betrifft Einzelrollen-Einsätze sowie vor Ort aktiv ausgelöste Folgeaufgaben. Der Draft-PR #7 bleibt auf `claude/operator-notruf` gerichtet.
