@@ -68,6 +68,8 @@ Die Prüfung des echten Vorschau-4-Screenshots zeigte die falsche Einzahl „1 K
 - Der Statusabruf im Funkarchiv erzeugt eine tatsächliche Rückmeldung mit FMS-Status, Ausrückzeit, verbleibender Anfahrt oder konkreter Arbeitsaufgabe. Alte Einträge adressieren keine inzwischen umdisponierten Fahrzeuge. Dieselbe Besatzung antwortet pro Simulationsminute höchstens einmal zum jeweiligen Einsatz.
 - Aus dem Funkprotokoll lässt sich die zugehörige Einsatzakte öffnen. Die gespeicherten Rufnamen, die tatsächliche Fahrzeug-ID und der Einsatzbezug bleiben beim Laden erhalten. Ältere Funkarchive ohne Fahrzeug-ID bleiben lesbar.
 
+[Vorschau 6](https://github.com/GoldenUnicorn24/Operator/releases/tag/v0.20.0-rebuilt-preview.6) ist veröffentlicht. [CI-Lauf 46136695226](https://github.com/GoldenUnicorn24/Operator/actions/runs/46136695226) bestätigt 178 Unit-Tests, 14 Gerätetests, Paketprüfung, Offline-Kaltstart und 37 Emulatorbilder. Lint meldete 0 Fehler und 64 Warnungen. SHA-256: `bd9b6920cd707c3b581a72be21c4b7172b9d17f758df7af46060a32d5f5029fb`.
+
 ## Vorschau 7
 
 - Einzelrollen- und Mehrrollen-Einsätze verwenden denselben Aufgabenablauf. Die Abschlussphase verwendet den tatsächlichen Aufgabenstatus. Die vorherige pauschale Zufallsberechnung entfällt bei vollständiger Arbeit.
@@ -160,6 +162,6 @@ Die bestätigte Vorschau ist der Ausgangspunkt. Die Bestätigung beim Neuanlegen
 
 ## Nächster Entwicklungsabschnitt
 
-Vorschau 5 mit acht Fragethemen und früher Alarmierung ist freigegeben. Vorschau 6 ergänzt Funkaktionen, die auf tatsächliche Fahrzeugzuordnungen zugreifen.
+Vorschau 6 mit Funkaktionen ist freigegeben. Der gemeinsame Ablauf für Einzel- und Mehrrollen-Einsätze hat 106 ausgewählte lokale JVM-Tests einschließlich ganzer Schichten, beide APK-Builds und Lint bestanden. Die vollständige Geräteprüfung dieses Kandidaten steht aus.
 
 Die Simulation benötigt weiterhin eindeutigen Zustandsbesitz durch einen Dispatcher und unveränderliche Werte für Hauptmenü, Karte, Telefon und Einsatzakte. Ein geeigneter Einstieg ist ein getesteter Zeitgeber mit serialisierter Befehlsübergabe. Vor dem Verschieben des Ticks müssen UI-Zugriffe, Audioereignisse, Ladevorgänge und Speicher-Snapshots vom veränderlichen Spielzustand getrennt sein. Einzel- und Mehrrollen-Einsätze nutzen einen gemeinsamen Aufgabenablauf. Die nächste Erweiterung betrifft aktiv ausgelöste Folgeaufgaben und längerfristige Managementkonsequenzen. Der Draft-PR #7 bleibt auf `claude/operator-notruf` gerichtet.
