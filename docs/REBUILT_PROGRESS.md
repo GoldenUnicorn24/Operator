@@ -27,6 +27,10 @@
 - Simulation und Karte nutzen dasselbe Distanzprofil. Die kumulierten Distanzen werden einmal pro aktiver Geometrie berechnet. Routenwechsel mit derselben Punktzahl und denselben Endpunkten laden auch bei veränderter Zwischenstrecke neu.
 - Vorschau-Releases leiten ihren Tag aus der tatsächlich gebauten APK ab. Die Veröffentlichung erfordert eine vollständig erfolgreiche Build-, Paket- und Geräteprüfung.
 
+### Erster Android-Lauf
+
+[CI-Lauf 46086676763](https://github.com/GoldenUnicorn24/Operator/actions/runs/46086676763) hat Build, JVM-Tests, Lint, Datenverträge, Paketprüfung und Offline-Kaltstart abgeschlossen. Von zwölf Gerätetests liefen fünf erfolgreich durch. Der sechste Test blieb vor seiner ersten Aufnahme im Rückrufablauf hängen. Das Schlussbild zeigt die geöffnete Einsatzakte bei pausierter Simulation. Der Emulator zeichnete während des Hängers fortlaufend Frames. Nach 40 Minuten beendete die Pipeline den unvollständigen Lauf und übersprang die Veröffentlichung. Die Wiederholung friert Auswahlpulse während der Pause ein, nutzt für Screenshots eine Hauptthread-Barriere und begrenzt jeden Gerätetest auf vier Minuten mit Stackdiagnose.
+
 ## Meilensteine
 
 | Meilenstein | Status |

@@ -9,12 +9,20 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import java.io.File
 import java.io.FileOutputStream
+import java.util.concurrent.TimeUnit
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.junit.rules.Timeout
 
 @RunWith(AndroidJUnit4::class)
 class NativeControlRoomTest {
+    @get:Rule
+    val testTimeout: Timeout = Timeout.builder()
+        .withTimeout(4, TimeUnit.MINUTES)
+        .withLookingForStuckThread(true)
+        .build()
+
     private val instrument
         get() = InstrumentationRegistry.getInstrumentation()
 
@@ -52,7 +60,8 @@ class NativeControlRoomTest {
     }
 
     private fun screenshot(name: String) {
-        instrument.waitForIdleSync()
+        // The animated map can continue posting frames indefinitely after the expected state is visible.
+        instrument.runOnMainSync {}
         Thread.sleep(300)
         val bmp = instrument.uiAutomation.takeScreenshot()
         assertNotNull(bmp)

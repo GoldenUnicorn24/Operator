@@ -506,8 +506,8 @@ class TacticalMapView(
         if (sel != null) {
             val q = t.point(sel.lon, sel.lat)
             paint(0xffffffff.toInt(), 2f, Paint.Style.STROKE)
-            val r = 25 * density + ((now % 1200) / 1200f) * 6 * density
-            c.drawCircle(q.x, q.y, r, p)
+            val pulse = if (paused) 0f else ((now % 1200) / 1200f) * 6 * density
+            c.drawCircle(q.x, q.y, 25 * density + pulse, p)
         }
         if (showMinimap) drawMinimap(c, t)
         if (showLegend) drawLegend(c, t)
@@ -518,8 +518,7 @@ class TacticalMapView(
                 else -> "Distanznäherung"
             }
         text(c, "© OpenStreetMap-Mitwirkende (ODbL) · Natural Earth · GeoBasis-DE/BKG · Routen: $basis", 10 * density, height - t.bottom + 13 * density, 7f, pal.labelMinor)
-        // Keep animating while anything moves or pulses.
-        if (!paused || sel != null) postInvalidateDelayed(if (paused) 60 else 33)
+        if (!paused) postInvalidateDelayed(33)
     }
 
     private fun routeColor(u: UnitState): Int =
