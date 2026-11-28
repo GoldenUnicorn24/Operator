@@ -202,6 +202,40 @@ class NativeControlRoomTest {
         }
     }
 
+    @Test
+    fun nativeIncidentFileShowsEarlyWorkAndTheMissingRescueCrew() {
+        reset()
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                dismiss(activity)
+                val controller = game(activity)
+                val state = controller.state
+                state.autoCalls = false
+                state.phoneEnabled = true
+                controller.startShift()
+                val patrol = state.units.first { it.type == "STREIFE" && controller.dispatchable(it) }
+                val call = controller.newIncident(
+                    IncidentTemplate("Verkehrsunfall mit verletzter Person", 2, "STREIFE", 12, "Simulierter Einsatz",
+                        requiredTypes = listOf("STREIFE", "RETTUNG")),
+                    GeoPoint(patrol.lon, patrol.lat),
+                )
+                assertTrue(controller.dispatch(call, patrol, false))
+                controller.advance(patrol.travelLeft + patrol.readinessLeft + 3)
+                state.paused = true
+                assertEquals("WORKING", call.status)
+                assertEquals(8, call.tasks.first().minutesLeft)
+                invoke(activity, "openCall", call)
+                val root = activity.window.decorView
+                assertTrue(tapPrefix(root, "↕"))
+                assertTrue(tapPrefix(root, "Einsatzaufgaben · 0/2"))
+                assertTrue(tapPrefix(root, "Lage sichern · ${patrol.callsign} · noch 8 Min"))
+                assertTrue(tapPrefix(root, "Medizinische Versorgung · Rettungsdienst benötigt"))
+            }
+            waitForBaseMap(scenario)
+            screenshot("native-parallel-incident.png")
+        }
+    }
+
     /** Measured on the emulator (not a physical device): written next to the screenshots. */
     private fun perf(line: String) {
         android.util.Log.i("NativePerf", line)

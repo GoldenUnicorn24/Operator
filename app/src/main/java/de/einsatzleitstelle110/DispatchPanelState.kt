@@ -26,6 +26,7 @@ internal data class DispatchPanelState(
     val transcript: List<String>,
     val timing: List<Long>,
     val required: List<String>,
+    val tasks: List<IncidentTask>,
     val assigned: List<UnitRow>,
     val candidates: List<UnitRow>,
 ) {
@@ -81,7 +82,7 @@ internal data class DispatchPanelState(
                 call.duplicateCallers, call.disconnected, call.addressUncertain, call.callbackDone,
                 call.notes.toList(), call.phoneTranscript.toList(),
                 listOf(call.reportedAt, call.answeredAt, call.firstDispatchedAt, call.phoneClosedAt),
-                call.requiredTypes.toList(),
+                call.requiredTypes.toList(), IncidentWork.tasks(call),
                 call.assignedUnits.mapNotNull(byId::get).map { row(it, assigned = true) }, free + bound,
             )
         }

@@ -42,6 +42,7 @@ object GameSnapshots {
                             notes = i.notes.toMutableList(),
                             surprise = i.surprise.toMutableList(),
                             phoneTranscript = i.phoneTranscript.toMutableList(),
+                            tasks = i.tasks.toList(),
                         )
                     }
                     .toMutableList(),

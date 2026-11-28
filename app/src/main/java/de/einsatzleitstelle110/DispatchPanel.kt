@@ -212,11 +212,12 @@ class DispatchPanel(
                 "WORKING" -> "Kräfte arbeiten vor Ort"
                 "HANDED" -> "an Folgeschicht übergeben"
                 "SOLVED" -> "erfolgreich abgeschlossen"
+                "PARTIAL" -> "teilweise abgeschlossen"
                 else -> "gescheitert"
             }
         body.addView(ui.text("${c.location} · ${c.id} · $status", 12f, ui.muted).apply { setPadding(0, ui.dp(4), 0, ui.dp(6)) })
         if (c.outcome.isNotBlank())
-            body.addView(ui.text(c.outcome, 12f, if (c.status == "SOLVED") ui.mint else ui.red, true).apply { setPadding(0, 0, 0, ui.dp(6)) })
+            body.addView(ui.text(c.outcome, 12f, when (c.status) { "SOLVED" -> ui.mint; "PARTIAL" -> ui.amber; else -> ui.red }, true).apply { setPadding(0, 0, 0, ui.dp(6)) })
         body.addView(ui.text("Anrufmeldungen: ${c.duplicateCallers}" + (if (c.disconnected) " · Verbindung abgebrochen" else "") +
             (if (c.addressUncertain) " · Adresse unbestätigt" else ""), 12f, if (c.disconnected || c.addressUncertain) ui.amber else ui.muted))
         if ((c.disconnected || c.addressUncertain) && !c.callbackDone && c.status in listOf("OPEN", "DRIVING", "WORKING"))
@@ -262,20 +263,35 @@ class DispatchPanel(
             body.addView(ui.text("Entscheidungen", 12f, ui.muted, true).apply { setPadding(0, ui.dp(6), 0, ui.dp(2)) })
             for (n in c.notes) body.addView(ui.text("• $n", 12f, if (n.startsWith("⏱")) ui.amber else ui.muted))
         }
-        // Requirements with coverage.
-        val need = c.requiredTypes
         val stillOpen = game.remainingTypes(c)
-        val left = stillOpen.toMutableList()
-        val reqRow = ui.row().apply { setPadding(0, ui.dp(8), 0, ui.dp(4)) }
-        reqRow.addView(ui.text("Benötigt  ", 12f, ui.muted, true))
-        for (type in need) {
-            val open = left.remove(type)
-            reqRow.addView(
-                ui.chip((if (open) "○ " else "✓ ") + ui.roleName(type), if (open) ui.amber else ui.mint, !open),
-                LinearLayout.LayoutParams(-2, -2).apply { marginEnd = ui.dp(6) },
-            )
+        val tasks = IncidentWork.tasks(c)
+        if (tasks.isNotEmpty()) {
+            body.addView(ui.text("Einsatzaufgaben · ${tasks.count(IncidentTask::done)}/${tasks.size}", 13f, ui.cyan, true)
+                .apply { setPadding(0, ui.dp(8), 0, ui.dp(4)) })
+            for (task in tasks) {
+                val crew = game.state.units.firstOrNull { it.id == task.unitId }?.callsign
+                val detail = when {
+                    task.done -> listOfNotNull("Erledigt", crew).joinToString(" · ")
+                    task.unitId.isNotEmpty() -> listOfNotNull(crew, "noch ${task.minutesLeft} Min").joinToString(" · ")
+                    c.status in listOf("PARTIAL", "FAILED") -> "Offen geblieben"
+                    else -> "${ui.roleName(task.role)} benötigt · ${task.minutesLeft} Min Arbeit"
+                }
+                body.addView(ui.text("${IncidentWork.label(task.role)} · $detail", 12f,
+                    if (task.done) ui.mint else if (task.unitId.isEmpty()) ui.amber else ui.ink)
+                    .apply { setPadding(0, 0, 0, ui.dp(4)) })
+            }
+        } else {
+            val reqRow = ui.row().apply { setPadding(0, ui.dp(8), 0, ui.dp(4)) }
+            reqRow.addView(ui.text("Benötigt  ", 12f, ui.muted, true))
+            for (type in c.requiredTypes) {
+                val open = type in stillOpen
+                reqRow.addView(
+                    ui.chip((if (open) "○ " else "✓ ") + ui.roleName(type), if (open) ui.amber else ui.mint, !open),
+                    LinearLayout.LayoutParams(-2, -2).apply { marginEnd = ui.dp(6) },
+                )
+            }
+            body.addView(reqRow)
         }
-        body.addView(reqRow)
         // Assigned units.
         val assigned = c.assignedUnits.mapNotNull { id -> game.state.units.find { it.id == id } }
         if (assigned.isNotEmpty()) {
@@ -285,8 +301,8 @@ class DispatchPanel(
                 val state =
                     when (u.status) {
                         "DRIVING" -> if (u.readinessLeft > 0) "rüstet aus · ${u.readinessLeft + u.travelLeft} Min" else "Anfahrt · ${u.travelLeft} Min"
-                        "ON_SCENE" -> "vor Ort · wartet auf weitere Kräfte"
-                        "WORKING" -> "arbeitet · noch ${u.workLeft} Min"
+                        "ON_SCENE" -> if (tasks.isNotEmpty()) "vor Ort · Reserve" else "vor Ort · wartet auf weitere Kräfte"
+                        "WORKING" -> if (tasks.isNotEmpty() && u.workLeft == 0) "Teilaufgabe erledigt · vor Ort" else "arbeitet · noch ${u.workLeft} Min"
                         else -> u.status
                     }
                 r.addView(ui.text("${u.callsign} · FMS ${game.fms(u)}\n${ui.roleName(u.type)} · $state", 12f, ui.ink).apply {

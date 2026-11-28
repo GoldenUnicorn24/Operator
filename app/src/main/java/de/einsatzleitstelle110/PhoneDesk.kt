@@ -580,16 +580,16 @@ object PhoneDesk {
         val sc = CallScripts.find(call.phoneScript) ?: return
         if (sc.worse.isBlank() || sc.kind != "REAL") return
         call.priority = (call.priority - 1).coerceAtLeast(1)
-        call.requiredTypes.addAll(sc.worseAdd)
+        call.requiredTypes.addAll(sc.worseAdd.take((8 - call.requiredTypes.size).coerceAtLeast(0)))
         call.riskDelta += .05
         call.notes.add("Lageverschärfung: ${sc.worse}")
         g.emit("Lageverschärfung", "${call.title}: ${sc.worse}", incident = call)
     }
 
     /** Graded like a German school mark: 1 is the best, 6 the worst. */
-    fun grade(solved: Int, failed: Int, missed: Int, takeAverage: Int, hilfsfrist: Int): Int {
-        val done = solved + failed
-        val success = if (done == 0) 70.0 else solved * 100.0 / done
+    fun grade(solved: Int, failed: Int, missed: Int, takeAverage: Int, hilfsfrist: Int, partial: Int = 0): Int {
+        val done = solved + failed + partial
+        val success = if (done == 0) 70.0 else (solved * 100.0 + partial * 50.0) / done
         val points = success * .5 + takeAverage * .3 + hilfsfrist * .2 - missed * 3
         return when {
             points >= 85 -> 1

@@ -182,6 +182,7 @@ class MainActivity : Activity() {
             "HANDED" -> "Übergeben"
             "OPEN" -> "Notruf offen"
             "SOLVED" -> "Abgeschlossen"
+            "PARTIAL" -> "Teilweise abgeschlossen"
             "FAILED" -> "Fehlgeschlagen"
             else -> status
         }
@@ -1670,7 +1671,7 @@ class MainActivity : Activity() {
             h.addView(text("Tag ${r.day} · ${r.duration/60}h", 15f, ink, true))
             h.addView(
                 text(
-                    "${r.solved} Erfolge · ${r.failed} Fehlschläge · ${r.handed} Übergaben",
+                    "${r.solved} Erfolge · ${r.partiallySolved} Teilabschlüsse · ${r.failed} Fehlschläge · ${r.handed} Übergaben",
                     13f,
                     muted,
                 )

@@ -71,7 +71,7 @@ class IncidentDeskScreen(
                 val missing = row.missing.groupingBy { it }.eachCount()
                 if (missing.isNotEmpty()) card.addView(ui.text("Fehlt: " + missing.entries.joinToString { "${it.value}× ${ui.roleName(it.key)}" }, 12f, ui.muted))
             }
-            if (call.outcome.isNotBlank()) card.addView(ui.text(call.outcome, 12f, if (call.status == "SOLVED") ui.mint else ui.red))
+            if (call.outcome.isNotBlank()) card.addView(ui.text(call.outcome, 12f, when (call.status) { "SOLVED" -> ui.mint; "PARTIAL" -> ui.amber; else -> ui.red }))
             card.addView(ui.button("Einsatzakte öffnen", a.needsAction) { open(call) })
             body.addView(card, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
         }

@@ -31,8 +31,9 @@ object DispatchAdvisor {
             call.status !in listOf("OPEN", "DRIVING", "WORKING") || game.remainingTypes(call).isEmpty()
         ) return DispatchAdvice(emptyList(), emptyList(), emptyList())
 
-        val roles = call.requiredTypes
-        val fleet = game.state.units.filter { it.region == call.region }.distinctBy { it.id }
+        val roles = IncidentWork.pendingRoles(call)
+        val credited = IncidentWork.creditedUnits(call)
+        val fleet = game.state.units.filter { it.region == call.region && it.id !in credited }.distinctBy { it.id }
         val byId = fleet.associateBy { it.id }
         val assigned = call.assignedUnits.distinct().mapNotNull(byId::get)
         val assignedIds = assigned.map { it.id }.toSet()
@@ -64,6 +65,7 @@ object DispatchAdvisor {
             warnings.add("Ausbildung, Besatzung oder Ausstattung fehlt bei ${available.size - eligible.size} verfügbaren Einheiten.")
 
         val timeLeft = when {
+            IncidentWork.enabled(call) -> IncidentWork.arrivalWindow(call) ?: Int.MAX_VALUE
             call.status != "WORKING" -> (call.deadline - call.age).coerceAtLeast(0)
             call.waitSince >= 0 -> (45 - (call.age - call.waitSince)).coerceAtLeast(0)
             else -> Int.MAX_VALUE
@@ -142,15 +144,22 @@ object IncidentDesk {
             val left = (GameController.DECISION_TIMEOUT - (call.age - call.pendingAge)).coerceAtLeast(0)
             return IncidentAttention(0, left, "Entscheidung · noch $left Min")
         }
-        val left = (call.deadline - call.age).coerceAtLeast(0)
+        val arrivalWindow = IncidentWork.arrivalWindow(call)
+        val left = arrivalWindow ?: (call.deadline - call.age).coerceAtLeast(0)
         val missing = game.remainingTypes(call).size
         val arrival = call.assignedUnits.mapNotNull { id -> game.state.units.find { it.id == id } }
             .filter { it.status == "DRIVING" }.maxOfOrNull { it.travelLeft + it.readinessLeft }
-        if (call.status != "WORKING" && (left == 0 || arrival != null && arrival > left))
+        if ((call.status != "WORKING" || arrivalWindow != null) && (left == 0 || arrival != null && arrival > left))
             return IncidentAttention(0, left, "Frist gefährdet · noch $left Min")
         if (missing > 0) return IncidentAttention(1, left,
-            if (call.assignedUnits.isEmpty()) "$missing Kräfte fehlen · noch $left Min" else "Verstärkung fehlt · $missing Kräfte")
-        return IncidentAttention(2, left, if (call.status == "WORKING") "Kräfte arbeiten vor Ort" else "Kräfte auf Anfahrt · ${arrival ?: 0} Min")
+            if (call.assignedUnits.isEmpty()) "$missing Kräfte fehlen · noch $left Min" else "Verstärkung fehlt · $missing Kräfte" + (arrivalWindow?.let { " · $it Min" } ?: ""))
+        val tasks = IncidentWork.tasks(call)
+        val status = when {
+            call.status != "WORKING" -> "Kräfte auf Anfahrt · ${arrival ?: 0} Min"
+            tasks.isNotEmpty() -> "${tasks.count(IncidentTask::done)}/${tasks.size} Aufgaben erledigt"
+            else -> "Kräfte arbeiten vor Ort"
+        }
+        return IncidentAttention(2, left, status)
     }
 
     fun ordered(game: GameController, calls: List<IncidentState>): List<IncidentState> {

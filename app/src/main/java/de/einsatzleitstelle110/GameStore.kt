@@ -156,6 +156,7 @@ object GameStore {
             .put("shiftIncoming", s.shiftIncoming)
             .put("shiftSolved", s.shiftSolved)
             .put("shiftFailed", s.shiftFailed)
+            .put("shiftPartial", s.shiftPartial)
             .put("shiftHanded", s.shiftHanded)
             .put("shiftIncome", s.shiftIncome)
             .put("nextId", s.nextId)
@@ -342,6 +343,12 @@ object GameStore {
                     .put("firstDispatchedAt", i.firstDispatchedAt)
                     .put("phoneClosedAt", i.phoneClosedAt)
                     .put("phoneTranscript", strings(i.phoneTranscript))
+                    .put("tasks", JSONArray().also { tasks ->
+                        i.tasks.forEach { task ->
+                            tasks.put(JSONObject().put("role", task.role).put("minutesLeft", task.minutesLeft)
+                                .put("unitId", task.unitId).put("requestedAtAge", task.requestedAtAge))
+                        }
+                    })
             },
         )
         o.put("customTemplates", jsonArray(s.customTemplates) { template(it as IncidentTemplate) })
@@ -356,6 +363,7 @@ object GameStore {
                     .put("served", r.served)
                     .put("solved", r.solved)
                     .put("failed", r.failed)
+                    .put("partiallySolved", r.partiallySolved)
                     .put("handed", r.handed)
                     .put("income", r.income)
                     .put("expenses", r.expenses)
@@ -532,6 +540,7 @@ object GameStore {
                 shiftIncoming = n(root, "shiftIncoming", 0),
                 shiftSolved = n(root, "shiftSolved", 0),
                 shiftFailed = n(root, "shiftFailed", 0),
+                shiftPartial = n(root, "shiftPartial", 0),
                 shiftHanded = n(root, "shiftHanded", 0),
                 shiftIncome = n(root, "shiftIncome", 0),
                 nextId = n(root, "nextId", 1, 1),
@@ -840,6 +849,20 @@ object GameStore {
             i.firstDispatchedAt = v.optLong("firstDispatchedAt", -1)
             i.phoneClosedAt = v.optLong("phoneClosedAt", -1)
             i.phoneTranscript.addAll(texts(array(v, "phoneTranscript", 120)).map { it.take(400) })
+            val savedTasks = array(v, "tasks", 8)
+            i.tasks = List(savedTasks.length()) { index ->
+                val task = savedTasks.getJSONObject(index)
+                val role = task.getString("role")
+                val work = task.getInt("minutesLeft")
+                val unitId = task.optString("unitId").take(120)
+                require(role in GameController.TYPES && work in 0..600 && (work > 0 || unitId.isNotBlank())) {
+                    "Ungültige Einsatzaufgabe"
+                }
+                IncidentTask(role, work, unitId, task.optInt("requestedAtAge", -1).coerceIn(-1, i.age.coerceAtMost(Int.MAX_VALUE - 45)))
+            }
+            require(i.tasks.mapNotNull { it.unitId.takeIf(String::isNotEmpty) }.let { it.size == it.toSet().size }) {
+                "Einsatzaufgaben verwenden dieselbe Einheit mehrfach"
+            }
             i.surprise = texts(array(v, "surprise", 12)).filter { it in GameController.TYPES }.toMutableList()
             i.surpriseText = v.optString("surpriseText").take(300)
             i.worsened = v.optBoolean("worsened")
@@ -848,7 +871,7 @@ object GameStore {
             if (i.assignedUnits.isEmpty() && i.assignedUnit.isNotBlank())
                 i.assignedUnits.add(i.assignedUnit)
             require(
-                i.status in listOf("OPEN", "DRIVING", "WORKING", "SOLVED", "FAILED", "HANDED") &&
+                i.status in listOf("OPEN", "DRIVING", "WORKING", "SOLVED", "PARTIAL", "FAILED", "HANDED") &&
                     i.requiredTypes.all { it in GameController.TYPES } &&
                     i.assignedUnits.all { it in ids } &&
                     i.riskDelta.isFinite() &&
@@ -906,6 +929,7 @@ object GameStore {
                             PhoneHandoff(entry.getString("callId").take(30), entry.optBoolean("active"))
                         }
                     },
+                    n(v, "partiallySolved", 0),
                 )
             )
         }

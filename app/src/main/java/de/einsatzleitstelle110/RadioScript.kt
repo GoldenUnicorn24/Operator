@@ -52,7 +52,7 @@ object RadioScript {
             "Einheit abgezogen" -> listOf(control(who, EVENT[5], incident))
             "Nachforderung", "Lageverschärfung", "Einsatz fehlgeschlagen" ->
                 announcement("$name. $message", RadioPriority.URGENT)
-            "Funkmeldung", "Verstärkung eingetroffen", "Einsatz beendet" -> announcement("$name. $message", incident)
+            "Funkmeldung", "Verstärkung eingetroffen", "Einsatz beendet", "Einsatz teilweise abgeschlossen", "Teilaufgabe erledigt" -> announcement("$name. $message", incident)
             "Schicht begonnen", "Schichtende" -> announcement("$name. $message", operations)
             "Funkstatus" -> when (message.substringAfter("Status ", "").trim()) {
                 "1" -> listOf(unit(who, EVENT[2], operations))
