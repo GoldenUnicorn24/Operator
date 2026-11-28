@@ -194,3 +194,7 @@ Vorschau 4 ist auf `f6808ac` veröffentlicht. CI 46134969095: 175 JVM- und 14 An
 ## Operator Rebuilt · Vorschau 6 · Funkantworten
 
 Funkaktionen verwenden den gespeicherten Einsatzbezug und die zugehörige Fahrzeug-ID. Der Auftrag wird vor Ausführung gegen die aktuelle Zuordnung geprüft. Quittierung und Statusmeldung werden als wirkliche Funkereignisse gespeichert. Der bestehende Geräteablauf führt beide Aktionen über das native Funkarchiv aus.
+
+### Abnahme Fragethemen
+
+Vorschau 5 auf `4518f5d` veröffentlicht. CI 46135950765: 177 JVM- und 14 Android-Tests, Paketprüfung, Offline-Kaltstart und 37 Emulatorbilder. Der Geräteablauf findet die Nachforderung über die native Fragegruppe „Verletzungen“. Für einen vollständigen Gesprächsscreenshot wartet Vorschau 6 ausdrücklich auf die fertig eingeblendete Antwort. Der Pausezustand und das tatsächlich gewählte Gesprächsstempo sind in der Statuszeile erkennbar.

@@ -60,6 +60,8 @@ Bei 50, 100, 250 und 500 Fahrzeugen sowie 10, 25, 50 und 100 Mehrrollen-Einsätz
 
 Die Prüfung des echten Vorschau-4-Screenshots zeigte die falsche Einzahl „1 Kräfte“. Vorschau 5 zeigt im selben Ablauf „1 Kraft“. Der Instrumentationstest prüft die genaue Beschriftung.
 
+[Vorschau 5](https://github.com/GoldenUnicorn24/Operator/releases/tag/v0.20.0-rebuilt-preview.5) ist veröffentlicht. [CI-Lauf 46135950765](https://github.com/GoldenUnicorn24/Operator/actions/runs/46135950765) bestätigt 177 Unit-Tests, 14 Gerätetests, Paketprüfung, Offline-Kaltstart und 37 Emulatorbilder. Lint meldete 0 Fehler und 64 Warnungen. SHA-256: `cfa069d42867f470f5dd8944947846893441aea8840b781b04c8c28c9516af9b`.
+
 ## Vorschau 6
 
 - Aktive Funkmeldungen lassen sich quittieren. Die Quittung wird zum ursprünglichen Eintrag gespeichert und als Rückmeldung der Leitstelle gesendet.
@@ -152,6 +154,6 @@ Die bestätigte Vorschau ist der Ausgangspunkt. Die Bestätigung beim Neuanlegen
 
 ## Nächster Entwicklungsabschnitt
 
-Vorschau 4 mit paralleler Aufgabenbearbeitung ist freigegeben. In Vorschau 5 werden die Fragethemen beim Geräteablauf für frühe Alarmierung geprüft.
+Vorschau 5 mit acht Fragethemen und früher Alarmierung ist freigegeben. Vorschau 6 ergänzt Funkaktionen, die auf tatsächliche Fahrzeugzuordnungen zugreifen.
 
 Die Simulation benötigt weiterhin eindeutigen Zustandsbesitz durch einen Dispatcher und unveränderliche Werte für Hauptmenü, Karte, Telefon und Einsatzakte. Ein geeigneter Einstieg ist ein getesteter Zeitgeber mit serialisierter Befehlsübergabe. Vor dem Verschieben des Ticks müssen UI-Zugriffe, Audioereignisse, Ladevorgänge und Speicher-Snapshots vom veränderlichen Spielzustand getrennt sein. Die Aufgabenbearbeitung für Mehrrollen-Einsätze ist umgesetzt. Die nächste Erweiterung betrifft Einzelrollen-Einsätze sowie vor Ort aktiv ausgelöste Folgeaufgaben. Der Draft-PR #7 bleibt auf `claude/operator-notruf` gerichtet.

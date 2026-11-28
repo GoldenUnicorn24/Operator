@@ -417,6 +417,7 @@ class NativeControlRoomTest {
                 assertTrue(incident.assignedUnits.isNotEmpty())
             }
             screenshot("native-rebuilt-phone-dispatch.png")
+            var expectedAnswer = ""
             scenario.onActivity { a ->
                 val g = game(a)
                 invoke(a, "answerNext")
@@ -430,12 +431,28 @@ class NativeControlRoomTest {
                 assertTrue(tapText(phone, "Fragen nach Thema"))
                 assertTrue(tapText(phone, "Verletzungen"))
                 val question = PhoneDesk.script(g, active).questions.first { it.id == "eingeklemmt" }
+                expectedAnswer = question.answer
                 assertTrue(tapText(phone, question.label))
                 assertTrue(active.asked.contains(question.id))
                 val incident = PhoneDesk.linkedIncident(g, active)!!
                 assertEquals(incidentId, incident.id)
                 assertTrue(incident.requiredTypes.contains("FEUERWEHR"))
             }
+            var fullReplyVisible = false
+            val deadline = android.os.SystemClock.uptimeMillis() + 8_000
+            while (!fullReplyVisible && android.os.SystemClock.uptimeMillis() < deadline) {
+                scenario.onActivity { activity ->
+                    val screen = MainActivity::class.java.getDeclaredField("phoneScreen")
+                        .apply { isAccessible = true }.get(activity) as PhoneScreen
+                    val dialog = PhoneScreen::class.java.getDeclaredField("dialog")
+                        .apply { isAccessible = true }.get(screen) as android.app.Dialog
+                    val replies = ArrayList<View>()
+                    dialog.window!!.decorView.findViewsWithText(replies, expectedAnswer, View.FIND_VIEWS_WITH_TEXT)
+                    fullReplyVisible = replies.any { (it as? android.widget.TextView)?.text == expectedAnswer }
+                }
+                if (!fullReplyVisible) Thread.sleep(100)
+            }
+            assertTrue("Die Antwort ist vollständig eingeblendet", fullReplyVisible)
             screenshot("native-phone-question-topics.png")
         }
         MainActivity.phoneDeskDefault = false
