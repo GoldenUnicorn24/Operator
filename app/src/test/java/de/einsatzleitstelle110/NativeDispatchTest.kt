@@ -168,10 +168,13 @@ class NativeDispatchTest {
         assertTrue(g.dispatch(c, u))
         var guard = 0
         while (c.status !in listOf("SOLVED", "FAILED") && guard++ < 600) g.advance(1)
-        assertTrue(c.outcome.contains("Chance"))
+        assertEquals("SOLVED", c.status)
+        assertTrue(c.outcome.contains("Aufgabe erledigt"))
+        assertTrue(c.outcome.contains("Erste Kräfte nach ${c.firstArrival} Min vor Ort"))
         assertTrue(c.firstArrival >= 0 && c.closedAt > 0)
         val restored = GameStore.fromJson(GameStore.toJson(g.state)).incidents.first { it.id == c.id }
         assertEquals(c.outcome, restored.outcome)
+        assertEquals(c.tasks, restored.tasks)
         assertEquals(c.firstArrival, restored.firstArrival)
         assertEquals(c.closedAt, restored.closedAt)
     }

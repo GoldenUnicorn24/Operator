@@ -1825,7 +1825,8 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
             val current = IncidentWork.tasks(call)
             if (current.all(IncidentTask::done)) {
                 val completion = if (current.size == 1) "Aufgabe erledigt" else "${current.size} von ${current.size} Aufgaben erledigt"
-                closeIncident(call, "SOLVED", "Vollständig abgeschlossen · $completion", scene)
+                val arrival = if (call.firstArrival >= 0) " · Erste Kräfte nach ${call.firstArrival} Min vor Ort" else ""
+                closeIncident(call, "SOLVED", "Vollständig abgeschlossen · $completion$arrival", scene)
             }
             return
         }

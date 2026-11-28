@@ -206,3 +206,7 @@ Die gemeinsame Aufgabenlogik ersetzt auch den separaten Einzelrollen-Timer und d
 ### Abnahme Funkantworten
 
 Vorschau 6 auf `c09b2d2` veröffentlicht. CI 46136695226: 178 JVM- und 14 Android-Tests, Paketprüfung, Android-Offline-Kaltstart und 37 Emulatorbilder. Das Archiv zeigt die Quittierung am ursprünglichen Funkspruch. Der Geräteablauf prüft die dadurch entstandene Rückmeldung aus dem tatsächlichen Fahrzeugzustand. Der Telefonscreenshot enthält die vollständig eingeblendete Antwort und die sichtbare Pause.
+
+### Abschlussgründe und Langlauf
+
+Der erste CI-Lauf 46137396946 enthielt den alten Wortlaut-Test auf „Chance“. Statt der entfallenen Prozentchance nennt der Abschlussbericht die erledigte Aufgabe und die tatsächliche Ankunftszeit. Der Speichertest prüft diese Angaben und den Aufgabenstand nach dem Laden. Ein gemischter Lastlauf mit 50 bis 500 Fahrzeugen und zwölf synthetische Schichtserien sind im Entwicklungsstand dokumentiert.

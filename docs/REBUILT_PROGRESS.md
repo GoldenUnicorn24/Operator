@@ -76,6 +76,14 @@ Die Prüfung des echten Vorschau-4-Screenshots zeigte die falsche Einzahl „1 K
 - Eine zusätzliche passende Besatzung unterstützt eine Einzelaufgabe und kann ihre Restarbeit einmal verkürzen. Der Bonus und abgeschlossene Arbeit bleiben bei Ablösung und in Spielständen erhalten. Die Besatzung bleibt bei einer später hinzugefügten anderen Anforderung für eine eigene Aufgabe verfügbar.
 - Die Abnahme für vollständige Schichten nutzt die tatsächlichen Dispositionsvorschläge. Eine weit entfernte Fachkraft hat damit keinen automatischen Vorrang vor einer passenden schnelleren Besatzung. Die Mindestquote vollständig abgeschlossener Einsätze bleibt bei 60 % je geprüfter Schicht.
 
+### Verifikation der vereinheitlichten Aufgaben
+
+Der erste vollständige CI-Lauf stellte fest, dass der bisherige Speichertest im Abschlussbericht weiterhin das Wort „Chance“ verlangte. Der Bericht nennt jetzt die erledigte Arbeit und die tatsächliche Ankunftszeit. Der Speichertest prüft beide Angaben und den unveränderten Aufgabenstand nach dem Laden.
+
+Der Lastlauf mit etwa gleich vielen Einzelrollen- und Mehrrollen-Einsätzen ergab bei 50, 100, 250 und 500 Fahrzeugen P95-Tickzeiten von 0,54, 1,48, 1,94 und 6,27 ms. Pro Stufe wurden 10, 25, 50 und 100 parallele Einsätze angesetzt. Es gelten je Stufe drei Folgen à 120 Spielminuten nach einem Aufwärmlauf. Die JVM-Messung umfasst weder Kartenrendering noch physische Android-Geräte.
+
+In einem synthetischen Hamburg-Langlauf über 72 Schichten und insgesamt 864 Spielstunden wurden Karriere und Sandbox mit je drei Seeds und zwei Spielweisen geprüft. Jede Schichtserie mischte 8, 12 und 24 Stunden. Die aktive Bedienung erreichte in allen sechs Vergleichen mehr Ruf. Alle zwölf Serien blieben bei positivem Budget. Nach jeder Schicht ließ sich der Aufgabenfortschritt unverändert laden. Der größte JSON-Spielstand umfasste 951.771 Bytes. Die Ergebnisse belegen diese Stichproben, keine allgemeine Langzeitbalance.
+
 ## Meilensteine
 
 | Meilenstein | Status |
