@@ -1,3 +1,44 @@
+## 0.20.0-rebuilt-preview.7
+
+- Auch Einzelrollen-Einsätze über den Aufgabenfortschritt abschließen und passende Unterstützung sichtbar berücksichtigen.
+- Eine Bearbeitung mit vollständigem Aufgabenabschluss endet zuverlässig. Fristen und Risikobewertung bleiben wirksam.
+
+## 0.20.0-rebuilt-preview.6
+
+- Funkmeldungen quittieren und den laufenden Status des zugewiesenen Fahrzeugs anfordern.
+- Einsatzakten aus dem Funkarchiv öffnen.
+
+## 0.20.0-rebuilt-preview.5
+
+- Notrufe nach acht Fragethemen befragen, mit weiterhin erreichbarer früher Alarmierung.
+- Unproduktive Gesprächsverläufe nachvollziehbar bewerten und die Fragehistorie speichern.
+
+## 0.20.0-rebuilt-preview.4
+
+- Passende Besatzungen bearbeiten Aufgaben bei Mehrrollen-Einsätzen ab Ankunft parallel.
+- Offene Aufgaben, Restzeiten, Ablösungen, Funkmeldungen und Teilabschlüsse sind Bestandteil der Einsatzbearbeitung.
+- Aufgabenfortschritt im laufenden Spielstand erhalten und alte Arbeitszeit übernehmen.
+
+## 0.20.0-rebuilt-preview.3
+
+- Tatsächliche Funkübertragungen speichern, durchsuchen, filtern und erneut anhören.
+- Spieltempo aus verstrichener Zeit berechnen und Drosselungen ausweisen.
+
+## 0.20.0-rebuilt-preview.2
+
+- Autosaves am ersten Spieltag beim Neuanlegen einer Partie ausdrücklich schützen.
+- Disposition zwischen schneller Hilfe, ausgewogener Planung, Wirtschaftlichkeit und manueller Auswahl umschalten.
+- Route, Fahrzeugposition und Reststrecke aus derselben indexierten Geometrie ermitteln.
+
+## 0.20.0-rebuilt-preview.1
+
+- Notrufe mit Gesprächsverlauf an die Folgeschicht übergeben und nach dem Laden fortsetzen.
+- Einsatz während des Gesprächs anlegen, disponieren und mit weiteren Erkenntnissen ergänzen.
+- Umdisposition vor der Ablösung validieren. Aufgaben zusätzlicher Fahrzeugrollen anhand von Besatzung, Qualifikation und Ausrüstung prüfen.
+- Funk nach Dringlichkeit wiedergeben, eigene Rufnamen mit optionaler lokaler Sprache unterstützen.
+- Hauptmenü, Telefonwarteschlange, Einsatzaktengrößen und Querformat-Leitstelle überarbeiten.
+- Autosave-Backup atomar schreiben. Pflicht-Geodaten bei Tests voraussetzen.
+
 ## 0.16.0 – Operator Notruf: reale Hamburg-Wachen und eigene Taskforces
 
 - 141 amtliche Hamburger Standorte offline eingebunden (37 Polizei, 18 Berufsfeuerwehr, 86 Freiwillige Feuerwehr); amtliche Standorte erscheinen auf der Karte statt erfundener Wachmarker.

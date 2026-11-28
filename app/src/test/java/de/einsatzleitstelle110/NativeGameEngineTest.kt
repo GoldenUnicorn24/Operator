@@ -154,6 +154,222 @@ class NativeGameEngineTest {
     }
 
     @Test
+    fun crewsStartIndependentWorkBeforeTheOtherServiceArrives() {
+        val game = controller()
+        game.startShift()
+        val patrol = game.state.units.first { it.type == "STREIFE" }
+        val rescue = game.state.units.first { it.type == "RETTUNG" }
+        val call = game.newIncident(
+            IncidentTemplate("Verkehrsunfall mit Betreuung", 2, "STREIFE", 12, "Test",
+                requiredTypes = listOf("STREIFE", "RETTUNG")),
+            GeoPoint(patrol.lon, patrol.lat),
+        )
+        assertTrue(game.dispatch(call, patrol, false))
+        game.advance(patrol.travelLeft + patrol.readinessLeft)
+        assertEquals("WORKING", call.status)
+        assertEquals(11, patrol.workLeft)
+        game.advance(3)
+        assertEquals(8, patrol.workLeft)
+        assertTrue(game.dispatch(call, rescue, false))
+        rescue.readinessLeft = 0
+        rescue.travelLeft = 1
+        game.advance(1)
+        assertEquals(7, patrol.workLeft)
+        assertEquals(11, rescue.workLeft)
+        game.advance(7)
+        assertEquals(0, patrol.workLeft)
+        assertEquals(4, rescue.workLeft)
+        assertEquals("WORKING", call.status)
+        game.advance(4)
+        assertEquals("SOLVED", call.status)
+        val messages = game.state.radioArchive.filter { it.title == "Teilaufgabe erledigt" && it.incidentId == call.id }
+        assertEquals(listOf(patrol.callsign, rescue.callsign), messages.map { it.callsign })
+    }
+
+    @Test
+    fun completedLocalWorkCountsAsPartialWhenOtherServiceNeverArrives() {
+        val game = controller()
+        game.startShift()
+        val patrol = game.state.units.first { it.type == "STREIFE" }
+        val call = game.newIncident(
+            IncidentTemplate("Verkehrsunfall mit Nachforderung", 2, "STREIFE", 3, "Test",
+                requiredTypes = listOf("STREIFE", "RETTUNG"), deadline = 16),
+            GeoPoint(patrol.lon, patrol.lat),
+        )
+        assertTrue(game.dispatch(call, patrol, false))
+        game.advance(35)
+        assertEquals("PARTIAL", call.status)
+        assertTrue(call.outcome.contains("1 von 2"))
+        assertEquals(0, game.state.shiftSolved)
+        assertEquals(0, game.state.shiftFailed)
+        game.finishShift()
+        assertEquals(1, game.state.reports.single().partiallySolved)
+        val restored = GameStore.fromJson(GameStore.toJson(game.state))
+        assertEquals(1, restored.reports.single().partiallySolved)
+        assertEquals(call.tasks, restored.incidents.first { it.id == call.id }.tasks)
+    }
+
+    @Test
+    fun runningTaskSurvivesSavingRecallAndAReplacementCrew() {
+        val original = controller()
+        original.startShift()
+        val patrol = original.state.units.first { it.type == "STREIFE" }
+        val call = original.newIncident(
+            IncidentTemplate("Unfall mit Ablösung", 2, "STREIFE", 14, "Test",
+                requiredTypes = listOf("STREIFE", "RETTUNG")),
+            GeoPoint(patrol.lon, patrol.lat),
+        )
+        assertTrue(original.dispatch(call, patrol, false))
+        original.advance(patrol.travelLeft + patrol.readinessLeft + 4)
+        val saved = GameSnapshots.capture(original.state)
+        val restarted = GameController(GameStore.fromJson(GameStore.toJson(saved)), listOf(region()))
+        val restored = restarted.state.incidents.first { it.id == call.id }
+        val oldCrew = restarted.state.units.first { it.id == patrol.id }
+        assertEquals(9, restored.tasks.first().minutesLeft)
+        assertTrue(restarted.recall(oldCrew))
+        assertEquals("", restored.tasks.first().unitId)
+        assertEquals(9, restored.tasks.first().minutesLeft)
+        val replacement = restarted.state.units.first { it.id != patrol.id && it.type == "STREIFE" }
+        assertTrue(restarted.dispatch(restored, replacement, false))
+        replacement.readinessLeft = 0
+        replacement.travelLeft = 1
+        restarted.advance(1)
+        assertEquals(8, restored.tasks.first().minutesLeft)
+        assertEquals(replacement.id, restored.tasks.first().unitId)
+        assertEquals(9, saved.incidents.first { it.id == call.id }.tasks.first().minutesLeft)
+    }
+
+    @Test
+    fun aLegacyWorkingMultiRoleIncidentResumesItsRemainingMinutes() {
+        val game = controller()
+        game.startShift()
+        val patrol = game.state.units.first { it.type == "STREIFE" }
+        val rescue = game.state.units.first { it.type == "RETTUNG" }
+        val call = game.newIncident(
+            IncidentTemplate("Alter laufender Einsatz", 2, "STREIFE", 15, "Test",
+                requiredTypes = listOf("STREIFE", "RETTUNG")),
+            GeoPoint(patrol.lon, patrol.lat),
+        )
+        for (crew in listOf(patrol, rescue)) {
+            assertTrue(game.dispatch(call, crew, false))
+            crew.status = "WORKING"
+            crew.readinessLeft = 0
+            crew.travelLeft = 0
+            crew.workLeft = 4
+        }
+        call.status = "WORKING"
+        val raw = GameStore.toJson(game.state)
+        for (index in 0 until raw.getJSONArray("incidents").length())
+            raw.getJSONArray("incidents").getJSONObject(index).remove("tasks")
+        val restarted = GameController(GameStore.fromJson(raw), listOf(region()))
+        val restored = restarted.state.incidents.first { it.id == call.id }
+        assertTrue(restored.tasks.isEmpty())
+        restarted.advance(1)
+        assertEquals(listOf(3, 3), restored.tasks.map(IncidentTask::minutesLeft))
+        restarted.advance(3)
+        assertEquals("SOLVED", restored.status)
+    }
+
+    @Test
+    fun aFlexibleCrewCannotClearTwoConcurrentRequirementsAlone() {
+        val game = controller()
+        game.startShift()
+        val flexible = game.state.units.first { it.type == "SEK" }
+        val call = game.newIncident(
+            IncidentTemplate("Mehrere Aufgaben", 2, "STREIFE", 4, "Test",
+                requiredTypes = listOf("STREIFE", "SEK")),
+            GeoPoint(flexible.lon, flexible.lat),
+        )
+        assertTrue(game.dispatch(call, flexible, false))
+        game.advance(flexible.travelLeft + flexible.readinessLeft + 10)
+        assertEquals(listOf("SEK"), call.tasks.filter(IncidentTask::done).map(IncidentTask::role))
+        assertEquals(listOf("STREIFE"), game.remainingTypes(call))
+        assertEquals("WORKING", call.status)
+    }
+
+    @Test
+    fun completeTaskOutcomeReflectsRiskWithoutRandomFailure() {
+        fun finish(risk: Double): Pair<GameController, IncidentState> {
+            val game = controller()
+            game.startShift()
+            game.state.reputation = 70
+            val patrol = game.state.units.first { it.type == "STREIFE" }
+            val rescue = game.state.units.first { it.type == "RETTUNG" }
+            val call = game.newIncident(
+                IncidentTemplate("Koordinierte Hilfe", 2, "STREIFE", 3, "Test",
+                    requiredTypes = listOf("STREIFE", "RETTUNG")),
+                GeoPoint(patrol.lon, patrol.lat),
+            )
+            call.pending = ""
+            call.riskDelta = risk
+            for (crew in listOf(patrol, rescue)) {
+                assertTrue(game.dispatch(call, crew, false))
+                crew.readinessLeft = 0
+                crew.travelLeft = 1
+            }
+            game.advance(3)
+            assertEquals("SOLVED", call.status)
+            return game to call
+        }
+        val (safer, saferCall) = finish(-.08)
+        val (riskier, riskierCall) = finish(.08)
+        assertEquals(2, safer.state.reputation - riskier.state.reputation)
+        assertTrue(saferCall.outcome.contains("Risiko im Verlauf gesenkt"))
+        assertTrue(riskierCall.outcome.contains("Erhöhtes Risiko im Verlauf"))
+    }
+
+    @Test
+    fun finishedRoutineTaskSucceedsAcrossRandomSeeds() {
+        for (seed in listOf(7L, 11L, 42L, 1102L, 22109L, 31411L)) {
+            val game = controller()
+            game.startShift()
+            game.state.randomSeed = seed
+            val patrol = game.state.units.first { it.type == "STREIFE" }
+            val call = game.newIncident(
+                IncidentTemplate("Kurze Aufnahme", 3, "STREIFE", 3, "Test"), GeoPoint(patrol.lon, patrol.lat),
+            )
+            assertTrue(game.dispatch(call, patrol, false))
+            game.advance(patrol.travelLeft + patrol.readinessLeft + 2)
+            assertEquals("SOLVED", call.status)
+            assertTrue(call.tasks.single().done)
+        }
+    }
+
+    @Test
+    fun recallingAndResendingItsSupportCannotApplyTheSameBenefitTwice() {
+        val game = controller()
+        game.startShift()
+        val crews = game.state.units.filter { it.type == "STREIFE" }.take(2)
+        val call = game.newIncident(
+            IncidentTemplate("Unterstützte Aufnahme", 3, "STREIFE", 50, "Test"), GeoPoint(crews.first().lon, crews.first().lat),
+        )
+        fun arrive(crew: UnitState) {
+            assertTrue(game.dispatch(call, crew, false))
+            crew.readinessLeft = 0
+            crew.travelLeft = 1
+            game.advance(1)
+        }
+        arrive(crews[0])
+        arrive(crews[1])
+        val firstBoost = call.tasks.single()
+        assertEquals(crews[1].id, firstBoost.supportUnitId)
+        assertTrue(firstBoost.supportApplied)
+        assertTrue(game.recall(crews[1]))
+        arrive(crews[1])
+        assertEquals(firstBoost.minutesLeft - 1, call.tasks.single().minutesLeft)
+    }
+
+    @Test
+    fun oldLongRunningIncidentCanStillRecordATimeChangingDecision() {
+        val game = controller()
+        game.startShift()
+        val incident = game.newIncident(IncidentTemplate("Langer offener Vorgang", 3, "STREIFE", 50, "Test"))
+        incident.age = 1441
+        assertTrue(game.choose(incident, "ask"))
+        assertEquals(1440, incident.deadline)
+    }
+
+    @Test
     fun trainingExactlyTwoCompletedManagementDays() {
         for (h in listOf(8, 12, 24)) {
             val g = controller()

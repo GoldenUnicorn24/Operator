@@ -13,11 +13,14 @@ import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.util.LruCache
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import de.einsatzleitstelle110.core.time.SimulationClock
+import de.einsatzleitstelle110.core.time.SimulationTempo
 import kotlin.math.max
 import org.json.JSONObject
 
@@ -59,11 +62,14 @@ class MainActivity : Activity() {
     private var lastReportDay = -1
     private var lastRosterStatus = ""
     private var phoneScreen: PhoneScreen? = null
+    private var phoneQueue: LinearLayout? = null
+    private var phoneQueueVersion: List<String> = emptyList()
     private lateinit var phoneBar: TextView
-    private var simCarry = 0.0
+    private val simulationClock = SimulationClock()
     private var liveTick = 0
     private var ringTick = 0
     private var radioView: TextView? = null
+    private var archiveScreen: RadioArchiveScreen? = null
     private lateinit var radio: RadioChannel
     private lateinit var voice: VoicePlayer
     private val SAVE = 701
@@ -176,6 +182,7 @@ class MainActivity : Activity() {
             "HANDED" -> "Übergeben"
             "OPEN" -> "Notruf offen"
             "SOLVED" -> "Abgeschlossen"
+            "PARTIAL" -> "Teilweise abgeschlossen"
             "FAILED" -> "Fehlgeschlagen"
             else -> status
         }
@@ -274,7 +281,8 @@ class MainActivity : Activity() {
         val root = column().apply { setBackgroundColor(dark) }
         val header =
             row().apply {
-                setPadding(dp(16), dp(9), dp(8), dp(9))
+                val vertical = if (wideMap()) 3 else 9
+                setPadding(dp(16), dp(vertical), dp(8), dp(vertical))
                 setBackgroundColor(panel)
             }
         val brand = column()
@@ -284,7 +292,7 @@ class MainActivity : Activity() {
         clockView = text("", 12f, mint, true)
         header.addView(clockView)
         header.addView(action("☰") { showSettings() }, LinearLayout.LayoutParams(dp(48), dp(48)))
-        root.addView(header, LinearLayout.LayoutParams(-1, dp(68)))
+        root.addView(header, LinearLayout.LayoutParams(-1, dp(if (wideMap()) 54 else 68)))
         phoneBar = text("", 15f, Color.WHITE, true).apply {
             gravity = Gravity.CENTER
             setPadding(dp(12), dp(10), dp(12), dp(10))
@@ -296,7 +304,7 @@ class MainActivity : Activity() {
         body = FrameLayout(this)
         root.addView(body, LinearLayout.LayoutParams(-1, 0, 1f))
         navigation = row().apply { setBackgroundColor(panel) }
-        root.addView(navigation, LinearLayout.LayoutParams(-1, dp(64)))
+        root.addView(navigation, LinearLayout.LayoutParams(-1, dp(if (wideMap()) 48 else 64)))
         root.setOnApplyWindowInsetsListener { v, insets ->
             v.setPadding(0, insets.systemWindowInsetTop, 0, insets.systemWindowInsetBottom)
             insets
@@ -327,6 +335,7 @@ class MainActivity : Activity() {
                 },
                 onUnitDetails = { showUnit(it) },
                 toast = { toast(it) },
+                onResize = ::rebuildMapChrome,
             )
         map.onEmptyTap = {
             if (dispatch.isOpen) {
@@ -372,6 +381,8 @@ class MainActivity : Activity() {
         phoneScreen = null
         map.close()
         game = next
+        simulationClock.reset()
+        radio.reset()
         installNotifications()
         createMap()
         audio.muted = restored.mute
@@ -390,8 +401,10 @@ class MainActivity : Activity() {
     }
 
     private fun installNotifications() {
+        game.transmit = { lines ->
+            if (::radio.isInitialized) radio.say(lines)
+        }
         game.notify = { name, message ->
-            if (::radio.isInitialized) radio.say(RadioScript.event(name, message))
             when {
                 name == "Tutorial abgeschlossen" -> {
                     audio.cue("SUCCESS")
@@ -433,21 +446,18 @@ class MainActivity : Activity() {
             override fun run() {
                 if (isFinishing) return
                 val old = game.state.phase
-                var moved = false
-                if (foreground && old == "RUNNING" && !game.state.paused) {
-                    val steps = simulationRate() * TICK_MS / 1000.0 + simCarry
-                    val whole = steps.toInt()
-                    simCarry = steps - whole
-                    if (whole > 0) {
-                        game.advance(whole)
-                        moved = true
-                    }
-                    map.glideMs = 1000.0 / simulationRate()
+                val running = foreground && old == "RUNNING" && !game.state.paused
+                val tempo = simulationTempo()
+                val minutes = simulationClock.poll(SystemClock.uptimeMillis(), running, tempo)
+                if (minutes > 0) game.advance(minutes)
+                if (running) map.glideMs = tempo.millisecondsPerMinute
+                if (old != game.state.phase) {
+                    simulationClock.reset()
+                    save()
                 }
-                if (old != game.state.phase) save()
                 updatePhone()
                 updateRadio()
-                if (moved || ++liveTick % 4 == 0) updateLive()
+                if (minutes > 0 || ++liveTick % 4 == 0) updateLive()
                 if (old == "RUNNING" && !game.state.paused && ++saveTick % 60 == 0) save()
                 if (
                     old == "RUNNING" &&
@@ -461,13 +471,13 @@ class MainActivity : Activity() {
             }
         }
 
-    /** Simulated minutes per real second. ×8 is the old minute per second, ×4 an 8h shift in 16 minutes. */
-    private fun simulationRate(): Double {
-        val s = game.state
-        if (PhoneDesk.active(s) != null) return 1 / 10.0
-        if (PhoneDesk.ringing(s).isNotEmpty()) return minOf(s.speed, 2) / SPEED_DIVISOR
-        return (if (game.pendingDecisions() > 0) minOf(s.speed, 4) else s.speed) / SPEED_DIVISOR
-    }
+    private fun simulationTempo() =
+        SimulationTempo.from(
+            selected = game.state.speed,
+            inConversation = PhoneDesk.active(game.state) != null,
+            callWaiting = PhoneDesk.ringing(game.state).isNotEmpty(),
+            decisionPending = game.pendingDecisions() > 0,
+        )
 
     /** Saves from a state that is still locked continue in Hamburg between shifts. */
     private fun moveToHamburg(s: GameState) {
@@ -476,7 +486,6 @@ class MainActivity : Activity() {
         s.scope = "STATE"
         s.phase = "PLANNING"
         s.unlockedRegions.add("DE-HH")
-        s.phones.clear()
     }
 
     private fun updateRadio() {
@@ -484,12 +493,18 @@ class MainActivity : Activity() {
         radio.volume = if (game.state.mute) 0f else game.state.masterVolume * game.state.radioVolume
         voice.volume = game.state.masterVolume
         radio.ducked = PhoneDesk.active(game.state) != null
-        radio.pump { game.state.units.filter { it.region == game.state.region }.take(24).map { it.callsign } }
+        radio.pump()
     }
 
     private fun answerNext() {
         if (phoneScreen?.isShowing == true) return
         val s = game.state
+        if (s.phase != "RUNNING") return
+        PhoneDesk.active(s)?.let { current ->
+            sheet?.dismiss()
+            openPhone(current)
+            return
+        }
         val next = PhoneDesk.ringing(s).firstOrNull() ?: return
         if (!PhoneDesk.answer(game, next)) return
         sheet?.dismiss()
@@ -505,18 +520,26 @@ class MainActivity : Activity() {
 
     /** Ringing banner above every tab; the call screen stays up to date while someone talks. */
     private fun updatePhone() {
-        val waiting = PhoneDesk.ringing(game.state)
+        val s = game.state
+        val waiting = PhoneDesk.ringing(s)
+        val active = PhoneDesk.active(s)
         phoneScreen?.takeIf { it.isShowing }?.updateStatus()
-        if (waiting.isEmpty() || phoneScreen?.isShowing == true) {
+        if (s.phase != "RUNNING" || (waiting.isEmpty() && active == null) || phoneScreen?.isShowing == true) {
             phoneBar.visibility = View.GONE
             return
         }
         ringTick++
         phoneBar.visibility = View.VISIBLE
-        val left = (PhoneDesk.PATIENCE - waiting.first().waited).coerceAtLeast(0)
-        phoneBar.text = "☎  NOTRUF ANNEHMEN" + (if (waiting.size > 1) " · ${waiting.size} in der Leitung" else "") + " · legt auf in ~$left Min"
-        phoneBar.setBackgroundColor(if (ringTick % 4 < 2) Color.rgb(196, 42, 62) else Color.rgb(140, 26, 44))
-        if (ringTick % 16 == 1) audio.cue("CALL")
+        if (active != null) {
+            val waitingText = if (waiting.isEmpty()) "" else " · ${waiting.size} wartend"
+            phoneBar.text = "GESPRÄCH FORTSETZEN$waitingText"
+            phoneBar.setBackgroundColor(Color.rgb(20, 64, 82))
+        } else {
+            val left = (PhoneDesk.PATIENCE - waiting.first().waited).coerceAtLeast(0)
+            phoneBar.text = "NOTRUF ANNEHMEN" + (if (waiting.size > 1) " · ${waiting.size} in der Leitung" else "") + " · legt auf in ~$left Min"
+            phoneBar.setBackgroundColor(if (ringTick % 4 < 2) Color.rgb(196, 42, 62) else Color.rgb(140, 26, 44))
+        }
+        if (waiting.isNotEmpty() && ringTick % 16 == 1) audio.cue("CALL")
     }
 
     override fun onPause() {
@@ -524,6 +547,7 @@ class MainActivity : Activity() {
         if (::radio.isInitialized) radio.stop()
         if (::voice.isInitialized) voice.stop()
         foreground = false
+        simulationClock.pause()
         handler.removeCallbacks(ticker)
         if (::game.isInitialized) {
             game.state.paused = true
@@ -547,8 +571,11 @@ class MainActivity : Activity() {
         sheet?.dismiss()
         chiefScreen?.close()
         pendingMapPoint = null
+        phoneScreen?.abandon()
+        phoneScreen = null
         if (::audio.isInitialized) audio.close()
         if (::radio.isInitialized) radio.close()
+        if (::voice.isInitialized) voice.close()
         if (::map.isInitialized) map.close()
         images.evictAll()
         super.onDestroy()
@@ -570,24 +597,28 @@ class MainActivity : Activity() {
     }
 
     private fun updateLive() {
-        clockView.text =
-            "TAG ${game.state.day}\n${game.clock()} ${if(game.state.phase=="RUNNING")if(game.state.paused)"Pause" else "×${game.state.speed}" else "Planung"}"
+        val tempo = simulationTempo()
+        clockView.text = "TAG ${game.state.day}\n${game.clock()} " + when (game.state.phase) {
+            "RUNNING" -> if (game.state.paused) "Pause" else tempo.label
+            "DEBRIEF" -> "Übergabe"
+            else -> "Planung"
+        }
+        val tempoLimit = tempo.limit?.description?.takeIf { game.state.phase == "RUNNING" && !game.state.paused }
+        clockView.tooltipText = tempoLimit
+        clockView.contentDescription = clockView.text.toString() + (tempoLimit?.let { " · $it" } ?: "")
         val left = (game.state.duration - game.state.elapsed).coerceAtLeast(0)
-        mapCounter?.text =
-            "${game.openIncidents()} Lagen  ·  ${game.freeUnits()} Kräfte frei" +
-                (if (game.state.phase == "RUNNING") "  ·  Schichtende in %d:%02d".format(left / 60, left % 60) else "") +
-                "\n${SimulationConditions.weatherOptions[game.state.weather]} · " +
+        val workload = "${game.openIncidents()} Einsätze · ${game.freeUnits()} frei"
+        val waiting = PhoneDesk.ringing(game.state).size
+        val shiftLeft = if (game.state.phase == "RUNNING") " · Schichtende in %d:%02d".format(left / 60, left % 60) else ""
+        mapCounter?.text = if (wideMap()) "$workload\n$waiting wartend$shiftLeft" else
+            "$workload · $waiting wartend$shiftLeft\n" +
+                "${SimulationConditions.weatherOptions[game.state.weather]} · " +
                 (if (SimulationConditions.trafficFactor(game.hour()) > 1) "Berufsverkehr" else if (SimulationConditions.trafficFactor(game.hour()) < 1) "Freie Straßen" else "Normalverkehr") +
-                " · Präsenz −${(game.patrolPresence() * 100).roundToInt()}% Einbruch/Sachbeschädigung" +
-                (PhoneDesk.event(game.state)?.let { "\n${if (PhoneDesk.surgeActive(game.state)) "⚠ Hochphase: " else "Lagebild: "}${it.title}" } ?: "") +
-                (if (game.state.takeStreak >= 2) "  ·  Serie ${game.state.takeStreak}" else "")
-        radioView?.text = game.state.logs.firstOrNull()?.substringAfter("] ") ?: ""
-        mapAction?.text =
-            when (game.state.phase) {
-                "PLANNING" -> "Schicht planen"
-                "RUNNING" -> if (game.state.paused) "Fortsetzen" else "Pause"
-                else -> "Tagesbericht"
-            }
+                (PhoneDesk.event(game.state)?.let { "\n${if (PhoneDesk.surgeActive(game.state)) "Hochphase" else "Lagebild"} · ${it.title}" } ?: "")
+        radioView?.text = game.state.radioArchive.lastOrNull()?.let { "${it.title} · ${it.message}" }
+            ?: game.state.logs.firstOrNull()?.substringAfter("] ") ?: ""
+        archiveScreen?.refresh()
+        mapAction?.text = mapActionLabel()
         incomingView?.text =
             game.state.incidents
                 .firstOrNull { it.region == game.state.region && it.status == "OPEN" }
@@ -595,13 +626,20 @@ class MainActivity : Activity() {
         if (tab == "MAP") {
             if (game.state.tutorialStep != lastTutorialStep && !(::dispatch.isInitialized && dispatch.isOpen)) rebuildMapChrome()
             map.invalidate()
-            if (::dispatch.isInitialized && dispatch.isOpen) dispatch.refresh() else updateQueue()
-            speedView?.text = speedLabel()
+            if (::dispatch.isInitialized && dispatch.isOpen) dispatch.refresh()
+            updateQueue()
+            speedView?.apply {
+                text = "×${game.state.speed}"
+                val reason = tempo.limit?.description
+                tooltipText = if (game.state.phase == "RUNNING" && reason != null) "${tempo.label} · $reason" else null
+                contentDescription = "Spieltempo wechseln · $text" + (tooltipText?.let { " · $it" } ?: "")
+            }
         }
         val version =
             game.state.incidents.joinToString { it.id + it.status } +
                 game.state.units.joinToString { it.id + it.status + it.trainingLeft }
         if (tab == "CALLS" && sheet?.isShowing != true) incidentDesk?.refresh()
+        if (tab == "PHONE") updatePhoneQueue()
         if (tab == "UNITS" && sheet?.isShowing != true && version != pageVersion) {
             val old = (body.getChildAt(0) as? ScrollView)?.scrollY ?: 0
             pageVersion = version
@@ -615,6 +653,8 @@ class MainActivity : Activity() {
     private fun showTab(next: String) {
         tab = next
         incidentDesk = null
+        phoneQueue = null
+        phoneQueueVersion = emptyList()
         body.removeAllViews()
         navigation.removeAllViews()
         mapCounter = null
@@ -622,15 +662,18 @@ class MainActivity : Activity() {
         incomingView = null
         val labels =
             listOf(
-                "MAP" to "Karte",
-                "CALLS" to "Lagen",
-                "UNITS" to "Personal",
-                "MANAGE" to "Dienst",
-                "EDITOR" to "Editor",
+                "MAP" to "Leitstelle",
+                "PHONE" to "Telefon",
+                "UNITS" to "Einheiten",
+                "MANAGE" to "Präsidium",
+                "MORE" to "Mehr",
             )
         for ((key, name) in labels) {
-            val b = action(name) { showTab(key) }
-            b.textSize = 11f
+            val b = action(name) { showTab(key) }.apply {
+                setPadding(dp(3), dp(8), dp(3), dp(8))
+                isSelected = key == tab || (key == "MORE" && tab in listOf("CALLS", "EDITOR"))
+            }
+            b.textSize = 12f
             b.background =
                 rounded(
                     if (key == tab) Color.rgb(21, 73, 93) else panel,
@@ -641,20 +684,89 @@ class MainActivity : Activity() {
         }
         when (tab) {
             "MAP" -> showMap()
+            "PHONE" -> showPhoneDesk()
             "CALLS" -> showCalls()
             "UNITS" -> showUnits()
             "MANAGE" -> showManage()
             "EDITOR" -> showEditor()
+            "MORE" -> showMore()
         }
         updateLive()
+    }
+
+    private fun showPhoneDesk() {
+        val content = page()
+        val panel = card(content)
+        title(panel, "Telefon")
+        gap(panel)
+        phoneQueue = column().also { panel.addView(it) }
+        updatePhoneQueue()
+    }
+
+    private fun updatePhoneQueue() {
+        val queue = phoneQueue ?: return
+        val state = game.state
+        val active = PhoneDesk.active(state)
+        val ringing = PhoneDesk.ringing(state)
+        val nextVersion = listOf(state.phase, state.phoneEnabled.toString(), active?.id.orEmpty()) +
+            ringing.map { "${it.id}:${it.waited}" }
+        if (nextVersion == phoneQueueVersion) return
+        phoneQueueVersion = nextVersion
+        queue.removeAllViews()
+        if (state.phase != "RUNNING") {
+            val pending = ringing.size + if (active == null) 0 else 1
+            queue.addView(text(if (pending > 0) "$pending Notrufe für die Folgeschicht" else "Außer Dienst", 14f, muted))
+            return
+        }
+        if (active != null) {
+            queue.addView(action("Gespräch fortsetzen · ${active.id}", true) { answerNext() })
+            gap(queue)
+        }
+        if (ringing.isEmpty()) {
+            queue.addView(text(if (active == null) "Keine offenen Notrufe" else "Keine weiteren Anrufe", 14f, muted))
+            return
+        }
+        title(queue, "Warteschlange")
+        ringing.forEach { call ->
+            queue.addView(text("${call.id} · ${call.waited} Min. Wartezeit", 14f, ink))
+            if (active == null) queue.addView(action("Annehmen · ${call.id}", true) {
+                if (PhoneDesk.answer(game, call)) openPhone(call)
+            })
+            gap(queue)
+        }
+    }
+
+    private fun showMore() {
+        val content = page()
+        val panel = card(content)
+        title(panel, "Mehr")
+        gap(panel)
+        val entries = listOf<Pair<String, () -> Unit>>(
+            "Einsätze" to { showTab("CALLS") },
+            "Funkarchiv" to ::showRadioLog,
+            "Speicherstände" to { SaveSlotsScreen(this, game, ::restoreState).show() },
+            "Kreativmodus" to { showTab("EDITOR") },
+            "Einstellungen" to ::showSettings,
+            "Hauptmenü" to { game.state.paused = true; save(); showWelcome() },
+        )
+        entries.forEach { (label, open) ->
+            panel.addView(action(label, onClick = open))
+            gap(panel)
+        }
     }
 
     private var mapChrome: FrameLayout? = null
     private var lastTutorialStep = 0
 
+    private fun wideMap() =
+        resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE &&
+            resources.configuration.screenWidthDp >= 620
+
     private fun showMap() {
         (map.parent as? ViewGroup)?.removeView(map)
-        body.addView(map, FrameLayout.LayoutParams(-1, -1))
+        body.addView(map, FrameLayout.LayoutParams(-1, -1).apply {
+            if (wideMap()) leftMargin = dp(194)
+        })
         map.setContentInsets(62f, 168f)
         map.prepareRegion()
         val chrome = FrameLayout(this)
@@ -663,9 +775,16 @@ class MainActivity : Activity() {
         rebuildMapChrome()
     }
 
-    private fun speedLabel() =
-        if (game.state.phase != "RUNNING") "×${game.state.speed}"
-        else if (game.state.paused) "▶ ×${game.state.speed}" else "❚❚ ×${game.state.speed}"
+    private fun mapActionLabel() = when (game.state.phase) {
+        "PLANNING" -> "Schicht planen"
+        "RUNNING" -> if (game.state.paused) "Fortsetzen" else "Pause"
+        else -> "Tagesbericht"
+    }
+
+    private fun wideFileWidth(): Int {
+        val width = body.width.takeIf { it > 0 } ?: resources.displayMetrics.widthPixels
+        return minOf(dp(390), width * 40 / 100)
+    }
 
     /** Compact controls around the map: top toolbar, zoom, and either queue or dispatch panel. */
     private fun rebuildMapChrome() {
@@ -683,16 +802,21 @@ class MainActivity : Activity() {
         fun tool(label: String, desc: String, w: Int, onClick: () -> Unit) =
             ui.button(label) { onClick() }.apply { contentDescription = desc; textSize = 12f }
                 .also { top.addView(it, LinearLayout.LayoutParams(if (w == 0) 0 else dp(w), dp(44), if (w == 0) 1f else 0f).apply { marginEnd = dp(5) }) }
+        val wide = wideMap()
+        val split = wide && dispatch.isOpen
         tool("▾ ${scopeName()}", "Zuständigkeit wählen", 0) { chooseArea() }
         tool(if (map.filter == "ALLE") "Filter" else map.filter, "Kartenebenen filtern", 74) { chooseFilter() }
-        tool("Land", "Ganzes Bundesland zeigen", 54) {
-            map.fitWholeState()
+        if (!split) {
+            tool("Land", "Ganzes Bundesland zeigen", 54) { map.fitWholeState() }
+            tool(if (map.showLegend) "Legende ✓" else "Legende", "Legende ein- oder ausblenden", 82) {
+                map.showLegend = !map.showLegend
+                rebuildMapChrome()
+            }
         }
-        tool(if (map.showLegend) "Legende ✓" else "Legende", "Legende ein- oder ausblenden", 82) {
-            map.showLegend = !map.showLegend
-            rebuildMapChrome()
-        }
-        chrome.addView(top, FrameLayout.LayoutParams(-1, -2, Gravity.TOP))
+        chrome.addView(top, FrameLayout.LayoutParams(-1, -2, Gravity.TOP).apply {
+            if (wide) leftMargin = dp(194)
+            if (split) rightMargin = wideFileWidth() + dp(8)
+        })
         lastTutorialStep = game.state.tutorialStep
         if (game.state.tutorialStep in 1..3 && game.state.phase == "RUNNING") {
             val tip = column().apply {
@@ -718,26 +842,24 @@ class MainActivity : Activity() {
         zoom.addView(ui.button("−") { map.zoomBy(1 / 1.6f) }.apply { textSize = 20f; contentDescription = "Herauszoomen" }, LinearLayout.LayoutParams(dp(46), dp(46)))
         zoom.addView(View(this), LinearLayout.LayoutParams(1, dp(6)))
         zoom.addView(ui.button("⌂") { map.resetCamera() }.apply { textSize = 17f; contentDescription = "Zurück zur Übersicht" }, LinearLayout.LayoutParams(dp(46), dp(46)))
-        if (::dispatch.isInitialized && dispatch.isOpen) {
+        if (wide) {
+            buildWideMap(chrome, zoom)
+            return
+        }
+        if (dispatch.isOpen) {
             (dispatch.root.parent as? ViewGroup)?.removeView(dispatch.root)
-            val landscape = resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
-            if (landscape) {
-                val panelWidth = (body.width.takeIf { it > 0 } ?: resources.displayMetrics.widthPixels) * 44 / 100
-                map.obstructedRight = panelWidth.toFloat() + dp(12)
-                map.obstructedBottom = 0f
-                map.setContentInsets(62f, 20f)
-                chrome.addView(dispatch.root, FrameLayout.LayoutParams(panelWidth, -1, Gravity.END).apply { setMargins(0, dp(58), dp(6), dp(6)) })
-                map.reveal(dispatch.call!!.lon, dispatch.call!!.lat)
-                return
-            }
             map.obstructedRight = 0f
-            val h = (body.height.takeIf { it > 0 } ?: resources.displayMetrics.heightPixels) * 54 / 100
+            val available = body.height.takeIf { it > 0 } ?: resources.displayMetrics.heightPixels
+            val h = (available * dispatch.heightFraction).roundToInt().coerceIn(dp(106), max(dp(106), available - dp(110)))
             map.obstructedBottom = h.toFloat() + dp(6)
             // Zoom controls sit just above the panel so nothing overlaps.
             chrome.addView(row().apply {
                 addView(ui.button("+") { map.zoomBy(1.6f) }.apply { textSize = 18f; contentDescription = "Hineinzoomen" }, LinearLayout.LayoutParams(dp(46), dp(42)))
                 addView(ui.button("−") { map.zoomBy(1 / 1.6f) }.apply { textSize = 18f; contentDescription = "Herauszoomen" }, LinearLayout.LayoutParams(dp(46), dp(42)).apply { marginStart = dp(6) })
             }, FrameLayout.LayoutParams(-2, -2, Gravity.END or Gravity.BOTTOM).apply { setMargins(0, 0, dp(10), h + dp(14)) })
+            chrome.addView(mapControls(includeQueue = false), FrameLayout.LayoutParams(dp(194), -2, Gravity.START or Gravity.BOTTOM).apply {
+                setMargins(dp(6), 0, 0, h + dp(14))
+            })
             chrome.addView(dispatch.root, FrameLayout.LayoutParams(-1, h, Gravity.BOTTOM).apply { setMargins(dp(6), 0, dp(6), dp(6)) })
             map.reveal(dispatch.call!!.lon, dispatch.call!!.lat, (body.height - h).toFloat())
             return
@@ -765,13 +887,21 @@ class MainActivity : Activity() {
         val queue = column().apply { setPadding(0, dp(4), 0, dp(6)) }
         queueView = queue
         bottom.addView(queue)
+        bottom.addView(mapControls(includeQueue = true))
+        chrome.addView(bottom, FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM).apply { setMargins(dp(6), 0, dp(6), dp(6)) })
+        updateQueue()
+        updateLive()
+    }
+
+    private fun mapControls(includeQueue: Boolean): LinearLayout {
         val actions = row()
         mapAction =
-            ui.button("", true) {
+            ui.button(mapActionLabel(), true) {
                 when (game.state.phase) {
                     "PLANNING" -> showShiftDialog()
                     "RUNNING" -> {
                         game.state.paused = !game.state.paused
+                        simulationClock.pause()
                         updateLive()
                         save()
                     }
@@ -780,25 +910,122 @@ class MainActivity : Activity() {
             }
         actions.addView(mapAction, LinearLayout.LayoutParams(0, dp(46), 1f))
         speedView =
-            ui.button(speedLabel()) {
-                val speeds = listOf(1, 4, 8, 16)
+            ui.button("×${game.state.speed}") {
+                val speeds = SimulationTempo.speeds
                 game.state.speed = speeds[(speeds.indexOf(game.state.speed) + 1).mod(speeds.size)]
                 updateLive()
                 save()
             }.apply { contentDescription = "Spieltempo wechseln" }
         actions.addView(speedView, LinearLayout.LayoutParams(dp(84), dp(46)).apply { marginStart = dp(6) })
-        actions.addView(ui.button("Liste") { showTab("CALLS") }.apply { contentDescription = "Notrufliste" }, LinearLayout.LayoutParams(dp(70), dp(46)).apply { marginStart = dp(6) })
-        bottom.addView(actions)
-        chrome.addView(bottom, FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM).apply { setMargins(dp(6), 0, dp(6), dp(6)) })
+        if (includeQueue) actions.addView(ui.button("Liste") { showTab("CALLS") }.apply { contentDescription = "Notrufliste" }, LinearLayout.LayoutParams(dp(70), dp(46)).apply { marginStart = dp(6) })
+        return actions
+    }
+
+    private fun buildWideMap(chrome: FrameLayout, zoom: LinearLayout) {
+        val left = column().apply {
+            setPadding(dp(9), dp(9), dp(9), dp(8))
+            background = ui.bg(panel, edge, 12)
+        }
+        title(left, "Einsätze")
+        mapCounter = text("", 12f, muted).also { left.addView(it) }
+        left.addView(ui.button("Telefon") { showTab("PHONE") })
+        queueView = column().also { left.addView(it) }
+        left.addView(ui.button("Einsatzliste") { showTab("CALLS") })
+        if (dispatch.isOpen) left.addView(ui.button("Karte") { showMapTools() })
+        val rail = ScrollView(this).apply { addView(left) }
+        chrome.addView(rail, FrameLayout.LayoutParams(dp(188), -1, Gravity.START).apply {
+            setMargins(dp(6), dp(6), 0, dp(6))
+        })
+
+        val controls = row().apply {
+            setPadding(dp(10), dp(5), dp(6), dp(5))
+            background = ui.bg(panel, edge, 12)
+            isClickable = true
+        }
+        radioView = text("", 12f, cyan).apply {
+            maxLines = 1
+            ellipsize = android.text.TextUtils.TruncateAt.END
+            contentDescription = "Letzte Funkmeldung"
+            setOnClickListener { showRadioLog() }
+        }
+        controls.addView(radioView, LinearLayout.LayoutParams(0, dp(44), 1f))
+        controls.addView(mapControls(includeQueue = false), LinearLayout.LayoutParams(dp(218), -2))
+        chrome.addView(controls, FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM).apply {
+            setMargins(dp(199), 0, dp(6), dp(6))
+        })
+
+        map.obstructedBottom = dp(64).toFloat()
+        map.setContentInsets(62f, 64f)
+        if (dispatch.isOpen) {
+            (dispatch.root.parent as? ViewGroup)?.removeView(dispatch.root)
+            val panelWidth = wideFileWidth()
+            map.obstructedRight = panelWidth.toFloat() + dp(12)
+            chrome.addView(dispatch.root, FrameLayout.LayoutParams(panelWidth, -1, Gravity.END).apply {
+                setMargins(0, dp(6), dp(6), dp(64))
+            })
+            dispatch.call?.let { map.reveal(it.lon, it.lat) }
+        } else {
+            map.obstructedRight = 0f
+            chrome.addView(zoom, FrameLayout.LayoutParams(-2, -2, Gravity.END or Gravity.CENTER_VERTICAL))
+        }
         updateQueue()
         updateLive()
     }
 
+    private fun showMapTools() {
+        val tools = column()
+        tools.addView(action("Landesübersicht") {
+            sheet?.dismiss()
+            map.fitWholeState()
+        })
+        gap(tools)
+        tools.addView(action(if (map.showLegend) "Legende ausblenden" else "Legende einblenden") {
+            map.showLegend = !map.showLegend
+            sheet?.dismiss()
+            rebuildMapChrome()
+        })
+        showSheet("Karte", tools)
+    }
+
     private fun showRadioLog() {
-        val log = ui.column()
-        game.state.logs.take(150).forEach { log.addView(text(it, 12f, ink).apply { setPadding(0, dp(5), 0, dp(5)) }) }
         sheet?.dismiss()
-        sheet = showShiftScreenDialog(this, "Funkprotokoll", log)
+        val screen = RadioArchiveScreen(this, game.state, onReplay = { entry ->
+            val s = game.state
+            if (s.mute || s.masterVolume == 0f || s.radioVolume == 0f) {
+                toast("Der Funkton ist stummgeschaltet.")
+            } else {
+                radio.say(entry.lines().map { it.copy(priority = RadioPriority.ROUTINE) })
+                toast("Funkmeldung zur Wiedergabe vorgemerkt.")
+            }
+        }, onActions = ::showRadioActions)
+        archiveScreen = screen
+        sheet = screen.dialog
+        screen.dialog.setOnDismissListener { if (archiveScreen === screen) archiveScreen = null }
+    }
+
+    private fun showRadioActions(entry: RadioEntry) {
+        val actions = RadioOperations.actions(game, entry)
+        if (actions.isEmpty()) {
+            toast("Die zugehörige Einsatzakte ist nicht verfügbar.")
+            return
+        }
+        AlertDialog.Builder(this)
+            .setTitle(entry.title)
+            .setItems(actions.map(RadioAction::label).toTypedArray()) { _, index ->
+                when (actions[index]) {
+                    RadioAction.OPEN_INCIDENT -> RadioOperations.incident(game, entry)?.let(::openCall)
+                    RadioAction.ACKNOWLEDGE, RadioAction.REQUEST_STATUS -> {
+                        val success = if (actions[index] == RadioAction.ACKNOWLEDGE) RadioOperations.acknowledge(game, entry)
+                            else RadioOperations.requestStatus(game, entry)
+                        if (success) {
+                            save()
+                            archiveScreen?.refresh(force = true)
+                        } else toast("Die Funkaktion ist nicht mehr verfügbar.")
+                    }
+                }
+            }
+            .setNegativeButton("Schließen", null)
+            .show()
     }
 
     /** Up to three most urgent calls as tappable rows under the map. */
@@ -826,7 +1053,10 @@ class MainActivity : Activity() {
             if (c.pending.isNotBlank()) r.addView(ui.chip("⚠", ui.amber, true), LinearLayout.LayoutParams(-2, -2).apply { marginStart = dp(4) })
             val attention = IncidentDesk.attention(game, c)
             r.addView(text("  ${c.title} · ${c.location}", 13f, ink, c.status == "OPEN").apply { maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END }, LinearLayout.LayoutParams(0, -2, 1f))
-            r.addView(text(attention.reason, 11f, if (attention.order == 0) red else muted, true).apply { maxWidth = dp(150); maxLines = 2 })
+            if (!wideMap()) r.addView(text(attention.reason, 11f, if (attention.order == 0) red else muted, true).apply {
+                maxWidth = dp(150)
+                maxLines = 2
+            })
             q.addView(r, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(4) })
         }
         if (calls.size > 3) q.addView(text("+ ${calls.size - 3} weitere Lagen · Liste", 11f, muted).apply { setPadding(dp(4), dp(4), 0, 0); setOnClickListener { showTab("CALLS") } })
@@ -1364,7 +1594,7 @@ class MainActivity : Activity() {
         val list = page()
         val s = game.state
         val c = card(list)
-        title(c, "Dienstleitung", scopeName())
+        title(c, "Präsidium", scopeName())
         gap(c)
         c.addView(action("Polizeichef · Dienststellen, Fuhrpark & Personal", true) { showChief() })
         gap(c)
@@ -1428,7 +1658,7 @@ class MainActivity : Activity() {
             val controls = card(list)
             title(controls, "Spieltempo")
             val speeds = row()
-            for (n in listOf(1, 4, 8, 16)) speeds.addView(
+            for (n in SimulationTempo.speeds) speeds.addView(
                 action("${n}×") {
                     s.speed = n
                     refresh()
@@ -1450,6 +1680,7 @@ class MainActivity : Activity() {
                         )
                         .setPositiveButton("Übergeben") { _, _ ->
                             game.finishShift()
+                            simulationClock.reset()
                             refresh()
                             showDebrief()
                         }
@@ -1465,7 +1696,7 @@ class MainActivity : Activity() {
             h.addView(text("Tag ${r.day} · ${r.duration/60}h", 15f, ink, true))
             h.addView(
                 text(
-                    "${r.solved} Erfolge · ${r.failed} Fehlschläge · ${r.handed} Übergaben",
+                    "${r.solved} Erfolge · ${r.partiallySolved} Teilabschlüsse · ${r.failed} Fehlschläge · ${r.handed} Übergaben",
                     13f,
                     muted,
                 )
@@ -1480,6 +1711,8 @@ class MainActivity : Activity() {
     }
 
     private fun showDebrief() {
+        phoneScreen?.abandon()
+        phoneScreen = null
         sheet?.dismiss()
         sheetName = "Tagesauswertung"
         sheet = ShiftReportScreen(this, game) { refresh(); showShiftDialog() }.show()
@@ -1953,19 +2186,7 @@ class MainActivity : Activity() {
         gap(c)
         c.addView(action("Spielstand importieren") { importSave() })
         gap(c)
-        c.addView(
-            action("Funkprotokoll") {
-                val log = column()
-                title(log, "Funkprotokoll")
-                gap(log)
-                log.addView(
-                    text(game.state.logs.joinToString("\n\n"), 13f, muted).apply {
-                        setTextIsSelectable(true)
-                    }
-                )
-                showSheet("Textfunk", log)
-            }
-        )
+        c.addView(action("Funkarchiv") { showRadioLog() })
         gap(c)
         c.addView(
             action("Quellen und Lizenzen") {
@@ -1995,36 +2216,63 @@ class MainActivity : Activity() {
     }
 
     private fun showWelcome() {
-        val c = column()
-        c.addView(image("dispatch_center.webp", 170), LinearLayout.LayoutParams(-1, dp(170)))
-        gap(c)
-        title(
-            c,
-            "Deine Leitstelle. Dein Dienst.",
-            "Wähle ein überschaubares Zuständigkeitsgebiet oder übernimm das ganze Bundesland.",
+        val menu = column()
+        menu.addView(ImageView(this).apply {
+            setImageResource(applicationInfo.icon)
+            scaleType = ImageView.ScaleType.CENTER_INSIDE
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+        }, LinearLayout.LayoutParams(dp(72), dp(72)))
+        title(menu, "EINSATZLEITSTELLE 110", "DEUTSCHLAND")
+        gap(menu, 16)
+        val actions = listOf<Pair<String, () -> Unit>>(
+            "Spiel fortsetzen" to {
+                sheet?.dismiss()
+                showTab("MAP")
+                when (game.state.phase) {
+                    "PLANNING" -> showShiftDialog()
+                    "DEBRIEF" -> showDebrief()
+                }
+            },
+            "Neue Karriere" to { startNewGame("CAREER") },
+            "Sandbox" to { startNewGame("SANDBOX") },
+            "Speicherstände" to {
+                sheet?.dismiss()
+                SaveSlotsScreen(this, game, ::restoreState).show()
+            },
+            "Kreativmodus" to { sheet?.dismiss(); showTab("EDITOR") },
+            "Einstellungen" to ::showSettings,
         )
-        gap(c)
-        c.addView(
-            text(
-                "Nimm Notrufe selbst an: Was du nicht fragst, weißt du nicht. Schicke die richtigen Kräfte, führe sie auf der Live-Karte und halte eine Schulnote von 1 für deine Schicht.",
-                14f,
-                muted,
-            )
-        )
-        gap(c)
-        c.addView(
-            action("Tutorial: 3 geführte Einsätze in Hamburg", true) {
+        actions.forEachIndexed { index, (label, open) ->
+            menu.addView(action(label, index == 0, open))
+            gap(menu)
+        }
+        if (game.state.phase == "PLANNING" && game.state.day == 1) {
+            menu.addView(action("Tutorial in Hamburg") {
                 sheet?.dismiss()
                 game.startTutorial()
-                save()
-                showTab("MAP")
-            }
-        )
-        gap(c)
-        c.addView(action("Zuständigkeit wählen") { chooseArea() })
-        gap(c)
-        c.addView(action("Schicht planen") { showShiftDialog() })
-        showSheet("Einsatzleitstelle 110", c)
+                refresh()
+            })
+            gap(menu)
+        }
+        val version = packageManager.getPackageInfo(packageName, 0).versionName.orEmpty()
+        menu.addView(text("Version $version", 12f, muted))
+        showSheet("Hauptmenü", menu)
+    }
+
+    private fun startNewGame(mode: String) {
+        fun start() {
+            val state = GameState(mode = mode, phoneEnabled = phoneDeskDefault)
+            tab = "MAP"
+            restoreState(state)
+            showShiftDialog()
+        }
+        AlertDialog.Builder(this)
+            .setTitle(if (mode == "CAREER") "Neue Karriere beginnen?" else "Neue Sandbox beginnen?")
+            .setMessage("Der neue Spielstand ersetzt die automatische Fortsetzung. Du kannst den laufenden Stand vorher in einem Speicherplatz sichern.")
+            .setNegativeButton("Abbrechen", null)
+            .setNeutralButton("Speicherplätze") { _, _ -> SaveSlotsScreen(this, game, ::restoreState).show() }
+            .setPositiveButton("Neues Spiel") { _, _ -> start() }
+            .show()
     }
 
     private fun showSheet(name: String, content: LinearLayout) {
@@ -2181,22 +2429,18 @@ class MainActivity : Activity() {
     override fun onBackPressed() {
         if (sheet?.isShowing == true) sheet?.dismiss()
         else if (tab != "MAP") showTab("MAP")
-        else
-            AlertDialog.Builder(this)
-                .setTitle("Dienst unterbrechen?")
-                .setMessage("Der aktuelle Stand wird gespeichert.")
-                .setPositiveButton("Beenden") { _, _ ->
-                    save()
-                    finish()
-                }
-                .setNegativeButton("Weiterspielen", null)
-                .show()
+        else if (dispatch.isOpen) {
+            dispatch.close()
+            rebuildMapChrome()
+        } else {
+            game.state.paused = true
+            save()
+            showWelcome()
+        }
     }
 
     companion object {
         const val TICK_MS = 250L
-        /** Speed ÷ this = simulated minutes per real second. ×4 plays an 8h shift in 10 minutes. */
-        const val SPEED_DIVISOR = 5.0
         /** Only Hamburg can be played for now; device tests of other states switch this off. */
         @JvmField var hamburgOnly = true
         /** New games take calls by phone. Device tests of the map flow switch this off. */

@@ -72,9 +72,8 @@ class TacticalMapView(
 
     /** Smoothly animated route progress per unit, so vehicles glide along the roads between ticks. */
     private class Anim(
-        val key: Int,
-        val points: List<GeoPoint>,
-        val cum: DoubleArray,
+        val route: RouteGeometry,
+        val status: String,
         var from: Double,
         var to: Double,
         var started: Long,
@@ -316,24 +315,17 @@ class TacticalMapView(
 
     // --- Unit animation along the route -----------------------------------------------------
 
-    private fun routeOf(u: UnitState): List<GeoPoint> =
-        u.routePoints.ifEmpty { listOf(GeoPoint(u.startLon, u.startLat), GeoPoint(u.destLon, u.destLat)) }
-
     private fun anim(u: UnitState, now: Long, paused: Boolean): Pair<GeoPoint, Float>? {
         if (u.status !in listOf("DRIVING", "RETURNING", "PATROLLING")) {
             anims.remove(u.id)
             return null
         }
-        val pts = routeOf(u)
-        if (pts.size < 2) return null
-        val key = pts.size * 31 + pts.first().hashCode() * 17 + pts.last().hashCode() + u.status.hashCode()
+        val route = u.routeGeometry()
         val target =
             if (u.readinessLeft > 0 || u.travelTotal <= 0) 0.0 else 1.0 - u.travelLeft.toDouble() / u.travelTotal
         var a = anims[u.id]
-        if (a == null || a.key != key || target < a.to) {
-            val cum = DoubleArray(pts.size)
-            for (i in 1 until pts.size) cum[i] = cum[i - 1] + GeoData.km(pts[i - 1], pts[i])
-            a = Anim(key, pts, cum, target, target, now, target)
+        if (a == null || a.route !== route || a.status != u.status || target < a.to) {
+            a = Anim(route, u.status, target, target, now, target)
             anims[u.id] = a
         }
         if (target != a.to) {
@@ -348,18 +340,14 @@ class TacticalMapView(
     }
 
     private fun along(a: Anim, progress: Double): Pair<GeoPoint, Float> {
-        val total = a.cum.last()
-        if (total <= 0) return a.points.last() to 0f
-        val d = total * progress.coerceIn(0.0, 1.0)
-        var i = a.cum.indexOfFirst { it >= d }.let { if (it <= 0) 1 else it }
-        if (i >= a.points.size) i = a.points.size - 1
-        val seg = (a.cum[i] - a.cum[i - 1]).takeIf { it > 0 } ?: 1.0
-        val f = ((d - a.cum[i - 1]) / seg).coerceIn(0.0, 1.0)
-        val p0 = a.points[i - 1]
-        val p1 = a.points[i]
-        val pos = GeoPoint(p0.lon + (p1.lon - p0.lon) * f, p0.lat + (p1.lat - p0.lat) * f)
+        val route = a.route
+        if (route.lengthKm <= 0) return route.points.last() to 0f
+        val distance = route.distanceAt(progress)
+        val segment = route.segmentEnd(distance)
+        val p0 = route.points[segment - 1]
+        val p1 = route.points[segment]
         val heading = Math.toDegrees(atan2(-(p1.lat - p0.lat), (p1.lon - p0.lon) * cos(Math.toRadians(p0.lat)))).toFloat() + 90f
-        return pos to heading
+        return route.positionOn(segment, distance) to heading
     }
 
     // --- Drawing ------------------------------------------------------------------------------
@@ -413,7 +401,7 @@ class TacticalMapView(
             for (u in units) {
                 if (u.status !in listOf("DRIVING", "RETURNING", "PATROLLING") || !visible(u)) continue
                 val a = anims[u.id] ?: continue
-                drawRoute(c, t, a.points, a.cum, a.shown, if (u.status == "RETURNING") 0xff6f8fa3.toInt() else routeColor(u), u.routeBasis == "DISTANCE_APPROXIMATION")
+                drawRoute(c, t, a.route, a.shown, if (u.status == "RETURNING") 0xff6f8fa3.toInt() else routeColor(u), u.routeBasis == "DISTANCE_APPROXIMATION")
             }
         // Dispatch preview: prospective routes of ticked candidates.
         val sel = selectedCall
@@ -518,8 +506,8 @@ class TacticalMapView(
         if (sel != null) {
             val q = t.point(sel.lon, sel.lat)
             paint(0xffffffff.toInt(), 2f, Paint.Style.STROKE)
-            val r = 25 * density + ((now % 1200) / 1200f) * 6 * density
-            c.drawCircle(q.x, q.y, r, p)
+            val pulse = if (paused) 0f else ((now % 1200) / 1200f) * 6 * density
+            c.drawCircle(q.x, q.y, 25 * density + pulse, p)
         }
         if (showMinimap) drawMinimap(c, t)
         if (showLegend) drawLegend(c, t)
@@ -530,8 +518,7 @@ class TacticalMapView(
                 else -> "Distanznäherung"
             }
         text(c, "© OpenStreetMap-Mitwirkende (ODbL) · Natural Earth · GeoBasis-DE/BKG · Routen: $basis", 10 * density, height - t.bottom + 13 * density, 7f, pal.labelMinor)
-        // Keep animating while anything moves or pulses.
-        if (!paused || sel != null) postInvalidateDelayed(if (paused) 60 else 33)
+        if (!paused) postInvalidateDelayed(33)
     }
 
     private fun routeColor(u: UnitState): Int =
@@ -542,10 +529,9 @@ class TacticalMapView(
             else -> 0xff60c8ee.toInt()
         }
 
-    private fun drawRoute(c: Canvas, t: Transform, pts: List<GeoPoint>, cum: DoubleArray, progress: Double, color: Int, approx: Boolean) {
-        if (pts.size < 2) return
-        val total = cum.last()
-        val d = total * progress
+    private fun drawRoute(c: Canvas, t: Transform, route: RouteGeometry, progress: Double, color: Int, approx: Boolean) {
+        val pts = route.points
+        val d = route.distanceAt(progress)
         val done = Path()
         val todo = Path()
         var started = false
@@ -558,15 +544,13 @@ class TacticalMapView(
             if (i != 0 && i != pts.lastIndex && started && (q.x - lastX).let { it * it } + (q.y - lastY).let { it * it } < minStep) continue
             lastX = q.x
             lastY = q.y
-            if (cum[i] <= d) {
+            if (route.distanceAtVertex(i) <= d) {
                 if (i == 0) done.moveTo(q.x, q.y) else done.lineTo(q.x, q.y)
             } else {
                 if (!started) {
                     // Start the remaining path exactly at the vehicle.
-                    val prev = pts[i - 1]
-                    val seg = (cum[i] - cum[i - 1]).takeIf { it > 0 } ?: 1.0
-                    val f = ((d - cum[i - 1]) / seg).coerceIn(0.0, 1.0)
-                    val v = t.point(prev.lon + (pts[i].lon - prev.lon) * f, prev.lat + (pts[i].lat - prev.lat) * f)
+                    val point = route.positionOn(i, d)
+                    val v = t.point(point.lon, point.lat)
                     todo.moveTo(v.x, v.y)
                     started = true
                 }

@@ -9,12 +9,21 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import java.io.File
 import java.io.FileOutputStream
+import java.util.concurrent.TimeUnit
 import org.junit.Assert.*
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.junit.rules.Timeout
 
 @RunWith(AndroidJUnit4::class)
 class NativeControlRoomTest {
+    @get:Rule
+    val testTimeout: Timeout = Timeout.builder()
+        .withTimeout(4, TimeUnit.MINUTES)
+        .withLookingForStuckThread(true)
+        .build()
+
     private val instrument
         get() = InstrumentationRegistry.getInstrumentation()
 
@@ -52,7 +61,8 @@ class NativeControlRoomTest {
     }
 
     private fun screenshot(name: String) {
-        instrument.waitForIdleSync()
+        // The animated map can continue posting frames indefinitely after the expected state is visible.
+        instrument.runOnMainSync {}
         Thread.sleep(300)
         val bmp = instrument.uiAutomation.takeScreenshot()
         assertNotNull(bmp)
@@ -115,6 +125,141 @@ class NativeControlRoomTest {
     private fun assertNative(view: View) {
         assertFalse(view.javaClass.name.startsWith("android.webkit."))
         if (view is ViewGroup) for (i in 0 until view.childCount) assertNative(view.getChildAt(i))
+    }
+
+    @Test
+    fun newGameConfirmsBeforeReplacingFirstDayStationPlanning() {
+        reset()
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                val controller = game(activity)
+                val station = controller.createChiefStation("Eigene Wache am ersten Tag", GeoPoint(10.01, 53.55))
+                assertNotNull(station)
+                assertEquals("PLANNING", controller.state.phase)
+                assertTrue(controller.state.incidents.isEmpty())
+                invoke(activity, "save")
+                invoke(activity, "showWelcome")
+            }
+            for ((entry, confirmation) in listOf("Neue Karriere" to "Neue Karriere beginnen?", "Sandbox" to "Neue Sandbox beginnen?")) {
+                scenario.onActivity { activity ->
+                    val menu = MainActivity::class.java.getDeclaredField("sheet").apply { isAccessible = true }
+                        .get(activity) as android.app.Dialog
+                    assertTrue(tapText(menu.window!!.decorView, entry))
+                    assertEquals("Eigene Wache am ersten Tag", game(activity).state.chief.stations.single().name)
+                }
+                instrument.waitForIdleSync()
+                val window = instrument.uiAutomation.rootInActiveWindow
+                assertTrue(window.findAccessibilityNodeInfosByText(confirmation).isNotEmpty())
+                val cancel = window.findAccessibilityNodeInfosByText("Abbrechen").single()
+                assertTrue(cancel.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK))
+                instrument.waitForIdleSync()
+            }
+            GameStore.awaitSaves()
+            assertEquals("Eigene Wache am ersten Tag", GameStore.load(instrument.targetContext)?.chief?.stations?.single()?.name)
+        }
+    }
+
+    @Test
+    fun nativeRadioArchiveSearchesAndFiltersRecordedDispatch() {
+        reset()
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                dismiss(activity)
+                val controller = game(activity)
+                controller.state.autoCalls = false
+                controller.startShift()
+                controller.state.paused = true
+                val unit = controller.state.units.first { it.type == "STREIFE" && controller.dispatchable(it) }
+                unit.callsign = "Peter 24/1"
+                val incident = controller.newIncident(
+                    IncidentTemplate("Testlage im Funkarchiv", 2, "STREIFE", 8, "Simulierter Einsatz"),
+                    GeoPoint(unit.lon, unit.lat),
+                )
+                assertTrue(controller.dispatch(incident, unit, false))
+                assertTrue(tapText(activity.window.decorView, "Mehr"))
+                assertTrue(tapText(activity.window.decorView, "Funkarchiv"))
+            }
+            instrument.runOnMainSync {}
+            scenario.onActivity { activity ->
+                val dialog = MainActivity::class.java.getDeclaredField("sheet").apply { isAccessible = true }
+                    .get(activity) as android.app.Dialog
+                val root = dialog.window!!.decorView
+                fun findSearch(view: View): android.widget.EditText? {
+                    if (view is android.widget.EditText) return view
+                    if (view !is ViewGroup) return null
+                    for (index in 0 until view.childCount) findSearch(view.getChildAt(index))?.let { return it }
+                    return null
+                }
+                val search = requireNotNull(findSearch(root))
+                search.setText("Einheit unterwegs Peter 24/1")
+            }
+            instrument.runOnMainSync {}
+            val window = instrument.uiAutomation.rootInActiveWindow
+            assertTrue(window.findAccessibilityNodeInfosByText("Peter 24/1 · Polizei · Einheit unterwegs").isNotEmpty())
+            assertTrue(window.findAccessibilityNodeInfosByText("Schicht begonnen").none { it.isVisibleToUser })
+            assertTrue(window.findAccessibilityNodeInfosByText("Anhören").any { it.isVisibleToUser })
+
+            fun issueRadioAction(label: String) {
+                scenario.onActivity { activity ->
+                    val archive = MainActivity::class.java.getDeclaredField("sheet").apply { isAccessible = true }
+                        .get(activity) as android.app.Dialog
+                    val controls = ArrayList<View>()
+                    archive.window!!.decorView.findViewsWithText(controls, "Funkaktionen · Einheit unterwegs",
+                        View.FIND_VIEWS_WITH_CONTENT_DESCRIPTION)
+                    assertTrue(controls.single().performClick())
+                }
+                instrument.waitForIdleSync()
+                val dialog = instrument.uiAutomation.rootInActiveWindow
+                val action = dialog.findAccessibilityNodeInfosByText(label).first { it.isVisibleToUser }
+                assertTrue(action.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK))
+                instrument.waitForIdleSync()
+            }
+            issueRadioAction("Meldung quittieren")
+            issueRadioAction("Aktuellen Status anfordern")
+            scenario.onActivity { activity ->
+                val archive = game(activity).state.radioArchive
+                assertTrue(archive.any { it.title == "Einheit unterwegs" && it.callsign == "Peter 24/1" && it.acknowledged })
+                assertTrue(archive.any { it.title == "Statusrückmeldung" && it.callsign == "Peter 24/1" && "Min bis vor Ort" in it.message })
+            }
+            screenshot("native-radio-archive.png")
+        }
+    }
+
+    @Test
+    fun nativeIncidentFileShowsEarlyWorkAndTheMissingRescueCrew() {
+        reset()
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                dismiss(activity)
+                val controller = game(activity)
+                val state = controller.state
+                state.autoCalls = false
+                state.phoneEnabled = true
+                controller.startShift()
+                val patrol = state.units.first { it.type == "STREIFE" && controller.dispatchable(it) }
+                val call = controller.newIncident(
+                    IncidentTemplate("Verkehrsunfall mit verletzter Person", 2, "STREIFE", 12, "Simulierter Einsatz",
+                        requiredTypes = listOf("STREIFE", "RETTUNG")),
+                    GeoPoint(patrol.lon, patrol.lat),
+                )
+                assertTrue(controller.dispatch(call, patrol, false))
+                controller.advance(patrol.travelLeft + patrol.readinessLeft + 3)
+                state.paused = true
+                assertEquals("WORKING", call.status)
+                assertEquals(8, call.tasks.first().minutesLeft)
+                invoke(activity, "openCall", call)
+                val root = activity.window.decorView
+                assertTrue(tapPrefix(root, "↕"))
+                assertTrue(tapPrefix(root, "Einsatzaufgaben · 0/2"))
+                assertTrue(tapPrefix(root, "Lage sichern · ${patrol.callsign} · noch 8 Min"))
+                assertTrue(tapPrefix(root, "Medizinische Versorgung · Rettungsdienst benötigt"))
+                val recommendation = ArrayList<View>()
+                root.findViewsWithText(recommendation, "Vorschlag auswählen", View.FIND_VIEWS_WITH_TEXT)
+                assertTrue(recommendation.any { (it as? android.widget.TextView)?.text == "Vorschlag auswählen · 1 Kraft" })
+            }
+            waitForBaseMap(scenario)
+            screenshot("native-parallel-incident.png")
+        }
     }
 
     /** Measured on the emulator (not a physical device): written next to the screenshots. */
@@ -227,6 +372,88 @@ class NativeControlRoomTest {
             scenario.onActivity { a ->
                 (MainActivity::class.java.getDeclaredField("phoneScreen").apply { isAccessible = true }.get(a) as PhoneScreen).close()
             }
+        }
+        MainActivity.phoneDeskDefault = false
+    }
+
+    @Test
+    fun canDispatchAndThenContinueTheSameCallFromTheNativeViews() {
+        reset()
+        MainActivity.phoneDeskDefault = true
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            waitForBaseMap(scenario)
+            screenshot("native-rebuilt-menu.png")
+            lateinit var callId: String
+            lateinit var incidentId: String
+            scenario.onActivity { a ->
+                dismiss(a)
+                val g = game(a)
+                g.state.autoCalls = false
+                g.setShift(14, 8)
+                g.startShift()
+                g.state.phones.clear()
+                g.state.paused = true
+                val call = PhoneDesk.ring(g, CallScripts.find("unfall_verletzt"))!!
+                callId = call.id
+                invoke(a, "answerNext")
+                PhoneDesk.calm(g, call)
+                PhoneDesk.ask(g, call, "wo")
+                val screen = MainActivity::class.java.getDeclaredField("phoneScreen")
+                    .apply { isAccessible = true }.get(a) as PhoneScreen
+                val dialog = PhoneScreen::class.java.getDeclaredField("dialog")
+                    .apply { isAccessible = true }.get(screen) as android.app.Dialog
+                PhoneScreen::class.java.getDeclaredMethod("render").apply { isAccessible = true }.invoke(screen)
+                val phone = dialog.window!!.decorView
+                assertTrue(tapText(phone, "Während des Gesprächs alarmieren"))
+                assertTrue(tapText(phone, PhoneDesk.script(g, call).correct))
+                assertTrue(tapText(phone, "P1 · Sofort"))
+                val incident = PhoneDesk.linkedIncident(g, call)!!
+                incidentId = incident.id
+                assertSame(call, PhoneDesk.active(g.state))
+                val control = MainActivity::class.java.getDeclaredField("mapAction")
+                    .apply { isAccessible = true }.get(a) as android.widget.TextView
+                assertEquals("Fortsetzen", control.text.toString())
+                assertTrue(tapPrefix(a.window.decorView, "Entsenden ("))
+                assertTrue(incident.assignedUnits.isNotEmpty())
+            }
+            screenshot("native-rebuilt-phone-dispatch.png")
+            var expectedAnswer = ""
+            scenario.onActivity { a ->
+                val g = game(a)
+                invoke(a, "answerNext")
+                val active = PhoneDesk.active(g.state)!!
+                assertEquals(callId, active.id)
+                val screen = MainActivity::class.java.getDeclaredField("phoneScreen")
+                    .apply { isAccessible = true }.get(a) as PhoneScreen
+                val dialog = PhoneScreen::class.java.getDeclaredField("dialog")
+                    .apply { isAccessible = true }.get(screen) as android.app.Dialog
+                val phone = dialog.window!!.decorView
+                assertTrue(tapText(phone, "Fragen nach Thema"))
+                assertTrue(tapText(phone, "Verletzungen"))
+                val question = PhoneDesk.script(g, active).questions.first { it.id == "eingeklemmt" }
+                expectedAnswer = question.answer
+                assertTrue(tapText(phone, question.label))
+                assertTrue(active.asked.contains(question.id))
+                val incident = PhoneDesk.linkedIncident(g, active)!!
+                assertEquals(incidentId, incident.id)
+                assertTrue(incident.requiredTypes.contains("FEUERWEHR"))
+            }
+            var fullReplyVisible = false
+            val deadline = android.os.SystemClock.uptimeMillis() + 8_000
+            while (!fullReplyVisible && android.os.SystemClock.uptimeMillis() < deadline) {
+                scenario.onActivity { activity ->
+                    val screen = MainActivity::class.java.getDeclaredField("phoneScreen")
+                        .apply { isAccessible = true }.get(activity) as PhoneScreen
+                    val dialog = PhoneScreen::class.java.getDeclaredField("dialog")
+                        .apply { isAccessible = true }.get(screen) as android.app.Dialog
+                    val replies = ArrayList<View>()
+                    dialog.window!!.decorView.findViewsWithText(replies, expectedAnswer, View.FIND_VIEWS_WITH_TEXT)
+                    fullReplyVisible = replies.any { (it as? android.widget.TextView)?.text == expectedAnswer }
+                }
+                if (!fullReplyVisible) Thread.sleep(100)
+            }
+            assertTrue("Die Antwort ist vollständig eingeblendet", fullReplyVisible)
+            screenshot("native-phone-question-topics.png")
         }
         MainActivity.phoneDeskDefault = false
     }
@@ -364,7 +591,13 @@ class NativeControlRoomTest {
                 invoke(a, "openCall", g.state.incidents.first { it.title == "Rückruf bei Nachbarschaftslage" })
             }
             waitForBaseMap(scenario)
-            scenario.onActivity { a -> assertTrue(mapView(a).obstructedRight > 0f) }
+            scenario.onActivity { a ->
+                assertTrue(mapView(a).obstructedRight > 0f)
+                val panel = MainActivity::class.java.getDeclaredField("dispatch")
+                    .apply { isAccessible = true }.get(a) as DispatchPanel
+                val heightDp = panel.root.height / a.resources.displayMetrics.density
+                assertTrue("Einsatzakte im Querformat: $heightDp dp", heightDp >= 180f)
+            }
             screenshot("native-landscape-dispatch.png")
             scenario.onActivity { a -> a.requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT }
         }

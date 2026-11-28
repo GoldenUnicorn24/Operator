@@ -1,6 +1,5 @@
 package de.einsatzleitstelle110
 
-import java.io.File
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Test
@@ -13,9 +12,6 @@ class NativeCareerTest {
         MapData.clear()
     }
 
-    private fun asset(name: String) =
-        listOf(File("src/main/native_assets/$name"), File("app/src/main/native_assets/$name")).firstOrNull { it.isFile }
-
     /** Simple player: dispatches fitting units, answers decisions with the first available option. */
     private fun play(g: GameController, decide: Boolean) {
         for (call in g.state.incidents.filter { it.region == g.state.region && it.status in listOf("OPEN", "DRIVING", "WORKING") }.sortedBy { it.priority }) {
@@ -24,7 +20,6 @@ class NativeCareerTest {
                 val pick = st?.options?.filter { g.optionAvailable(call, it).first }?.minByOrNull { it.effect.risk }
                 if (pick != null) g.choose(call, pick.id)
             }
-            if (call.status == "WORKING") continue
             for (need in g.remainingTypes(call)) {
                 val c = g.candidates(call).firstOrNull { (u, _) -> u.type == need } ?: g.candidates(call).firstOrNull { (u, _) -> g.canHandle(u, need) && u.type !in listOf("SEK", "MEK") }
                 if (c != null) g.dispatch(call, c.first)
@@ -33,10 +28,10 @@ class NativeCareerTest {
     }
 
     private fun career(decide: Boolean, days: Int = 10): Pair<GameController, List<String>> {
-        val states = asset("states.geojson")!!
+        val states = NativeTestAssets.bundled("states.geojson")
         val regions = GeoData.parseStates(states.readText())
         val hamburg = regions.first { it.code == "DE-HH" }
-        val map = MapData.parseBinary("DE-HH", asset("geo/roads-DE-HH.bin")!!.readBytes())
+        val map = MapData.parseBinary("DE-HH", NativeTestAssets.bundled("geo/roads-DE-HH.bin").readBytes())
         NativeRouting.install(map)
         val g = GameController(GameState(region = "DE-HH", mode = "CAREER"), regions)
         g.placeProvider = { r -> if (r.code == "DE-HH") map.places.filter { hamburg.contains(GeoPoint(it.lon, it.lat)) } else r.cities.map { MapPlace(it.name, "city", 80000, it.lon, it.lat) } }
@@ -63,7 +58,6 @@ class NativeCareerTest {
 
     @Test
     fun tenCareerDaysAreSustainableButNotAMoneyRain() {
-        if (asset("geo/roads-DE-HH.bin") == null) return
         val (g, log) = career(decide = true)
         log.forEach(::println)
         assertEquals(11, g.state.day)
@@ -78,13 +72,13 @@ class NativeCareerTest {
 
     @Test
     fun engagedPlayBeatsPassivePlay() {
-        if (asset("geo/roads-DE-HH.bin") == null) return
         val (active, _) = career(decide = true, days = 4)
         NativeRouting.clear()
         val (passive, _) = career(decide = false, days = 4)
         val a = active.state.reports.sumOf { it.solved }.toDouble() / active.state.reports.sumOf { it.served }
         val p = passive.state.reports.sumOf { it.solved }.toDouble() / passive.state.reports.sumOf { it.served }
         println("aktive Quote $a, passive Quote $p, Ruf ${active.state.reputation} vs ${passive.state.reputation}")
+        assertTrue("active completion rate $a vs $p", a >= p)
         assertTrue(active.state.reputation >= passive.state.reputation)
     }
 }

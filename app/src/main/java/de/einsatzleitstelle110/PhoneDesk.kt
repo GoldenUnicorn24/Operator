@@ -22,6 +22,12 @@ data class PhoneCall(
     var cprQuality: Int = -1,
     /** Spoken lines not played yet, as "voice|raw text". Not saved. */
     val spoken: MutableList<String> = mutableListOf(),
+    val region: String = "",
+    val scope: String = "",
+    val receivedAt: Long = -1,
+    var answeredAt: Long = -1,
+    var activeMinutes: Int = 0,
+    var incidentId: String = "",
 )
 
 data class CallCode(val title: String, val correct: Boolean, val merge: Boolean = false, val none: Boolean = false)
@@ -73,9 +79,20 @@ object PhoneDesk {
 
     fun rate(s: GameState) = if (surgeActive(s)) SURGE_RATE else 1.0
 
-    fun ringing(s: GameState) = s.phones.filter { it.status == "RINGING" }
+    private fun atDesk(s: GameState, call: PhoneCall) =
+        (call.region.isBlank() || call.region == s.region) &&
+            (call.scope.isBlank() || call.scope == s.scope)
 
-    fun active(s: GameState) = s.phones.firstOrNull { it.status == "ACTIVE" }
+    fun ringing(s: GameState) = s.phones.filter { it.status == "RINGING" && atDesk(s, it) }
+
+    fun active(s: GameState) = s.phones.firstOrNull { it.status == "ACTIVE" && atDesk(s, it) }
+
+    fun handOver(g: GameController): List<PhoneHandoff> =
+        g.state.phones.filter { atDesk(g.state, it) }.map { call ->
+            call.lines.add("S|An Folgeschicht übergeben · Tag ${g.state.day}.")
+            linkedIncident(g, call)?.let { syncTranscript(call, it) }
+            PhoneHandoff(call.id, call.status == "ACTIVE")
+        }
 
     fun script(g: GameController, c: PhoneCall): CallScript =
         CallScripts.find(c.scriptId)
@@ -117,7 +134,6 @@ object PhoneDesk {
     fun beginShift(g: GameController) {
         val s = g.state
         ensurePartnerForces(g)
-        s.phones.clear()
         s.shiftAnswered = 0; s.shiftMissed = 0; s.shiftTakeTotal = 0; s.shiftTakes = 0; s.takeStreak = 0
         s.shiftEvent = ""
         if (s.tutorialStep == 0 && g.rnd() < .7) {
@@ -169,7 +185,9 @@ object PhoneDesk {
         val p = duplicateOf?.let { GeoPoint(it.actualLon, it.actualLat) } ?: at ?: sc.place ?: g.samplePosition(r)
         val street = NativeRouting.loadedGraph(r.code)?.takeIf { it.map.version >= 2 }?.namedStreetPoint(p) { r.contains(it) && g.inScope(it) }
         val point = if (duplicateOf == null) street?.first ?: p else p
-        val call = PhoneCall("T-${s.nextId++}", sc.id, point.lat, point.lon, street?.second ?: "Hauptstraße", g.locationName(r, point), duplicateOf = duplicateOf?.id ?: "")
+        val call = PhoneCall("T-${s.nextId++}", sc.id, point.lat, point.lon, street?.second ?: "Hauptstraße", g.locationName(r, point),
+            duplicateOf = duplicateOf?.id ?: "", region = s.region, scope = s.scope,
+            receivedAt = s.absoluteMinute)
         s.phones.add(call)
         s.recentScripts.add(sc.id)
         while (s.recentScripts.size > 8) s.recentScripts.removeAt(0)
@@ -204,9 +222,10 @@ object PhoneDesk {
 
     fun answer(g: GameController, c: PhoneCall): Boolean {
         val s = g.state
-        if (c.status != "RINGING" || active(s) != null || s.phase != "RUNNING") return false
+        if (s.phase != "RUNNING" || c.status != "RINGING" || !atDesk(s, c) || active(s) != null) return false
         c.status = "ACTIVE"
-        if (c.lines.isEmpty()) {
+        if (c.answeredAt < 0) c.answeredAt = s.absoluteMinute
+        if (c.lines.none { it.startsWith("D|") }) {
             s.shiftAnswered++
             val sc = script(g, c)
             c.lines.add("D|${greeting(g)}")
@@ -239,11 +258,13 @@ object PhoneDesk {
         c.calmed = true
         talk(g, c, "D", CALM_LINE)
         talk(g, c, "C", CALM_REPLY)
+        linkedIncident(g, c)?.let { syncTranscript(c, it) }
     }
 
     fun ask(g: GameController, c: PhoneCall, id: String): Boolean {
+        if (g.state.phase != "RUNNING" || active(g.state) !== c) return false
         val sc = script(g, c)
-        val q = sc.questions.firstOrNull { it.id == id } ?: return false
+        val q = CallQuestions.answer(sc, id) ?: return false
         if (id in c.asked) return false
         talk(g, c, "D", q.label)
         if (needsCalming(g, c)) {
@@ -254,7 +275,13 @@ object PhoneDesk {
         talk(g, c, "C", q.answer)
         if (id == "wo" && !sc.vague) c.located = true
         if (id == "wo" && sc.vague) c.lines.add("S|Keine verwertbare Ortsangabe. Mobilfunkortung (AML) anfordern.")
-        sc.beats[c.asked.size]?.let { talk(g, c, "C", it) }
+        if (sc.questions.any { it.id == id })
+            sc.beats[sc.questions.count { it.id in c.asked }]?.let { talk(g, c, "C", it) }
+        linkedIncident(g, c)?.let { incident ->
+            if (id == sc.twistQuestion && incident.title == sc.correct && incident.status in openStatuses)
+                addKnownRoles(incident, template(g, sc.correct)?.requiredTypes.orEmpty() + sc.twistAdd)
+            syncTranscript(c, incident)
+        }
         return true
     }
 
@@ -263,6 +290,7 @@ object PhoneDesk {
         if (c.located) return
         c.located = true
         c.lines.add("S|AML-Ortung: ${c.street}, ${c.place} · Genauigkeit etwa 40 m")
+        linkedIncident(g, c)?.let { syncTranscript(c, it) }
     }
 
     fun advise(g: GameController, c: PhoneCall, id: String): Advice? {
@@ -271,6 +299,7 @@ object PhoneDesk {
         c.advised.add(id)
         talk(g, c, "D", a.label)
         talk(g, c, "C", a.reply)
+        linkedIncident(g, c)?.let { syncTranscript(c, it) }
         return a
     }
 
@@ -326,7 +355,62 @@ object PhoneDesk {
         } else s.takeStreak = 0
     }
 
-    /** The call ends with the chosen keyword. Only now does the dispatch side see an incident. */
+    private val openStatuses = setOf("OPEN", "DRIVING", "WORKING")
+
+    fun linkedIncident(g: GameController, call: PhoneCall): IncidentState? =
+        call.incidentId.takeIf { it.isNotBlank() }?.let { id -> g.state.incidents.firstOrNull { it.id == id } }
+
+    /** Create an actual dispatchable incident while the caller stays connected. */
+    fun startDispatch(g: GameController, call: PhoneCall, keyword: String, priority: Int): IncidentState? {
+        if (g.state.phase != "RUNNING" || active(g.state) !== call || !call.located ||
+            call.duplicateOf.isNotBlank() || priority !in 1..3) return null
+        val t = template(g, keyword) ?: return null
+        val sc = script(g, call)
+        val existing = linkedIncident(g, call)
+        val incident = existing ?: create(g, call, sc, t.title, uncertain = false)
+        if (incident.status !in openStatuses) return null
+        if (existing != null && incident.title != t.title) updateKeyword(incident, t)
+        incident.priority = priority
+        val factor = g.regionDeadlineFactor() * g.difficultyDeadline()
+        incident.deadline = min(incident.deadline, (phoneDeadline(g, priority, t.deadline) * factor).roundToInt().coerceAtLeast(12))
+        call.incidentId = incident.id
+        if (incident.title == sc.correct && sc.twistQuestion in call.asked)
+            addKnownRoles(incident, t.requiredTypes + sc.twistAdd)
+        call.lines.add("S|Einsatz ${incident.id} · P$priority · ${incident.title}")
+        syncTranscript(call, incident)
+        return incident
+    }
+
+    private fun syncTranscript(call: PhoneCall, incident: IncidentState) {
+        incident.phoneTranscript.clear()
+        incident.phoneTranscript.addAll(call.lines.takeLast(120))
+    }
+
+    private fun addKnownRoles(incident: IncidentState, desired: List<String>) {
+        val stillMissing = desired.toMutableList()
+        incident.requiredTypes.forEach { stillMissing.remove(it) }
+        incident.requiredTypes.addAll(stillMissing.take((7 - incident.requiredTypes.size).coerceAtLeast(0)))
+        stillMissing.forEach { incident.surprise.remove(it) }
+    }
+
+    private fun updateKeyword(incident: IncidentState, template: IncidentTemplate) {
+        if (incident.status !in openStatuses || incident.title == template.title) return
+        incident.notes.add("Stichwort: ${incident.title} → ${template.title}")
+        incident.title = template.title
+        incident.required = template.required
+        incident.requiredTypes = template.requiredTypes.toMutableList()
+        incident.description = template.description
+        incident.duration = template.duration
+        incident.scenario = Scenarios.find(template.title)?.id.orEmpty()
+    }
+
+    private fun reuseOrCreate(g: GameController, c: PhoneCall, sc: CallScript, title: String, uncertain: Boolean): IncidentState {
+        val existing = linkedIncident(g, c) ?: return create(g, c, sc, title, uncertain)
+        template(g, title)?.let { updateKeyword(existing, it) }
+        return existing
+    }
+
+    /** Score the completed intake and extend any dispatch already in progress. */
     fun classify(g: GameController, c: PhoneCall, code: CallCode): TakeResult {
         val s = g.state
         val sc = script(g, c)
@@ -343,18 +427,24 @@ object PhoneDesk {
         } else if (sc.kind != "REAL") {
             if (code.none) {
                 score = 100
+                incident = linkedIncident(g, c)
+                if (incident != null) {
+                    score = 70
+                    incident.notes.add("Nach Gesprächsabschluss als Fehlalarm erkannt.")
+                    template(g, "Blinder Alarm")?.let { updateKeyword(incident, it) }
+                }
                 notes.add("Kein Notfall erkannt, Leitung schnell wieder frei.")
             } else {
                 score = 15
                 notes.add("Kein echter Notfall: eine Streife fährt umsonst.")
-                incident = g.reportCaller(CallScripts.templates.first { it.title == "Blinder Alarm" }, GeoPoint(c.lon, c.lat))
+                incident = reuseOrCreate(g, c, sc, "Blinder Alarm", uncertain = false)
                 incident.phoneScript = sc.id
             }
         } else if (code.none) {
             score = 0
             notes.add("Echter Notfall abgewiesen! Die Lage wird nun ohne Vorwarnung nachgemeldet.")
             s.reputation = (s.reputation - 4).coerceAtLeast(0)
-            incident = create(g, c, sc, sc.correct, false)
+            incident = reuseOrCreate(g, c, sc, sc.correct, false)
             incident.deadline = (incident.deadline / 2).coerceAtLeast(incident.age + 5)
             incident.notes.add("Der erste Notruf wurde abgewiesen.")
         } else {
@@ -371,7 +461,12 @@ object PhoneDesk {
             else notes.add("Keine hilfreiche Anweisung gegeben.")
             if (bad.isNotEmpty()) { score -= 25; notes.add("Gefährliche Anweisung: „${bad.first().label}“") }
             if (c.waited > 4) { score -= 5; notes.add("Anrufer wartete ${c.waited} Minuten in der Leitung.") }
-            incident = create(g, c, sc, code.title, !c.located)
+            val unproductive = c.asked.count(CallQuestions::isUnproductive)
+            if (unproductive > 2) {
+                score -= (unproductive - 2) * 3
+                notes.add("$unproductive Zusatzfragen blieben ohne verwertbare Angaben.")
+            }
+            incident = reuseOrCreate(g, c, sc, code.title, !c.located)
             if (sc.cpr) {
                 if (c.cprQuality >= 60) { incident.riskDelta -= .25; notes.add("Telefonreanimation hielt den Kreislauf in Gang (${c.cprQuality} %).") }
                 else if (c.cprQuality >= 0) notes.add("Telefonreanimation unregelmäßig (${c.cprQuality} %): Ziel 100–120 Stöße pro Minute.")
@@ -384,7 +479,7 @@ object PhoneDesk {
             val missing = want.toMutableList()
             incident.requiredTypes.forEach { missing.remove(it) }
             if (known && code.correct) {
-                incident.requiredTypes.addAll(hiddenTwist)
+                addKnownRoles(incident, want)
                 if (hiddenTwist.isNotEmpty()) notes.add("Durch Nachfragen gleich die richtigen Kräfte: ${hiddenTwist.joinToString { roleLabel(it) }}.")
             } else if (missing.isNotEmpty()) {
                 incident.surprise.addAll(missing)
@@ -395,7 +490,11 @@ object PhoneDesk {
             if (score >= 85) s.reputation = (s.reputation + 1).coerceAtMost(100)
         }
         score = score.coerceIn(0, 100)
-        incident?.notes?.add("Notrufaufnahme: ${rating(score)} ($score %).")
+        incident?.let {
+            it.notes.add("Notrufaufnahme: ${rating(score)} ($score %).")
+            it.phoneClosedAt = s.absoluteMinute
+            if (!code.merge) syncTranscript(c, it)
+        }
         addStat(g, score)
         g.emit("Notruf beendet", "${rating(score)} ($score %)")
         return TakeResult(score, rating(score), notes, incident)
@@ -413,6 +512,9 @@ object PhoneDesk {
         if (g.state.incidents.size > before) {
             val factor = g.regionDeadlineFactor() * g.difficultyDeadline()
             incident.deadline = (phoneDeadline(g, incident.priority, t.deadline) * factor).roundToInt().coerceAtLeast(12)
+            incident.age = c.waited + c.activeMinutes
+            incident.reportedAt = c.receivedAt.takeIf { it >= 0 } ?: g.state.absoluteMinute
+            incident.answeredAt = c.answeredAt
         }
         incident.phoneScript = sc.id
         incident.location = incident.location.replace(" (ungefähr)", "")
@@ -422,8 +524,8 @@ object PhoneDesk {
     /** Runs once per simulated minute. */
     fun tick(g: GameController) {
         val s = g.state
-        for (c in s.phones.toList()) {
-            if (c.status != "RINGING") continue
+        active(s)?.let { it.activeMinutes++ }
+        for (c in ringing(s)) {
             c.waited++
             if (c.waited >= PATIENCE) hangUp(g, c)
         }
@@ -433,6 +535,14 @@ object PhoneDesk {
         val s = g.state
         val sc = script(g, c)
         s.phones.remove(c)
+        linkedIncident(g, c)?.let {
+            it.disconnected = true
+            it.phoneClosedAt = s.absoluteMinute
+            c.lines.add("S|Verbindung abgebrochen.")
+            syncTranscript(c, it)
+            g.emit("Anrufer aufgelegt", "${it.location}: bestehender Einsatz ${it.id}.")
+            return
+        }
         if (sc.kind != "REAL" || c.duplicateOf.isNotBlank()) return
         s.shiftMissed++
         s.takeStreak = 0
@@ -457,7 +567,7 @@ object PhoneDesk {
             call.riskDelta += .06
             call.duration += 6
             call.notes.add("Adresse war ungenau: Kräfte mussten suchen.")
-            g.emit("Funkmeldung", "${call.title}: Einsatzort nicht gefunden, Nachsuche läuft (+6 Min.)")
+            g.emit("Funkmeldung", "${call.title}: Einsatzort nicht gefunden, Nachsuche läuft (+6 Min.)", incident = call)
         }
         if (call.surprise.isEmpty()) return
         val add = call.surprise.toList()
@@ -466,7 +576,7 @@ object PhoneDesk {
         call.riskDelta += .08
         call.deadline = (call.deadline + 15).coerceAtMost(1440)
         call.notes.add("Nachforderung vor Ort: ${add.joinToString { roleLabel(it) }}")
-        g.emit("Nachforderung", "${call.title}: ${call.surpriseText.ifBlank { add.joinToString { roleLabel(it) } }}")
+        g.emit("Nachforderung", "${call.title}: ${call.surpriseText.ifBlank { add.joinToString { roleLabel(it) } }}", incident = call)
     }
 
     /** Waiting makes it worse: at half of the deadline an unattended situation escalates. */
@@ -477,16 +587,16 @@ object PhoneDesk {
         val sc = CallScripts.find(call.phoneScript) ?: return
         if (sc.worse.isBlank() || sc.kind != "REAL") return
         call.priority = (call.priority - 1).coerceAtLeast(1)
-        call.requiredTypes.addAll(sc.worseAdd)
+        call.requiredTypes.addAll(sc.worseAdd.take((8 - call.requiredTypes.size).coerceAtLeast(0)))
         call.riskDelta += .05
         call.notes.add("Lageverschärfung: ${sc.worse}")
-        g.emit("Lageverschärfung", "${call.title}: ${sc.worse}")
+        g.emit("Lageverschärfung", "${call.title}: ${sc.worse}", incident = call)
     }
 
     /** Graded like a German school mark: 1 is the best, 6 the worst. */
-    fun grade(solved: Int, failed: Int, missed: Int, takeAverage: Int, hilfsfrist: Int): Int {
-        val done = solved + failed
-        val success = if (done == 0) 70.0 else solved * 100.0 / done
+    fun grade(solved: Int, failed: Int, missed: Int, takeAverage: Int, hilfsfrist: Int, partial: Int = 0): Int {
+        val done = solved + failed + partial
+        val success = if (done == 0) 70.0 else (solved * 100.0 + partial * 50.0) / done
         val points = success * .5 + takeAverage * .3 + hilfsfrist * .2 - missed * 3
         return when {
             points >= 85 -> 1

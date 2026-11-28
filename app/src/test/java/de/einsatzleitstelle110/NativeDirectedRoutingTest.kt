@@ -47,6 +47,26 @@ class NativeDirectedRoutingTest {
     }
 
     @Test
+    fun concurrentDetailEtaReadsAgreeWithTheRoutedJourneys() {
+        val points = (0..18).map { index -> GeoPoint(a.lon + index * .002, a.lat) }
+        NativeRouting.install(map(points.zipWithNext { from, to -> road(from, to) }))
+        val unit = UnitState("eta", "Peter 24/1", "STREIFE", "DE-TEST", a.lat, a.lon)
+        val expected = points.associateWith { NativeRouting.routeFor(unit, it).durationMinutes }
+        val pool = java.util.concurrent.Executors.newFixedThreadPool(4)
+        try {
+            val futures = (0..100).map { index ->
+                pool.submit<Boolean> {
+                    val target = points[index % points.size]
+                    NativeRouting.eta(unit, target) == expected.getValue(target)
+                }
+            }
+            assertTrue(futures.all { it.get(10, java.util.concurrent.TimeUnit.SECONDS) })
+        } finally {
+            pool.shutdownNow()
+        }
+    }
+
+    @Test
     fun reverseOnewayAndUnreachableFieldAreRespected() {
         val g = RoadGraph("DE-TEST", map(listOf(road(a, b, -1))))
         val ia = g.nearest(a)

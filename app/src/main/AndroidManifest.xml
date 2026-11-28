@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
     <application
-        android:icon="@drawable/ic_dispatch"
+        android:icon="@drawable/ic_operator_rebuilt"
         android:label="Einsatzleitstelle 110"
         android:usesCleartextTraffic="false"
         android:allowBackup="true"

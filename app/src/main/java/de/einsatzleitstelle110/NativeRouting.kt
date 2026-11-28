@@ -2,6 +2,9 @@ package de.einsatzleitstelle110
 
 import android.content.Context
 import java.util.PriorityQueue
+import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 import kotlin.math.*
 
 data class NativeRoute(
@@ -35,7 +38,7 @@ class RoadGraph(val code: String, val map: StateMap, everyVertex: Boolean = map.
     private val main: BooleanArray
     private val grid = HashMap<Long, IntArray>()
     private val snapCache = LinkedHashMap<GeoPoint, StreetSnap>()
-    private val detailFields = LinkedHashMap<Int, FloatArray>()
+    private val fields = LinkedHashMap<Int, FloatArray>(16, .75f, true)
     private val segmentGrid by lazy {
         val cells = HashMap<Long, MutableList<Long>>()
         for ((ri, line) in map.roads.withIndex()) {
@@ -410,17 +413,21 @@ class RoadGraph(val code: String, val map: StateMap, everyVertex: Boolean = map.
         }
         val departures = attachments(from, true)
         for (enter in attachments(to, false)) {
-            val distances = detailFields.remove(enter.node)?.also { detailFields[enter.node] = it }
-                ?: field(enter.node).also {
-                    detailFields[enter.node] = it
-                    while (detailFields.size > 12) detailFields.remove(detailFields.keys.first())
-                }
+            val distances = cachedField(enter.node)
             for (leave in departures) {
                 val cost = distances[leave.node].toDouble()
                 if (cost.isFinite()) best = min(best, accessTime + leave.minutes + cost + enter.minutes)
             }
         }
         return if (best.isFinite()) max(1, ceil(best * REFERENCE_SPEED / speedKmh).toInt()) else null
+    }
+
+    /** The graph owns its ETA fields, so replacing a network invalidates all old results. */
+    internal fun cachedField(goal: Int): FloatArray = synchronized(fields) {
+        fields[goal] ?: field(goal).also {
+            fields[goal] = it
+            if (fields.size > 12) fields.remove(fields.keys.first())
+        }
     }
 
     /** R2 routes include legal partial edges at both ends, including positions between junctions. */
@@ -490,7 +497,28 @@ class RoadGraph(val code: String, val map: StateMap, everyVertex: Boolean = map.
 object NativeRouting {
     private var appContext: Context? = null
     private val graphs = HashMap<String, RoadGraph>()
-    private val fields = LinkedHashMap<String, FloatArray>()
+    private val etaWorker = ThreadPoolExecutor(
+        1, 1, 30L, TimeUnit.SECONDS, ArrayBlockingQueue(1),
+        { task -> Thread(task, "route-prewarm").apply { isDaemon = true } },
+        ThreadPoolExecutor.DiscardOldestPolicy(),
+    ).apply { allowCoreThreadTimeOut(true) }
+
+    private data class VehicleOrigin(
+        val position: GeoPoint,
+        val region: String,
+        val scope: String,
+        val type: String,
+        val speed: Double,
+    )
+
+    private fun origin(u: UnitState) =
+        VehicleOrigin(GeoPoint(u.lon, u.lat), u.region, u.scope, u.type, u.vehicleSpeed)
+
+    /** At most one pending warmup. Workers only receive scalar routing inputs. */
+    fun prewarmEta(u: UnitState, target: GeoPoint) {
+        val from = origin(u)
+        etaWorker.execute { eta(from, target) }
+    }
 
     @Synchronized
     fun initialize(context: Context) {
@@ -520,7 +548,6 @@ object NativeRouting {
         MapData.install(map)
         graphs["DE-HH"] = RoadGraph("DE-HH", map)
         graphs.remove("DE-HH:MAIN")
-        fields.clear()
     }
 
     @Synchronized
@@ -528,13 +555,11 @@ object NativeRouting {
         MapData.install(map)
         graphs[map.code] = RoadGraph(map.code, map)
         graphs.remove("${map.code}:MAIN")
-        fields.clear()
     }
 
     @Synchronized
     fun clear() {
         graphs.clear()
-        fields.clear()
     }
 
     private fun pickGraph(start: GeoPoint, end: GeoPoint, region: String?): RoadGraph? {
@@ -598,62 +623,41 @@ object NativeRouting {
         )
     }
 
-    private fun unitGraphCode(u: UnitState): String =
-        if (u.region == "DE-HH" && u.scope == "STATE" && (graph(u.region)?.map?.version ?: 1) >= 2) "${u.region}:MAIN" else u.region
+    private fun unitGraphCode(region: String, scope: String): String =
+        if (region == "DE-HH" && scope == "STATE" && (graph(region)?.map?.version ?: 1) >= 2)
+            "$region:MAIN" else region
 
     /** District vehicles use detail streets; statewide units retain the arterial network. */
     fun routeFor(u: UnitState, end: GeoPoint): NativeRoute {
         val start = GeoPoint(u.lon, u.lat)
-        return if (u.type == "HELI") air(start, end, u.vehicleSpeed) else route(start, end, u.vehicleSpeed, unitGraphCode(u))
+        return if (u.type == "HELI") air(start, end, u.vehicleSpeed) else route(start, end, u.vehicleSpeed, unitGraphCode(u.region, u.scope))
     }
 
     /**
      * Fast ETA (minutes, without readiness time) of many units to one target: one Dijkstra from the
      * target instead of one A* per candidate.
      */
-    fun eta(u: UnitState, target: GeoPoint): Int {
-        val start = GeoPoint(u.lon, u.lat)
-        if (u.type == "HELI") return air(start, target, u.vehicleSpeed).durationMinutes
-        val g = graph(unitGraphCode(u))
+    fun eta(u: UnitState, target: GeoPoint): Int = eta(origin(u), target)
+
+    private fun eta(u: VehicleOrigin, target: GeoPoint): Int {
+        val start = u.position
+        if (u.type == "HELI") return air(start, target, u.speed).durationMinutes
+        val g = graph(unitGraphCode(u.region, u.scope))
         if (g == null || !g.covers(start) || !g.covers(target) || (g.map.version < 2 && GeoData.km(start, target) < .15))
-            return approximation(start, target, u.vehicleSpeed).durationMinutes
-        if (g.map.version >= 2) return g.detailEta(start, target, u.vehicleSpeed)
-            ?: approximation(start, target, u.vehicleSpeed).durationMinutes
+            return approximation(start, target, u.speed).durationMinutes
+        if (g.map.version >= 2) return g.detailEta(start, target, u.speed)
+            ?: approximation(start, target, u.speed).durationMinutes
         val goal = g.nearest(target)
-        val key = "${g.code}:$goal"
-        val field =
-            synchronized(this) {
-                fields.remove(key)?.also { fields[key] = it }
-                    ?: g.field(goal).also {
-                        fields[key] = it
-                        while (fields.size > 12) fields.remove(fields.keys.first())
-                    }
-            }
+        val field = g.cachedField(goal)
         val from = g.nearest(start)
         val ref = field.getOrElse(from) { Float.POSITIVE_INFINITY }
-        if (!ref.isFinite()) return approximation(start, target, u.vehicleSpeed).durationMinutes
+        if (!ref.isFinite()) return approximation(start, target, u.speed).durationMinutes
         val total =
             ref + accessMinutes(GeoData.km(start, g.point(from))) + accessMinutes(GeoData.km(target, g.point(goal)))
-        return max(1, ceil(total * RoadGraph.REFERENCE_SPEED / u.vehicleSpeed).toInt())
+        return max(1, ceil(total * RoadGraph.REFERENCE_SPEED / u.speed).toInt())
     }
 
     /** Distance-weighted interpolation supports the irregular road-geometry vertices. */
-    fun position(points: List<GeoPoint>, progress: Double): GeoPoint {
-        require(points.size >= 2 && progress.isFinite())
-        if (progress <= 0) return points.first()
-        if (progress >= 1) return points.last()
-        val lengths = points.zipWithNext { a, b -> GeoData.km(a, b) }
-        var remaining = lengths.sum() * progress
-        for (i in lengths.indices) {
-            if (remaining <= lengths[i] || i == lengths.lastIndex) {
-                val f = if (lengths[i] > 0) remaining / lengths[i] else 0.0
-                return GeoPoint(
-                    points[i].lon + (points[i + 1].lon - points[i].lon) * f,
-                    points[i].lat + (points[i + 1].lat - points[i].lat) * f,
-                )
-            }
-            remaining -= lengths[i]
-        }
-        return points.last()
-    }
+    fun position(points: List<GeoPoint>, progress: Double): GeoPoint =
+        RouteGeometry(points).position(progress)
 }

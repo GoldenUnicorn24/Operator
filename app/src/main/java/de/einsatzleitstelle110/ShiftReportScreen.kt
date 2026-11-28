@@ -39,9 +39,16 @@ class ShiftReportScreen(
             if (report.takeAverage >= 0) line(body, "Qualität der Notrufaufnahme", "${report.takeAverage} %")
             if (report.hilfsfrist >= 0) line(body, "P1 unter 10 Min vor Ort", "${report.hilfsfrist} %")
         }
+        if (report.phoneHandoffs.isNotEmpty()) {
+            heading(body, "Telefonübergabe")
+            report.phoneHandoffs.forEach { handoff ->
+                line(body, handoff.callId, if (handoff.active) "Aktives Gespräch" else "Wartender Notruf")
+            }
+        }
         val rows = listOf(
             "Notrufe" to "${report.served}",
             "Erfolgreich" to "${report.solved}",
+            "Teilweise abgeschlossen" to "${report.partiallySolved}",
             "Fehlgeschlagen" to "${report.failed}",
             "Übergeben" to "${report.handed}",
             "Einnahmen" to euro(report.income),
@@ -75,8 +82,13 @@ class ShiftReportScreen(
         if (closed.isNotEmpty()) {
             heading(body, "Einsatzbilanz – warum es so ausging")
             closed.takeLast(20).forEach { incident ->
-                body.addView(ui.text("${if (incident.status == "SOLVED") "✓" else "✗"} P${incident.priority} ${incident.title} · ${incident.location}", 13f,
-                    if (incident.status == "SOLVED") ui.mint else ui.red, true).apply { setPadding(0, ui.dp(6), 0, ui.dp(2)) })
+                val (symbol, color) = when (incident.status) {
+                    "SOLVED" -> "✓" to ui.mint
+                    "PARTIAL" -> "◐" to ui.amber
+                    else -> "✗" to ui.red
+                }
+                body.addView(ui.text("$symbol P${incident.priority} ${incident.title} · ${incident.location}", 13f, color, true)
+                    .apply { setPadding(0, ui.dp(6), 0, ui.dp(2)) })
                 if (incident.outcome.isNotBlank()) note(body, incident.outcome)
             }
         }

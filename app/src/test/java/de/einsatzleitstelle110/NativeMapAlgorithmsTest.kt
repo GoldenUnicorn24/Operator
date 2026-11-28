@@ -49,6 +49,39 @@ class NativeMapAlgorithmsTest {
     }
 
     @Test
+    fun replacingRouteWithSameEndpointsDropsTheOldGeometry() {
+        val start = GeoPoint(10.0, 53.5)
+        val end = GeoPoint(10.1, 53.5)
+        val detour = GeoPoint(10.05, 53.56)
+        val u = UnitState("patrol", "Peter 1", "STREIFE", "DE-HH", start.lat, start.lon)
+        u.routePoints = listOf(start, start, end)
+        val old = u.routeGeometry()
+        assertSame(old, u.routeGeometry())
+        assertEquals(10.05, old.position(.5).lon, .0001)
+
+        u.routePoints = listOf(start, detour, end)
+        val next = u.routeGeometry()
+        assertNotSame(old, next)
+        assertTrue(next.lengthKm > old.lengthKm)
+        assertEquals(detour.lat, next.position(.5).lat, .0001)
+        assertEquals(end, next.position(1.0))
+    }
+
+    @Test
+    fun oldRouteWithNoUsablePolylineUsesSavedEndpoints() {
+        val start = GeoPoint(10.0, 53.5)
+        val end = GeoPoint(10.1, 53.5)
+        val u = UnitState("patrol", "Peter 1", "STREIFE", "DE-HH", start.lat, start.lon,
+            destLat = end.lat, destLon = end.lon, routePoints = listOf(start))
+        val route = u.routeGeometry()
+        assertEquals(listOf(start, end), route.points)
+        assertSame(route, u.routeGeometry())
+
+        u.destLon = 10.2
+        assertEquals(10.2, u.routeGeometry().position(1.0).lon, 0.0)
+    }
+
+    @Test
     fun bundledHamburgRoadGraphProducesRealPolyline() {
         val file =
             listOf(

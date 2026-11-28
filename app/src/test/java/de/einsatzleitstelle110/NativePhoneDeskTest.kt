@@ -13,12 +13,9 @@ class NativePhoneDeskTest {
         MapData.clear()
     }
 
-    private fun asset(name: String) =
-        listOf(File("src/main/native_assets/$name"), File("app/src/main/native_assets/$name")).firstOrNull { it.isFile }
-
-    private fun game(seed: Long = 7L, code: String = "DE-HH"): GameController? {
-        val states = asset("states.geojson") ?: return null
-        val bin = asset("geo/roads-$code.bin") ?: return null
+    private fun game(seed: Long = 7L, code: String = "DE-HH"): GameController {
+        val states = NativeTestAssets.bundled("states.geojson")
+        val bin = NativeTestAssets.bundled("geo/roads-$code.bin")
         val regions = GeoData.parseStates(states.readText())
         val map = MapData.parseBinary(code, bin.readBytes())
         NativeRouting.install(map)
@@ -33,8 +30,8 @@ class NativePhoneDeskTest {
 
     private fun script(id: String) = CallScripts.find(id)!!
 
-    private fun started(id: String): Pair<GameController, PhoneCall>? {
-        val g = game() ?: return null
+    private fun started(id: String): Pair<GameController, PhoneCall> {
+        val g = game()
         g.state.autoCalls = false
         g.setShift(10, 8)
         g.startShift()
@@ -69,7 +66,7 @@ class NativePhoneDeskTest {
     }
 
     @Test fun completeCallIsRatedHighAndSendsRightForcesAtOnce() {
-        val (g, c) = started("unfall_verletzt") ?: return
+        val (g, c) = started("unfall_verletzt")
         for (q in script("unfall_verletzt").questions) PhoneDesk.ask(g, c, q.id)
         PhoneDesk.advise(g, c, "sichern")
         val result = PhoneDesk.classify(g, c, PhoneDesk.codes(g, c).first { it.correct })
@@ -82,7 +79,7 @@ class NativePhoneDeskTest {
     }
 
     @Test fun unaskedQuestionComesBackAsSurpriseOnScene() {
-        val (g, c) = started("unfall_verletzt") ?: return
+        val (g, c) = started("unfall_verletzt")
         PhoneDesk.ask(g, c, "wo")
         val i = PhoneDesk.classify(g, c, PhoneDesk.codes(g, c).first { it.correct }).incident!!
         assertFalse("FEUERWEHR" in i.requiredTypes)
@@ -100,7 +97,7 @@ class NativePhoneDeskTest {
     }
 
     @Test fun panicNeedsCalmingFirst() {
-        val (g, c) = started("herzstillstand") ?: return
+        val (g, c) = started("herzstillstand")
         PhoneDesk.ask(g, c, "wo")
         assertFalse("wo" in c.asked)
         assertFalse(c.located)
@@ -109,8 +106,48 @@ class NativePhoneDeskTest {
         assertTrue(c.located)
     }
 
+    @Test fun theCommonQuestionGuidePreservesScriptedRevelations() {
+        val (g, c) = started("einbrecher_daheim")
+        val script = script("einbrecher_daheim")
+        val beat = script.beats.getValue(2)
+        assertTrue(PhoneDesk.ask(g, c, "general.people"))
+        assertFalse(c.located)
+        assertTrue(c.lines.last().contains("nicht sicher"))
+        assertTrue(PhoneDesk.ask(g, c, "wo"))
+        assertTrue(c.lines.none { it.contains(beat) })
+        assertTrue(PhoneDesk.ask(g, c, "wieviel"))
+        assertEquals(1, c.lines.count { it.contains(beat) })
+        assertTrue(PhoneDesk.ask(g, c, "general.development"))
+        assertEquals(1, c.lines.count { it.contains(beat) })
+        assertFalse(PhoneDesk.ask(g, c, "general.people"))
+        PhoneDesk.hold(g, c)
+        assertFalse(PhoneDesk.ask(g, c, "general.callback"))
+    }
+
+    @Test fun unnecessaryQuestionsAffectTheEvaluationAndTheInterviewSurvivesSaving() {
+        val (focusedGame, focusedCall) = started("unfall_verletzt")
+        val (longGame, longCall) = started("unfall_verletzt")
+        for ((g, c) in listOf(focusedGame to focusedCall, longGame to longCall)) {
+            PhoneDesk.calm(g, c)
+            for (q in script("unfall_verletzt").questions) assertTrue(PhoneDesk.ask(g, c, q.id))
+            PhoneDesk.advise(g, c, "sichern")
+        }
+        for (topic in QuestionTopic.entries) {
+            val common = CallQuestions.forTopic(script("unfall_verletzt"), topic).last()
+            assertTrue(PhoneDesk.ask(longGame, longCall, common.id))
+        }
+        val restored = GameStore.fromJson(GameStore.toJson(longGame.state))
+        assertEquals(longCall.asked, PhoneDesk.active(restored)?.asked)
+        assertEquals(longCall.lines, PhoneDesk.active(restored)?.lines)
+        val focused = PhoneDesk.classify(focusedGame, focusedCall, PhoneDesk.codes(focusedGame, focusedCall).first { it.correct })
+        val long = PhoneDesk.classify(longGame, longCall, PhoneDesk.codes(longGame, longCall).first { it.correct })
+        assertEquals(focused.score - 15, long.score)
+        assertTrue(long.feedback.any { it.contains("Zusatzfragen") })
+        assertTrue(long.incident!!.requiredTypes.contains("FEUERWEHR"))
+    }
+
     @Test fun vagueCallerNeedsMobileLocation() {
-        val (g, c) = started("autobahn_falschfahrer") ?: return
+        val (g, c) = started("autobahn_falschfahrer")
         PhoneDesk.ask(g, c, "wo")
         assertFalse(c.located)
         PhoneDesk.locate(g, c)
@@ -118,7 +155,7 @@ class NativePhoneDeskTest {
     }
 
     @Test fun prankIsNotDispatchedWhenRecognised() {
-        val (g, c) = started("fake_unfall_prank") ?: return
+        val (g, c) = started("fake_unfall_prank")
         val before = g.state.incidents.size
         val r = PhoneDesk.classify(g, c, PhoneDesk.codes(g, c).first { it.none })
         assertEquals(100, r.score)
@@ -126,14 +163,14 @@ class NativePhoneDeskTest {
     }
 
     @Test fun prankBelievedWastesAPatrol() {
-        val (g, c) = started("fake_unfall_prank") ?: return
+        val (g, c) = started("fake_unfall_prank")
         val r = PhoneDesk.classify(g, c, PhoneDesk.codes(g, c).first { !it.none })
         assertEquals("Blinder Alarm", r.incident!!.title)
         assertTrue(r.score < 40)
     }
 
     @Test fun rejectingARealEmergencyCostsTrustAndComesBack() {
-        val (g, c) = started("schlaegerei") ?: return
+        val (g, c) = started("schlaegerei")
         val rep = g.state.reputation
         val r = PhoneDesk.classify(g, c, PhoneDesk.codes(g, c).first { it.none })
         assertEquals(0, r.score)
@@ -142,7 +179,7 @@ class NativePhoneDeskTest {
     }
 
     @Test fun duplicateCallerIsMergedWithoutNewIncident() {
-        val (g, c) = started("schlaegerei") ?: return
+        val (g, c) = started("schlaegerei")
         PhoneDesk.ask(g, c, "wo")
         val first = PhoneDesk.classify(g, c, PhoneDesk.codes(g, c).first { it.correct }).incident!!
         val second = PhoneDesk.ring(g, script("schlaegerei"), duplicateOf = first)!!
@@ -157,7 +194,7 @@ class NativePhoneDeskTest {
     }
 
     @Test fun unansweredPhoneHangsUpAndBecomesVagueIncident() {
-        val (g, c) = started("schlaegerei") ?: return
+        val (g, c) = started("schlaegerei")
         PhoneDesk.hold(g, c)
         g.advance(PhoneDesk.PATIENCE + 1)
         assertTrue(g.state.phones.isEmpty())
@@ -167,7 +204,7 @@ class NativePhoneDeskTest {
     }
 
     @Test fun waitingEscalatesAndAddsForces() {
-        val (g, c) = started("schlaegerei") ?: return
+        val (g, c) = started("schlaegerei")
         PhoneDesk.ask(g, c, "wo"); PhoneDesk.ask(g, c, "wer")
         val i = PhoneDesk.classify(g, c, PhoneDesk.codes(g, c).first { it.correct }).incident!!
         val needed = i.requiredTypes.size
@@ -178,24 +215,26 @@ class NativePhoneDeskTest {
     }
 
     @Test fun playerAnswersAsPoliceOfTheState() {
-        val (_, c) = started("gas") ?: return
+        val (_, c) = started("gas")
         assertTrue(c.lines.first().substringAfter('|').startsWith("Notruf, Polizei Hamburg"))
     }
 
     @Test fun hamburgCallsRingAtTheirPlace() {
-        val (g, c) = started("hh_kiez_flasche") ?: return
+        val (g, c) = started("hh_kiez_flasche")
         assertTrue(GeoData.km(GeoPoint(c.lon, c.lat), CallScripts.find("hh_kiez_flasche")!!.place!!) < 1.5)
         assertTrue(g.region().contains(GeoPoint(c.lon, c.lat)))
     }
 
-    @Test fun radioEventsOnlyUseRecordedClips() {
+    @Test fun standardRadioClipsStayRecordedAndCustomCallsignsGetDynamicLines() {
         val all = RadioScript.allClips().toSet()
         val heard = RadioScript.event("Einheit unterwegs", "Peter HH 4 · 6 Sim.-Min.") + RadioScript.event("Am Einsatzort", "Peter HH 4 · Test") +
             RadioScript.event("Funkstatus", "Peter HH 4 an Leitstelle: Status 2")
         assertEquals(4, heard.size)
-        assertTrue(RadioScript.event("Einheit unterwegs", "SEK HH 4 · 6").isEmpty())
-        val rnd = java.util.Random(4)
-        repeat(200) { (heard + RadioScript.ambient({ rnd.nextDouble() }, listOf("Peter HH 2", "SEK HH 1"))).forEach { l -> assertTrue(l.clips.isNotEmpty() && all.containsAll(l.clips)) } }
+        assertTrue(heard.all { it.clips.isNotEmpty() && all.containsAll(it.clips) })
+        val own = RadioScript.event("Einheit unterwegs", "Peter 24/1 · 6")
+        assertEquals(2, own.size)
+        assertTrue(own.all { line -> line.clips.any { it.text == "Peter 24 Strich 1" } })
+        assertEquals("SEK HH 4", RadioScript.event("Am Einsatzort", "SEK HH 4 · 6").single().clips.first().text)
     }
 
     @Test fun spokenLinesNameTheDistrictNotTheStreet() {
@@ -207,14 +246,14 @@ class NativePhoneDeskTest {
 
     /** Set VOICE_MANIFEST=write once after changing any text, then render the clips. */
     @Test fun voiceManifestIsInStep() {
-        val states = asset("states.geojson") ?: return
-        val bin = asset("geo/roads-DE-HH.bin") ?: return
+        val states = NativeTestAssets.bundled("states.geojson")
+        val bin = NativeTestAssets.bundled("geo/roads-DE-HH.bin")
         val region = GeoData.parseStates(states.readText()).first { it.code == "DE-HH" }
         val places = MapData.parseBinary("DE-HH", bin.readBytes()).places
             .filter { region.contains(GeoPoint(it.lon, it.lat)) }.map { it.name }.distinct().sorted()
         val g = GameController(GameState(), emptyList())
         val lines = VoiceLines.manifest(g.allTemplates(), places).map { "${it.id}\t${it.voice}\t${it.text}" }.sorted()
-        val file = listOf(File("../tools/voices/lines.tsv"), File("tools/voices/lines.tsv")).first { it.parentFile.isDirectory }
+        val file = listOf(File("../tools/voices/lines.tsv"), File("tools/voices/lines.tsv")).firstOrNull { it.isFile } ?: error("Pflicht-Testdatei fehlt: tools/voices/lines.tsv")
         if (System.getenv("VOICE_MANIFEST") == "write") file.writeText(lines.joinToString("\n") + "\n")
         assertEquals(lines, file.readLines())
     }
@@ -227,7 +266,7 @@ class NativePhoneDeskTest {
     }
 
     @Test fun cprSavesRiskOnlyWhenPerformed() {
-        val (g, c) = started("herzstillstand") ?: return
+        val (g, c) = started("herzstillstand")
         PhoneDesk.calm(g, c)
         PhoneDesk.ask(g, c, "wo")
         PhoneDesk.advise(g, c, "cpr")
@@ -237,19 +276,98 @@ class NativePhoneDeskTest {
     }
 
     @Test fun phoneStateSurvivesSaveRoundtrip() {
-        val (g, c) = started("pizza") ?: return
+        val (g, c) = started("pizza")
         PhoneDesk.ask(g, c, "hinweis")
         val restored = GameStore.fromJson(org.json.JSONObject(GameStore.toJson(g.state).toString()))
         val p = restored.phones.single()
         assertEquals(c.scriptId, p.scriptId)
         assertEquals(c.lines, p.lines)
         assertEquals(setOf("hinweis"), p.asked)
-        assertEquals("RINGING", p.status)
+        assertEquals("ACTIVE", p.status)
         assertTrue(restored.phoneEnabled)
     }
 
+    @Test fun earlyDispatchKeepsTheCallerOnTheLineAndReusesTheSameIncident() {
+        val (g, phone) = started("unfall_verletzt")
+        val template = PhoneDesk.template(g, script(phone.scriptId).correct)!!
+        assertNull(PhoneDesk.startDispatch(g, phone, template.title, 1))
+
+        PhoneDesk.calm(g, phone)
+        assertTrue(PhoneDesk.ask(g, phone, "wo"))
+        g.advance(2)
+        val incident = PhoneDesk.startDispatch(g, phone, template.title, 1)!!
+        val firstAlarm = g.state.absoluteMinute
+        assertSame(phone, PhoneDesk.active(g.state))
+        assertEquals(2, incident.age)
+        assertTrue(incident.reportedAt <= incident.answeredAt)
+        assertTrue(incident.answeredAt < firstAlarm)
+        val unit = g.state.units.first { g.dispatchable(it) && g.canHandle(it, incident.required) }
+        assertTrue(g.dispatch(incident, unit))
+        assertEquals(firstAlarm, incident.firstDispatchedAt)
+
+        val saved = GameStore.fromJson(GameStore.toJson(g.state))
+        val next = GameController(saved, g.regions)
+        val resumed = PhoneDesk.active(saved)!!
+        val linked = PhoneDesk.linkedIncident(next, resumed)!!
+        assertEquals(incident.id, linked.id)
+        val detail = script(phone.scriptId).twistQuestion
+        assertTrue(PhoneDesk.ask(next, resumed, detail))
+        assertTrue(linked.requiredTypes.containsAll(script(phone.scriptId).twistAdd))
+        assertTrue(linked.phoneTranscript.contains(resumed.lines.last()))
+        val roles = linked.requiredTypes.toList()
+        val result = PhoneDesk.classify(next, resumed, PhoneDesk.codes(next, resumed).first { it.correct })
+        assertSame(linked, result.incident)
+        assertEquals(1, saved.incidents.size)
+        assertEquals(listOf(unit.id), linked.assignedUnits)
+        assertEquals(roles, linked.requiredTypes)
+        assertTrue(saved.phones.isEmpty())
+        assertTrue(linked.phoneClosedAt >= firstAlarm)
+    }
+
+    @Test fun activeAndRingingCallsSurviveHandoffAndSave() {
+        val (g, active) = started("unfall_verletzt")
+        PhoneDesk.ask(g, active, "wo")
+        g.advance(30)
+        val ringing = PhoneDesk.ring(g, script("schlaegerei"))!!
+        g.advance(2)
+        assertEquals(2, ringing.waited)
+
+        g.finishShift()
+        val report = g.state.reports.first()
+        assertEquals(listOf(PhoneHandoff(active.id, true), PhoneHandoff(ringing.id, false)), report.phoneHandoffs)
+        val saved = GameStore.fromJson(GameStore.toJson(g.state))
+        assertEquals("DEBRIEF", saved.phase)
+        assertEquals(report.phoneHandoffs, saved.reports.first().phoneHandoffs)
+
+        val next = GameController(saved, g.regions)
+        next.nextDay()
+        next.startShift()
+        assertEquals(listOf(ringing.id), PhoneDesk.ringing(saved).map { it.id })
+        val resumed = PhoneDesk.active(saved)!!
+        assertEquals(active.id, resumed.id)
+        assertEquals(active.lines, resumed.lines)
+        assertEquals(active.asked, resumed.asked)
+        assertEquals(active.located, resumed.located)
+        assertTrue(resumed.lines.last().contains("An Folgeschicht übergeben"))
+        assertEquals(2, PhoneDesk.ringing(saved).single().waited)
+        assertEquals(0, saved.shiftAnswered)
+    }
+
+    @Test fun olderPhoneEntriesWithoutStatusRemainAnswerable() {
+        val (g, call) = started("pizza")
+        val old = GameStore.toJson(g.state)
+        old.getJSONArray("phones").getJSONObject(0).apply {
+            remove("status")
+            remove("region")
+            remove("scope")
+        }
+        val restored = GameStore.fromJson(old)
+        assertEquals(listOf(call.id), PhoneDesk.ringing(restored).map { it.id })
+        assertEquals(call.lines, PhoneDesk.ringing(restored).single().lines)
+    }
+
     @Test fun snapshotDoesNotShareCallTranscript() {
-        val (g, c) = started("pizza") ?: return
+        val (g, c) = started("pizza")
         val copy = GameSnapshots.capture(g.state)
         PhoneDesk.ask(g, c, "hinweis")
         assertTrue(copy.phones.single().asked.isEmpty())
@@ -299,7 +417,7 @@ class NativePhoneDeskTest {
         val lines = mutableListOf<String>()
         val grades = mutableMapOf<Double, MutableList<Int>>()
         for (skill in listOf(.2, .6, 1.0)) for (seed in 1L..6L) {
-            val g = game(seed * 7919) ?: return
+            val g = game(seed * 7919)
             val r = playShift(g, skill, java.util.Random(seed))
             grades.getOrPut(skill) { mutableListOf() }.add(r.grade)
             lines.add("skill=$skill seed=$seed calls=${r.served} answered=${r.answered} missed=${r.missed} ok=${r.solved} bad=${r.failed} handed=${r.handed} take=${r.takeAverage} hf=${r.hilfsfrist} note=${r.grade} ev=${r.event} rep=${g.state.reputation}")

@@ -55,3 +55,29 @@ Je nach Buildumgebung: Playwright/JS Unit-Tests und Android-Instrumentation. In 
 - [ ] Automat: `full_state_bounds_each_region`, `incident_within_state`, `vehicles_visible_across_region`, `region_switch_retains_vehicles`, `cluster_open_and_filter`, `shift_8h`, `shift_12h`, `shift_24h`, `midnight_once`.
 
 Verbindlicher Detailvertrag: [STATEWIDE_MAP_AND_SHIFTS.md](STATEWIDE_MAP_AND_SHIFTS.md).
+
+## Rebuilt – Regressionen und Freigabe
+
+| Verhalten | Nachweis |
+| --- | --- |
+| Notrufübergabe und laufendes Gespräch nach dem Laden | `NativePhoneDeskTest.activeAndRingingCallsSurviveHandoffAndSave` |
+| Frühe Alarmierung und Fortsetzung auf Android | `NativeControlRoomTest.canDispatchAndThenContinueTheSameCallFromTheNativeViews` |
+| Neuere Informationen bleiben mit demselben Einsatz verbunden | `NativePhoneDeskTest.earlyDispatchKeepsTheCallerOnTheLineAndReusesTheSameIncident` |
+| Abgelehnte Umdisposition bewahrt den gesamten Spielzustand | `NativeDispatchTest.failedRedirectPreservesOriginVehicleBudgetAndLogs` |
+| Zusätzliche Einsatzrollen erfüllen Besatzung, Ausbildung und Ausrüstung | `NativeDispatchAdvisorTest.careerTaskforceCannotDeclareItsWayIntoSpecialistAssignments` |
+| Fahrzeugwechsel bei konstanter Anzahl aktualisiert die Einsatzakte | `NativeDispatchAdvisorTest.incidentFileChangesWhenFreeVehiclesSwapEvenWithSameCount` |
+| Gleichzeitige ETA-Abfragen bleiben mit den Routen konsistent | `NativeDirectedRoutingTest.concurrentDetailEtaReadsAgreeWithTheRoutedJourneys` |
+| Routinemeldungen verdrängen dringende Funkmeldungen nicht | `NativeRadioQueueTest.routineOverflowDoesNotDiscardUrgentOrIncidentTraffic` |
+| Fehlende Pflichtdaten führen zu einer erklärenden Fehlermeldung | `NativeTestAssets` in Geografie-, Telefon- und Schichttests |
+| Simulationsuhr behält Tempo bei unregelmäßigen Ticks und pausiert bei Hintergrundwechsel | `SimulationClockTest` |
+| Erste Besatzung arbeitet vor der Ankunft weiterer Dienste | `NativeGameEngineTest.crewsStartIndependentWorkBeforeTheOtherServiceArrives` und der native Einsatzakten-Ablauf |
+| Restarbeit überlebt Speichern, Neustart und eine neue Besatzung | `NativeGameEngineTest.runningTaskSurvivesSavingRecallAndAReplacementCrew` |
+| Routineeinsatz endet bei erledigter Arbeit über mehrere Seeds zuverlässig | `NativeGameEngineTest.finishedRoutineTaskSucceedsAcrossRandomSeeds` |
+| Eine abgezogene und wieder alarmierte Unterstützung wiederholt ihren Arbeitsbonus nicht | `NativeGameEngineTest.recallingAndResendingItsSupportCannotApplyTheSameBenefitTwice` |
+| Alte laufende Mehrrollen-Einsätze setzen die gespeicherte Arbeitszeit fort | `NativeGameEngineTest.aLegacyWorkingMultiRoleIncidentResumesItsRemainingMinutes` |
+| Teilabschlüsse erscheinen im Schichtbericht, aktive Entscheidungen behalten ihren Wert | `NativeGameEngineTest.completedLocalWorkCountsAsPartialWhenOtherServiceNeverArrives`, `NativeCareerTest.engagedPlayBeatsPassivePlay` |
+| Allgemeine Rückfragen verändern geskriptete Wendungen und offene Nachforderungen nur bei neuem Fallwissen | `NativePhoneDeskTest.theCommonQuestionGuidePreservesScriptedRevelations` und der Geräteablauf für frühe Alarmierung |
+| Funkstatus antwortet für die tatsächlich eingesetzte Besatzung, Quittierungen bleiben erhalten | `NativeRadioArchiveTest.radioCommandsArePersistedAndDoNotControlAReassignedVehicle` und der native Funkarchiv-Ablauf |
+| Vorschau erscheint nach erfolgreicher Paketprüfung, Geräteprüfung und Offline-Start | [Rebuilt Android](../.github/workflows/rebuilt-android.yml) |
+
+Die vollständige Rebuilt-Freigabe erfordert darüber hinaus die laut [Entwicklungsstand](REBUILT_PROGRESS.md) offenen System-, Geräte- und Leistungsprüfungen.

@@ -1,10 +1,6 @@
 package de.einsatzleitstelle110
 
-import kotlin.math.abs
-
-data class RadioLine(val clips: List<VoiceClip>)
-
-/** What is heard on the police radio: events of the shift and fictional routine traffic. */
+/** Creates spoken transmissions from actual simulation events. */
 object RadioScript {
     private const val CONTROL = "r0"
     const val MAX_NUMBER = 24
@@ -32,39 +28,41 @@ object RadioScript {
 
     private fun sign(voice: String, n: Int) = VoiceClip(voice, "Peter $n")
 
-    private fun unit(callsign: String, text: String): RadioLine? {
-        val n = number(callsign) ?: return null
-        val v = voice(n)
-        return RadioLine(listOf(sign(v, n), VoiceClip(v, text)))
+    private fun callsign(voice: String, value: String): VoiceClip =
+        number(value)?.let { sign(voice, it) } ?: VoiceClip(voice, value.replace("/", " Strich "))
+
+    private fun unit(callsign: String, text: String, priority: RadioPriority): RadioLine {
+        val v = voice(number(callsign) ?: (callsign.hashCode() and Int.MAX_VALUE))
+        return RadioLine(listOf(callsign(v, callsign), VoiceClip(v, text)), priority)
     }
 
-    private fun control(callsign: String, text: String): RadioLine? {
-        val n = number(callsign) ?: return null
-        return RadioLine(listOf(VoiceClip(CONTROL, SHORT[0]), sign(CONTROL, n), VoiceClip(CONTROL, text)))
-    }
+    private fun control(callsign: String, text: String, priority: RadioPriority) =
+        RadioLine(listOf(VoiceClip(CONTROL, SHORT[0]), callsign(CONTROL, callsign), VoiceClip(CONTROL, text)), priority)
 
-    /** A game event as radio traffic; only patrol cars have recorded call signs. */
-    fun event(name: String, message: String): List<RadioLine> {
-        val who = message.substringBefore(" · ").substringBefore(" an Leitstelle").trim()
+    private fun announcement(text: String, priority: RadioPriority) =
+        listOf(RadioLine(listOf(VoiceClip(CONTROL, text)), priority))
+
+    fun event(name: String, message: String, callsign: String? = null): List<RadioLine> {
+        val who = callsign ?: message.substringBefore(" · ").substringBefore(" an Leitstelle").substringBefore(" verlässt ").trim()
+        val incident = RadioPriority.INCIDENT
+        val operations = RadioPriority.OPERATIONS
         return when (name) {
-            "Einheit unterwegs" -> listOfNotNull(control(who, EVENT[4]), unit(who, EVENT[0]))
-            "Am Einsatzort" -> listOfNotNull(unit(who, EVENT[1]))
-            "Einheit abgezogen" -> listOfNotNull(control(who, EVENT[5]))
+            "Einheit unterwegs" -> listOf(control(who, EVENT[4], incident), unit(who, EVENT[0], incident))
+            "Am Einsatzort" -> listOf(unit(who, EVENT[1], incident))
+            "Einheit abgezogen" -> listOf(control(who, EVENT[5], incident))
+            "Nachforderung", "Lageverschärfung", "Einsatz fehlgeschlagen" ->
+                announcement("$name. $message", RadioPriority.URGENT)
+            "Funkmeldung", "Verstärkung eingetroffen", "Einsatz beendet", "Einsatz teilweise abgeschlossen", "Teilaufgabe erledigt" -> announcement("$name. $message", incident)
+            "Funk quittiert" -> listOf(RadioLine(listOf(VoiceClip(CONTROL, CONTROL_LINES.first())), incident))
+            "Statusrückmeldung" -> announcement(message, incident)
+            "Schicht begonnen", "Schichtende" -> announcement("$name. $message", operations)
             "Funkstatus" -> when (message.substringAfter("Status ", "").trim()) {
-                "1" -> listOfNotNull(unit(who, EVENT[2]))
-                "2" -> listOfNotNull(unit(who, EVENT[3]))
+                "1" -> listOf(unit(who, EVENT[2], operations))
+                "2" -> listOf(unit(who, EVENT[3], operations))
                 else -> emptyList()
             }
             else -> emptyList()
         }
-    }
-
-    /** One short piece of routine traffic. */
-    fun ambient(rnd: () -> Double, units: List<String>): List<RadioLine> {
-        fun <T> any(l: List<T>) = l[(rnd() * l.size).toInt().coerceAtMost(l.lastIndex)]
-        val a = units.filter { number(it) != null }.ifEmpty { listOf("Peter 12") }.let(::any)
-        return if (rnd() < .2) listOf(RadioLine(listOf(VoiceClip(CONTROL, any(CONTROL_LINES.drop(5))))))
-        else listOfNotNull(unit(a, any(UNIT)), RadioLine(listOf(VoiceClip(CONTROL, any(CONTROL_LINES.take(3))))))
     }
 
     fun allClips(): List<VoiceClip> {

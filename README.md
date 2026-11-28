@@ -2,7 +2,11 @@
 
 **Native Android-Leitstellensimulation.** Die entwickelte Spielversion wird als Kotlin-App mit nativen Views, Canvas-Karte und SoundPool weitergeführt. Die installierbare App enthält keine HTML-, JavaScript- oder CSS-Dateien, keine WebView und benötigt weder Internet noch eine eigene Domäne.
 
-[Native Android-APK herunterladen](https://github.com/GoldenUnicorn24/Operator/releases?q=operator-polizeichef) · [Android-Screenshots](docs/evidence/polizeichef/)
+[Operator Rebuilt Vorschau 6 herunterladen](https://github.com/GoldenUnicorn24/Operator/releases/tag/v0.20.0-rebuilt-preview.6) · [Emulatorbilder der Vorschau](https://github.com/GoldenUnicorn24/Operator/releases/download/v0.20.0-rebuilt-preview.6/Emulator-Screenshots.tar.gz)
+
+## Operator Rebuilt – Entwicklungsvorschau
+
+Der Branch `codex/operator-rebuilt-v020` entwickelt die native Version 0.16 weiter. Rebuilt verbindet Notruf, Einsatzakte und Disposition im laufenden Gespräch. Die Folgeschicht kann offene Notrufe übernehmen. Vorschau 3 ergänzt das durchsuchbare Funkarchiv und die abgestimmte Spieluhr. Seit Vorschau 4 beginnen Besatzungen bei Mehrrollen-Einsätzen mit eigenen Aufgaben, sobald sie eintreffen. Acht Fragethemen unterstützen die Notrufannahme. Vorschau 6 ergänzt Funkquittierungen und Statusabfragen. Aktueller Umfang, Testbefunde und offene Meilensteine stehen im [Entwicklungsstand](docs/REBUILT_PROGRESS.md).
 
 ## Lagezentrum und Polizeichef (0.12.0)
 
@@ -34,7 +38,7 @@ python3 scripts/verify_native_apk.py app/build/outputs/apk/debug/app-debug.apk
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Version: **0.11.0-polizeichef-preview**, minSdk26, targetSdk35. Kein Release-Signing-Schlüssel im Repository. `app/src/main/native_assets` und die Bildressourcen sind die einzigen APK-Assetquellen. Frühere Alpha-/Webquellen bleiben als Entwicklungs- und Migrationsreferenz erhalten; sie werden nicht mit dem Spiel ausgeführt oder als Web-App ausgeliefert.
+Aktueller Rebuilt-Kandidat **0.20.0-rebuilt-preview.7**, VersionCode 124, minSdk 26, targetSdk 35. Kein Release-Signing-Schlüssel im Repository. `app/src/main/native_assets` und die Bildressourcen sind die einzigen APK-Assetquellen. Frühere Alpha-/Webquellen bleiben als Entwicklungs- und Migrationsreferenz erhalten; sie werden nicht mit dem Spiel ausgeführt oder als Web-App ausgeliefert.
 
 Der CI-Workflow baut das APK, führt Unit-Tests/Lint/Paketprüfung aus und startet einen nativen Android-Emulatorablauf inklusive Wandsbek, P99, Spezialkräfte-Disposition,24h, Folgetag und Screenshots. Ein verifizierter Preview-Build wird als APK-Artefakt und separater GitHub-Preview-Download bereitgestellt. [Actions](https://github.com/GoldenUnicorn24/Operator/actions/workflows/android-ci.yml).
 
@@ -46,6 +50,6 @@ Die Ausgabe wird zusätzlich direkt auf HTML-/Script-Dateien und WebView-Klassen
 
 ## Grenzen und Nachweise
 
-Straßengraph und Fahrzeiten sind **Spielnäherungen**: Hamburg berücksichtigt Einbahnrichtungen; Abbiegeverbote und Echtzeit-Verkehrsdaten fehlen. Alle 16 Länder besitzen gebündelte OSM-Netze; bei fehlenden Anschlüssen wird eine Distanznäherung ausdrücklich markiert. Alle Wachen, Personen, Einsätze und Ausstattungswerte sind fiktiv. Die Fahrzeug- und Ausrüstungsbilder sind generierte Illustrationen und keine Herstellerproduktdokumentation. Die visuelle Abnahme und Leistung auf physischen Mittelklassegeräten bleiben eigene Releasegates; kein vorzeitiges v1.0-Fertiglabel.
+Straßengraph und Fahrzeiten sind **Spielnäherungen**: Hamburg berücksichtigt Einbahnrichtungen; Abbiegeverbote und Echtzeit-Verkehrsdaten fehlen. Alle 16 Länder besitzen gebündelte OSM-Netze; bei fehlenden Anschlüssen wird eine Distanznäherung ausdrücklich markiert. Die 141 Hamburger Polizei- und Feuerwehrstandorte dienen als geografische Vorlagen. Ihre Ressourcen und Kapazitäten sowie eigene Wachen, Personen, Einsätze und Ausstattungswerte sind simuliert. Die Fahrzeug- und Ausrüstungsbilder sind generierte Illustrationen und keine Herstellerproduktdokumentation. Die visuelle Abnahme und Leistung auf physischen Mittelklassegeräten bleiben eigene Releasegates; kein vorzeitiges v1.0-Fertiglabel.
 
 [Native Änderungsanforderungen und Nachweise](docs/NATIVE_REVISION.md) · [Implementierungslog](docs/IMPLEMENTATION_LOG.md) · [Quellen/Lizenzen](THIRD_PARTY_NOTICES.md).

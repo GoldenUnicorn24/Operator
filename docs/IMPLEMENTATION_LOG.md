@@ -1,3 +1,7 @@
+# Operator Rebuilt
+
+Die neue Entwicklungslinie und ihre Nachweise sind in [REBUILT_PROGRESS.md](REBUILT_PROGRESS.md) dokumentiert. Der [Ausgangsaudit](REBUILT_AUDIT.md) enthält Basiscommit, Branchvergleich und priorisierte Defekte.
+
 # Implementierungslog
 
 ## 2026-11-01 – Codex-Vorbereitung
@@ -158,3 +162,51 @@ Die abschließende Sichtprüfung bestätigt den echten Fortschritt zusätzlich i
 
 ## Notrufleitung · 2026-11-05
 Diagnose am Stand `db57263`: Viele Systeme, aber keine Spannung. ×4 lief 4 Spielminuten pro Sekunde, Einsätze entstanden ohne Anruf, Optionen zeigten ihre Wirkung vorab, Fristen waren für P1/P2 zu großzügig. Umgesetzt in `PhoneDesk.kt`, `CallScripts.kt`, `PhoneScreen.kt`; die bestehende Engine bleibt, `phoneEnabled` schaltet zwischen Telefon und alter Direktmeldung. Lokal ohne Android-SDK: Engine und 143 JVM-Tests über den Kotlin-Compiler aus Gradle, alle grün außer 5 `NativeMapFormatTest`, die im lokalen Behelfsaufbau keine Testressourcen fanden. Oberfläche nur in CI kompilierbar.
+
+## Operator Rebuilt · Vorschau 2 · 2026-11-28
+
+Ein Autosave mit ausschließlicher Verwaltungsarbeit konnte am ersten Tag in der Planung überschrieben werden. Der neue Geräteablauf legt eine Wache an, speichert sie, öffnet nacheinander Karriere und Sandbox und bricht die Überschreibabfrage ab. Die bestehende Partie und Wache müssen erhalten bleiben. Die Dispositionsmodi erweitern den bisherigen budgetbeschränkten Rollenabgleich. Simulation und Kartenanimation teilen die vorberechnete Routengeometrie. Der Release-Workflow bestimmt den Vorschautag aus der APK und wartet auf die Geräteprüfung. Der vollständige Prüflauf wird im [Entwicklungsstand](REBUILT_PROGRESS.md) nachgetragen.
+
+### Geräteprüfung und Veröffentlichung · Vorschau 2
+
+Vollständiger CI-Lauf 46132381958 auf `bf75b7c`: 163 JVM- und 12 Android-Tests, Paketprüfung, Offline-Kaltstart und 34 Emulatorbilder. Lint meldete 0 Fehler und 63 Warnungen. Die erste Android-Prüfung hatte vor dem Rückruf-Screenshot das Zeitlimit erreicht. Die Pausenmarkierung zeichnet seit dem Korrekturcommit keine fortlaufenden Pulse. Die Geräteprüfung verwendet eine Hauptthread-Barriere vor dem Screenshot und eine begrenzte Laufzeit je Test. Die App wurde als Vorschau 2 im Release-Bereich veröffentlicht.
+
+### Fortsetzung · Vorschau 3
+
+Eine monotone Uhr vereinheitlicht effektives Tempo und Fahranimation. Das persistierte Funkarchiv übernimmt tatsächliche Übertragungen durch den GameController vor der Audiowiedergabe. Schema 7 akzeptiert ältere Spielstände ohne das neue Archiv samt bisherigem Textprotokoll. Lokal 71 ausgewählte Tests erfolgreich, beide Android-APKs gebaut und Lint abgeschlossen. Der zusätzliche Geräteablauf überprüft die Anzeige einer tatsächlichen Entsendung und ihre Suche.
+
+## Operator Rebuilt · Vorschau 4 · Mehrrollen-Einsätze
+
+Die ersten beiden Regressionstests reproduzierten die alte Wartezeit und den vollständigen Fehlschlag trotz möglicher Teilarbeit. Die neue Aufgabenlogik erzeugt je Rollenanforderung eine eigene Arbeit. Dieselbe Besatzung kann nur einer Arbeit gleichzeitig zugeordnet sein und nur eine Aufgabe desselben Einsatzes abschließen. Fertige Aufgaben bleiben bei einer Ablösung stehen. Teilabschlüsse sind im Funk, Bericht und in der Bewertung abgebildet. Schema 7 enthält die zusätzlichen optionalen Felder. Der neue Emulatorablauf öffnet eine reale Einsatzakte mit arbeitender Streife und ausstehendem Rettungsdienst. Die vollständige CI-Abnahme folgt.
+
+### Freigabe Vorschau 3 und Karriereprüfung Vorschau 4
+
+Vorschau 3 wurde am Stand `e20ac5e` veröffentlicht. Der vollständige CI-Lauf 46133578431 bestand mit 169 JVM- und 13 Android-Tests. Eine Sichtprüfung des Funkarchiv-Screenshots bestätigte die Darstellung von Rufname, Priorität, Einsatznummer und Wiedergabe. Der erste CI-Lauf für Vorschau 4 fand eine Karriere-Regression. Die Aufgabenbewertung berücksichtigt seither Risikoverlauf und Ruf. Im angepassten Test kann auch eine bereits arbeitende Lage weitere Kräfte erhalten.
+
+## Operator Rebuilt · Vorschau 5 · Notrufgespräch
+
+Der Frageleitfaden zeigt acht allgemeine Themen und ordnet vorhandene Fragen zu. Rückfragen ohne nutzbare Antwort werden nach mehrmaliger Verwendung in der Bewertung erklärt. Sie verändern weder die Reihenfolge geskripteter Wendungen noch das Auffinden der Adresse. Der Geräteablauf öffnet nach früher Alarmierung die Fragegruppe „Verletzungen“ und prüft die ausgelöste Nachforderung über die native Telefonoberfläche.
+
+### Abnahme Mehrrollen-Einsätze
+
+Vorschau 4 ist auf `f6808ac` veröffentlicht. CI 46134969095: 175 JVM- und 14 Android-Tests, Paketprüfung, Android-Offline-Kaltstart und 36 Emulatorbilder. Der geprüfte Screenshot zeigt die arbeitende Streife und den ausstehenden Rettungsdienst. Die Einzahl im Dispositionsvorschlag wurde in Vorschau 5 korrigiert.
+
+## Operator Rebuilt · Vorschau 6 · Funkantworten
+
+Funkaktionen verwenden den gespeicherten Einsatzbezug und die zugehörige Fahrzeug-ID. Der Auftrag wird vor Ausführung gegen die aktuelle Zuordnung geprüft. Quittierung und Statusmeldung werden als wirkliche Funkereignisse gespeichert. Der bestehende Geräteablauf führt beide Aktionen über das native Funkarchiv aus.
+
+### Abnahme Fragethemen
+
+Vorschau 5 auf `4518f5d` veröffentlicht. CI 46135950765: 177 JVM- und 14 Android-Tests, Paketprüfung, Offline-Kaltstart und 37 Emulatorbilder. Der Geräteablauf findet die Nachforderung über die native Fragegruppe „Verletzungen“. Für einen vollständigen Gesprächsscreenshot wartet Vorschau 6 ausdrücklich auf die fertig eingeblendete Antwort. Der Pausezustand und das tatsächlich gewählte Gesprächsstempo sind in der Statuszeile erkennbar.
+
+## Operator Rebuilt · Vorschau 7 · Einheitlicher Aufgabenablauf
+
+Die gemeinsame Aufgabenlogik ersetzt auch den separaten Einzelrollen-Timer und dessen Zufallsergebnis. Optionale Unterstützung der Einzelaufgabe bleibt erhalten. Der erste Langlauf ergab für einen Niedersachsen-Seed 13 von 23 Abschlüssen. Der Test bevorzugte eine Fachkraft ohne Rücksicht auf die Frist. Der neue Lauf nutzt die produktive Disposition und behält die geforderte Abschlussquote unverändert. Er erreichte 16 von 24 vollständigen Abschlüssen in Niedersachsen, 16 von 21 in Hamburg und 12 von 13 in Bayern. Der Vier-Schichten-Karrierevergleich erzielte aktiv 96,5 %, passiv 94,9 % und Ruf 94 gegenüber 89.
+
+### Abnahme Funkantworten
+
+Vorschau 6 auf `c09b2d2` veröffentlicht. CI 46136695226: 178 JVM- und 14 Android-Tests, Paketprüfung, Android-Offline-Kaltstart und 37 Emulatorbilder. Das Archiv zeigt die Quittierung am ursprünglichen Funkspruch. Der Geräteablauf prüft die dadurch entstandene Rückmeldung aus dem tatsächlichen Fahrzeugzustand. Der Telefonscreenshot enthält die vollständig eingeblendete Antwort und die sichtbare Pause.
+
+### Abschlussgründe und Langlauf
+
+Der erste CI-Lauf 46137396946 enthielt den alten Wortlaut-Test auf „Chance“. Statt der entfallenen Prozentchance nennt der Abschlussbericht die erledigte Aufgabe und die tatsächliche Ankunftszeit. Der Speichertest prüft diese Angaben und den Aufgabenstand nach dem Laden. Ein gemischter Lastlauf mit 50 bis 500 Fahrzeugen und zwölf synthetische Schichtserien sind im Entwicklungsstand dokumentiert.

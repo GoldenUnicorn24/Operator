@@ -1,6 +1,5 @@
 package de.einsatzleitstelle110
 
-import java.io.File
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Test
@@ -13,20 +12,17 @@ class NativeAcceptanceTest {
         MapData.clear()
     }
 
-    private fun asset(name: String) =
-        listOf(File("src/main/native_assets/$name"), File("app/src/main/native_assets/$name")).firstOrNull { it.isFile }
-
-    private fun world(code: String): Pair<List<GeoRegion>, StateMap>? {
-        val states = asset("states.geojson") ?: return null
-        val bin = asset("geo/roads-$code.bin") ?: return null
+    private fun world(code: String): Pair<List<GeoRegion>, StateMap> {
+        val states = NativeTestAssets.bundled("states.geojson")
+        val bin = NativeTestAssets.bundled("geo/roads-$code.bin")
         val regions = GeoData.parseStates(states.readText())
         val map = MapData.parseBinary(code, bin.readBytes())
         NativeRouting.install(map)
         return regions to map
     }
 
-    private fun controller(code: String, state: GameState = GameState(region = code, mode = "SANDBOX")): GameController? {
-        val (regions, map) = world(code) ?: return null
+    private fun controller(code: String, state: GameState = GameState(region = code, mode = "SANDBOX")): GameController {
+        val (regions, map) = world(code)
         val region = regions.first { it.code == code }
         val g = GameController(state, regions)
         val places = map.places.filter { region.contains(GeoPoint(it.lon, it.lat)) }
@@ -41,18 +37,16 @@ class NativeAcceptanceTest {
                 val st = g.pendingStage(call) ?: continue
                 st.options.filter { g.optionAvailable(call, it).first && it.effect.cost <= g.state.budget }.minByOrNull { it.effect.risk }?.let { g.choose(call, it.id) }
             }
-            if (call.status == "WORKING" && g.remainingTypes(call).isEmpty()) continue
-            for (need in g.remainingTypes(call)) {
-                val c = g.candidates(call).firstOrNull { (u, _) -> u.type == need } ?: g.candidates(call).firstOrNull { (u, _) -> g.canHandle(u, need) && u.type !in listOf("SEK", "MEK") }
-                if (c != null) g.dispatch(call, c.first)
-            }
+            val plan = DispatchAdvisor.plan(g, call)
+            val byId = g.state.units.associateBy(UnitState::id)
+            g.dispatchAll(call, plan.picks.mapNotNull { byId[it.unitId] })
         }
     }
 
     @Test
     fun fullShiftsInHamburgNiedersachsenAndBayern() {
         for ((code, start) in listOf("DE-HH" to 14, "DE-NI" to 6, "DE-BY" to 22)) {
-            val g = controller(code) ?: return
+            val g = controller(code)
             g.state.randomSeed = 20261102L + code.hashCode()
             g.setShift(start, 8)
             g.startShift()
@@ -84,7 +78,7 @@ class NativeAcceptanceTest {
 
     @Test
     fun ownScenarioCreatedExportedImportedSavedAndPlayedNextDay() {
-        val author = controller("DE-HH") ?: return
+        val author = controller("DE-HH")
         val t =
             IncidentTemplate(
                 "Abnahme: Einbruch mit Folgeermittlung",
@@ -104,7 +98,7 @@ class NativeAcceptanceTest {
         val pack = GameStore.exportTemplates(author.state.customTemplates).toString()
         cleanup()
         // A different player imports the pack into a fresh career save.
-        val g = controller("DE-HH", GameState(region = "DE-HH", mode = "CAREER")) ?: return
+        val g = controller("DE-HH", GameState(region = "DE-HH", mode = "CAREER"))
         GameStore.importTemplates(pack).forEach { assertTrue(g.validateTemplate(it).isEmpty()); assertTrue(g.addTemplate(it)) }
         g.setShift(8, 8)
         g.startShift()
@@ -133,7 +127,7 @@ class NativeAcceptanceTest {
 
     @Test
     fun saveDuringTwentyFourHourShiftOverMidnightContinuesIdentically() {
-        val g = controller("DE-HH") ?: return
+        val g = controller("DE-HH")
         g.state.randomSeed = 77
         g.setShift(20, 24)
         g.startShift()

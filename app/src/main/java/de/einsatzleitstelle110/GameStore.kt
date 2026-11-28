@@ -55,27 +55,22 @@ object GameStore {
     @Synchronized
     private fun persist(context: Context, raw: String) {
         fromJson(JSONObject(raw))
-        val temp = context.getFileStreamPath("einsatzleitstelle-native.tmp")
-        java.io.FileOutputStream(temp).use {
-            it.write(raw.toByteArray(Charsets.UTF_8))
-            it.fd.sync()
-        }
         val base = context.getFileStreamPath(FILE)
         val backup = context.getFileStreamPath(FILE + ".backup")
-        if (base.exists()) {
-            try {
-                fromJson(JSONObject(base.readText()))
-                base.copyTo(backup, true)
-            } catch (_: Exception) {
-                /* preserve last valid backup */
-            }
+        val previous = try {
+            val bytes = base.readBytes()
+            fromJson(JSONObject(bytes.toString(Charsets.UTF_8)))
+            bytes
+        } catch (_: Exception) {
+            null
         }
-        check(temp.renameTo(base)) { "Spielstand konnte nicht atomar gesichert werden" }
+        if (previous != null) writeSaveAtomically(backup, previous)
+        writeSaveAtomically(base, raw.toByteArray(Charsets.UTF_8))
     }
 
     fun load(context: Context): GameState? {
         // A recreation can precede the queued disk write. Prefer its exact immutable snapshot.
-        if (context.getFileStreamPath(FILE).exists() || writing.get() || pending.get() != null) {
+        if (writing.get() || pending.get() != null) {
             latestSnapshot?.let {
                 return GameSnapshots.capture(it)
             }
@@ -161,6 +156,7 @@ object GameStore {
             .put("shiftIncoming", s.shiftIncoming)
             .put("shiftSolved", s.shiftSolved)
             .put("shiftFailed", s.shiftFailed)
+            .put("shiftPartial", s.shiftPartial)
             .put("shiftHanded", s.shiftHanded)
             .put("shiftIncome", s.shiftIncome)
             .put("nextId", s.nextId)
@@ -192,6 +188,14 @@ object GameStore {
             .put("depot", JSONObject().also { d -> s.depot.forEach { (k, v) -> d.put(k, v) } })
             .put("unlockedRegions", strings(s.unlockedRegions))
             .put("logs", strings(s.logs))
+            .put("radioArchive", JSONArray().also { archive ->
+                s.radioArchive.forEach { entry ->
+                    archive.put(JSONObject().put("day", entry.day).put("clock", entry.clock)
+                        .put("title", entry.title).put("message", entry.message).put("priority", entry.priority.name)
+                        .put("callsign", entry.callsign).put("organisation", entry.organisation).put("incidentId", entry.incidentId)
+                        .put("unitId", entry.unitId).put("acknowledged", entry.acknowledged))
+                }
+            })
             .put("chief", PoliceChiefCodec.write(s.chief))
             .put("weather", s.weather)
             .put("shiftFuelCosts", s.shiftFuelCosts)
@@ -206,13 +210,17 @@ object GameStore {
             .put("shiftTakes", s.shiftTakes)
             .put("shiftTakeTotal", s.shiftTakeTotal)
             .put("takeStreak", s.takeStreak)
+            .put("dispatchMode", s.dispatchMode.name)
             .put("phones", jsonArray(s.phones) { value ->
                 val c = value as PhoneCall
                 JSONObject().put("id", c.id).put("scriptId", c.scriptId).put("lat", c.lat).put("lon", c.lon)
                     .put("street", c.street).put("place", c.place).put("waited", c.waited)
-                    .put("lines", strings(c.lines)).put("asked", strings(c.asked)).put("advised", strings(c.advised))
+                    .put("lines", strings(c.lines.takeLast(120))).put("asked", strings(c.asked)).put("advised", strings(c.advised))
                     .put("calmed", c.calmed).put("located", c.located).put("duplicateOf", c.duplicateOf)
-                    .put("cprQuality", c.cprQuality)
+                    .put("cprQuality", c.cprQuality).put("status", c.status)
+                    .put("region", c.region).put("scope", c.scope)
+                    .put("receivedAt", c.receivedAt).put("answeredAt", c.answeredAt)
+                    .put("activeMinutes", c.activeMinutes).put("incidentId", c.incidentId)
             })
         o.put(
             "units",
@@ -239,6 +247,7 @@ object GameStore {
                     .put("travelTotal", u.travelTotal)
                     .put("travelLeft", u.travelLeft)
                     .put("workLeft", u.workLeft)
+                    .put("operationType", u.operationType)
                     .put("training", u.training)
                     .put("trainingLeft", u.trainingLeft)
                     .put("officers", jsonArray(u.officers) { officer(it as Officer) })
@@ -316,7 +325,7 @@ object GameStore {
                     .put("pending", i.pending)
                     .put("pendingAge", i.pendingAge)
                     .put("flags", strings(i.flags))
-                    .put("notes", strings(i.notes))
+                    .put("notes", strings(i.notes.takeLast(40)))
                     .put("waitSince", i.waitSince)
                     .put("disconnected", i.disconnected)
                     .put("duplicateCallers", i.duplicateCallers)
@@ -330,6 +339,18 @@ object GameStore {
                     .put("surpriseText", i.surpriseText)
                     .put("worsened", i.worsened)
                     .put("takeScore", i.takeScore)
+                    .put("reportedAt", i.reportedAt)
+                    .put("answeredAt", i.answeredAt)
+                    .put("firstDispatchedAt", i.firstDispatchedAt)
+                    .put("phoneClosedAt", i.phoneClosedAt)
+                    .put("phoneTranscript", strings(i.phoneTranscript))
+                    .put("tasks", JSONArray().also { tasks ->
+                        i.tasks.forEach { task ->
+                            tasks.put(JSONObject().put("role", task.role).put("minutesLeft", task.minutesLeft)
+                                .put("unitId", task.unitId).put("requestedAtAge", task.requestedAtAge)
+                                .put("supportUnitId", task.supportUnitId).put("supportApplied", task.supportApplied))
+                        }
+                    })
             },
         )
         o.put("customTemplates", jsonArray(s.customTemplates) { template(it as IncidentTemplate) })
@@ -344,6 +365,7 @@ object GameStore {
                     .put("served", r.served)
                     .put("solved", r.solved)
                     .put("failed", r.failed)
+                    .put("partiallySolved", r.partiallySolved)
                     .put("handed", r.handed)
                     .put("income", r.income)
                     .put("expenses", r.expenses)
@@ -368,6 +390,10 @@ object GameStore {
                     .put("hilfsfrist", r.hilfsfrist)
                     .put("grade", r.grade)
                     .put("event", r.event)
+                    .put("phoneHandoffs", jsonArray(r.phoneHandoffs) { entry ->
+                        val handoff = entry as PhoneHandoff
+                        JSONObject().put("callId", handoff.callId).put("active", handoff.active)
+                    })
             },
         )
         return o
@@ -516,6 +542,7 @@ object GameStore {
                 shiftIncoming = n(root, "shiftIncoming", 0),
                 shiftSolved = n(root, "shiftSolved", 0),
                 shiftFailed = n(root, "shiftFailed", 0),
+                shiftPartial = n(root, "shiftPartial", 0),
                 shiftHanded = n(root, "shiftHanded", 0),
                 shiftIncome = n(root, "shiftIncome", 0),
                 nextId = n(root, "nextId", 1, 1),
@@ -559,16 +586,43 @@ object GameStore {
                 shiftTakes = n(root, "shiftTakes", 0),
                 shiftTakeTotal = n(root, "shiftTakeTotal", 0),
                 takeStreak = n(root, "takeStreak", 0),
+                dispatchMode = DispatchMode.entries.firstOrNull { it.name == root.optString("dispatchMode") }
+                    ?: DispatchMode.BALANCED,
             )
-        val phones = array(root, "phones", 8)
+        val archive = array(root, "radioArchive", RadioArchive.MAX_ENTRIES)
+        val validClock = Regex("^(?:[01]\\d|2[0-3]):[0-5]\\d$")
+        for (index in 0 until archive.length()) {
+            val entry = archive.getJSONObject(index)
+            val clock = entry.getString("clock")
+            require(validClock.matches(clock)) { "Ungültige Funkzeit" }
+            s.radioArchive.add(RadioEntry(
+                n(entry, "day", 1, 1), clock, entry.getString("title").take(100),
+                entry.getString("message").take(4_000), RadioPriority.valueOf(entry.getString("priority")),
+                entry.optString("callsign").take(100).ifBlank { null },
+                entry.optString("organisation").take(100).ifBlank { null },
+                entry.optString("incidentId").take(30).ifBlank { null },
+                entry.optString("unitId").take(120).ifBlank { null },
+                entry.optBoolean("acknowledged"),
+            ))
+        }
+        val phones = array(root, "phones", 128)
         for (j in 0 until phones.length()) {
             val v = phones.getJSONObject(j)
-            // A call interrupted by saving rings again, keeping its transcript.
+            val status = v.optString("status", "RINGING")
+            require(status == "RINGING" || status == "ACTIVE") { "Ungültiger Notrufstatus" }
             s.phones.add(PhoneCall(v.getString("id").take(30), v.getString("scriptId").take(120), coordinate(v, "lat", 53.55), coordinate(v, "lon", 10.0),
-                v.optString("street", "Hauptstraße").take(90), v.optString("place").take(90), "RINGING", n(v, "waited", 0, 0, 60),
-                texts(array(v, "lines", 80)).map { it.take(400) }.toMutableList(),
-                texts(array(v, "asked", 12)).toMutableSet(), texts(array(v, "advised", 12)).toMutableSet(),
-                v.optBoolean("calmed"), v.optBoolean("located"), v.optString("duplicateOf").take(30), n(v, "cprQuality", -1, -1, 100)))
+                v.optString("street", "Hauptstraße").take(90), v.optString("place").take(90), status, n(v, "waited", 0, 0, 60),
+                texts(array(v, "lines", 120)).map { it.take(400) }.toMutableList(),
+                texts(array(v, "asked", 32)).toMutableSet(), texts(array(v, "advised", 12)).toMutableSet(),
+                v.optBoolean("calmed"), v.optBoolean("located"), v.optString("duplicateOf").take(30), n(v, "cprQuality", -1, -1, 100),
+                region = v.optString("region").ifBlank { s.region }.take(12),
+                scope = v.optString("scope").ifBlank { s.scope }.take(50),
+                receivedAt = v.optLong("receivedAt", -1), answeredAt = v.optLong("answeredAt", -1),
+                activeMinutes = n(v, "activeMinutes", 0, 0, 1000000),
+                incidentId = v.optString("incidentId").take(30)))
+        }
+        require(s.phones.filter { it.status == "ACTIVE" }.groupBy { it.region to it.scope }.values.none { it.size > 1 }) {
+            "Mehrere aktive Notrufe an derselben Leitstelle"
         }
         require(s.weather in SimulationConditions.weatherOptions) { "Unbekanntes Wetter" }
         root.optJSONObject("depot")?.let { d ->
@@ -675,11 +729,12 @@ object GameStore {
                     n(v, "readinessLeft", 0),
                     v.optBoolean("onDuty", true),
                     v.optString("scope", "STATE"),
-                    mutableListOf(),
+                    emptyList(),
                     v.optString("routeBasis", "DISTANCE_APPROXIMATION"),
                 )
             u.taskforceName = v.optString("taskforceName", "")
             u.customCapabilities.addAll(texts(array(v, "customCapabilities", 30)))
+            u.operationType = v.optString("operationType").takeIf { it in GameController.TYPES }.orEmpty()
             u.patrolMode = v.optString("patrolMode", "WATCH")
             u.patrolScope = v.optString("patrolScope", u.scope)
             u.focusLon = coordinate(v, "focusLon", lon)
@@ -691,10 +746,10 @@ object GameStore {
                 (u.patrolScope == "STATE" || u.region == "DE-HH" && u.patrolScope in listOf("WANDSBEK", "MITTE", "ALTONA", "NORD", "EIMSBÜTTEL", "HARBURG", "BERGEDORF")) &&
                 u.distanceDrivenKm.isFinite() && u.distanceDrivenKm >= 0 && u.shiftDrivenKm.isFinite() && u.shiftDrivenKm >= 0)
             val points = array(v, "routePoints", 5000)
-            for (k in 0 until points.length()) {
-                val a = points.getJSONArray(k)
-                require(a.length() == 2 && a.getDouble(0).isFinite() && a.getDouble(1).isFinite())
-                u.routePoints.add(GeoPoint(a.getDouble(0), a.getDouble(1)))
+            u.routePoints = List(points.length()) { index ->
+                val point = points.getJSONArray(index)
+                require(point.length() == 2 && point.getDouble(0).isFinite() && point.getDouble(1).isFinite())
+                GeoPoint(point.getDouble(0), point.getDouble(1))
             }
             require(
                 u.status in
@@ -793,6 +848,28 @@ object GameStore {
             i.actualLon = coordinate(v, "actualLon", i.lon)
             i.actualLocation = v.optString("actualLocation", i.location).take(120)
             i.phoneScript = v.optString("phoneScript").take(120)
+            i.reportedAt = v.optLong("reportedAt", -1)
+            i.answeredAt = v.optLong("answeredAt", -1)
+            i.firstDispatchedAt = v.optLong("firstDispatchedAt", -1)
+            i.phoneClosedAt = v.optLong("phoneClosedAt", -1)
+            i.phoneTranscript.addAll(texts(array(v, "phoneTranscript", 120)).map { it.take(400) })
+            val savedTasks = array(v, "tasks", 8)
+            i.tasks = List(savedTasks.length()) { index ->
+                val task = savedTasks.getJSONObject(index)
+                val role = task.getString("role")
+                val work = task.getInt("minutesLeft")
+                val unitId = task.optString("unitId").take(120)
+                require(role in GameController.TYPES && work in 0..600 && (work > 0 || unitId.isNotBlank())) {
+                    "Ungültige Einsatzaufgabe"
+                }
+                val support = task.optString("supportUnitId").take(120)
+                require(support.isEmpty() || support != unitId)
+                IncidentTask(role, work, unitId, task.optInt("requestedAtAge", -1).coerceIn(-1, i.age.coerceAtMost(Int.MAX_VALUE - 45)),
+                    support, task.optBoolean("supportApplied"))
+            }
+            require(i.tasks.mapNotNull { it.unitId.takeIf(String::isNotEmpty) }.let { it.size == it.toSet().size }) {
+                "Einsatzaufgaben verwenden dieselbe Einheit mehrfach"
+            }
             i.surprise = texts(array(v, "surprise", 12)).filter { it in GameController.TYPES }.toMutableList()
             i.surpriseText = v.optString("surpriseText").take(300)
             i.worsened = v.optBoolean("worsened")
@@ -801,7 +878,7 @@ object GameStore {
             if (i.assignedUnits.isEmpty() && i.assignedUnit.isNotBlank())
                 i.assignedUnits.add(i.assignedUnit)
             require(
-                i.status in listOf("OPEN", "DRIVING", "WORKING", "SOLVED", "FAILED", "HANDED") &&
+                i.status in listOf("OPEN", "DRIVING", "WORKING", "SOLVED", "PARTIAL", "FAILED", "HANDED") &&
                     i.requiredTypes.all { it in GameController.TYPES } &&
                     i.assignedUnits.all { it in ids } &&
                     i.riskDelta.isFinite() &&
@@ -853,6 +930,13 @@ object GameStore {
                     n(v, "hilfsfrist", -1, -1, 100),
                     n(v, "grade", 0, 0, 6),
                     v.optString("event").take(90),
+                    array(v, "phoneHandoffs", 8).let { handoffs ->
+                        List(handoffs.length()) { index ->
+                            val entry = handoffs.getJSONObject(index)
+                            PhoneHandoff(entry.getString("callId").take(30), entry.optBoolean("active"))
+                        }
+                    },
+                    n(v, "partiallySolved", 0),
                 )
             )
         }
