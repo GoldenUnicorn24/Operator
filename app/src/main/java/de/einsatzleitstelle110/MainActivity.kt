@@ -2233,12 +2233,6 @@ class MainActivity : Activity() {
             restoreState(state)
             showShiftDialog()
         }
-        val state = game.state
-        if (state.completedShifts == 0 && state.phase == "PLANNING" && state.day == 1 &&
-            state.incidents.isEmpty() && state.customTemplates.isEmpty()) {
-            start()
-            return
-        }
         AlertDialog.Builder(this)
             .setTitle(if (mode == "CAREER") "Neue Karriere beginnen?" else "Neue Sandbox beginnen?")
             .setMessage("Der neue Spielstand ersetzt die automatische Fortsetzung. Du kannst den laufenden Stand vorher in einem Speicherplatz sichern.")

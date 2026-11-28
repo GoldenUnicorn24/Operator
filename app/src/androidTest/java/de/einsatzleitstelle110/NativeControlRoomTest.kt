@@ -117,6 +117,38 @@ class NativeControlRoomTest {
         if (view is ViewGroup) for (i in 0 until view.childCount) assertNative(view.getChildAt(i))
     }
 
+    @Test
+    fun newGameConfirmsBeforeReplacingFirstDayStationPlanning() {
+        reset()
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                val controller = game(activity)
+                val station = controller.createChiefStation("Eigene Wache am ersten Tag", GeoPoint(10.01, 53.55))
+                assertNotNull(station)
+                assertEquals("PLANNING", controller.state.phase)
+                assertTrue(controller.state.incidents.isEmpty())
+                invoke(activity, "save")
+                invoke(activity, "showWelcome")
+            }
+            for ((entry, confirmation) in listOf("Neue Karriere" to "Neue Karriere beginnen?", "Sandbox" to "Neue Sandbox beginnen?")) {
+                scenario.onActivity { activity ->
+                    val menu = MainActivity::class.java.getDeclaredField("sheet").apply { isAccessible = true }
+                        .get(activity) as android.app.Dialog
+                    assertTrue(tapText(menu.window!!.decorView, entry))
+                    assertEquals("Eigene Wache am ersten Tag", game(activity).state.chief.stations.single().name)
+                }
+                instrument.waitForIdleSync()
+                val window = instrument.uiAutomation.rootInActiveWindow
+                assertTrue(window.findAccessibilityNodeInfosByText(confirmation).isNotEmpty())
+                val cancel = window.findAccessibilityNodeInfosByText("Abbrechen").single()
+                assertTrue(cancel.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK))
+                instrument.waitForIdleSync()
+            }
+            GameStore.awaitSaves()
+            assertEquals("Eigene Wache am ersten Tag", GameStore.load(instrument.targetContext)?.chief?.stations?.single()?.name)
+        }
+    }
+
     /** Measured on the emulator (not a physical device): written next to the screenshots. */
     private fun perf(line: String) {
         android.util.Log.i("NativePerf", line)
