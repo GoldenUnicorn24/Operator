@@ -609,7 +609,7 @@ object GameStore {
             s.phones.add(PhoneCall(v.getString("id").take(30), v.getString("scriptId").take(120), coordinate(v, "lat", 53.55), coordinate(v, "lon", 10.0),
                 v.optString("street", "Hauptstraße").take(90), v.optString("place").take(90), status, n(v, "waited", 0, 0, 60),
                 texts(array(v, "lines", 120)).map { it.take(400) }.toMutableList(),
-                texts(array(v, "asked", 12)).toMutableSet(), texts(array(v, "advised", 12)).toMutableSet(),
+                texts(array(v, "asked", 32)).toMutableSet(), texts(array(v, "advised", 12)).toMutableSet(),
                 v.optBoolean("calmed"), v.optBoolean("located"), v.optString("duplicateOf").take(30), n(v, "cprQuality", -1, -1, 100),
                 region = v.optString("region").ifBlank { s.region }.take(12),
                 scope = v.optString("scope").ifBlank { s.scope }.take(50),

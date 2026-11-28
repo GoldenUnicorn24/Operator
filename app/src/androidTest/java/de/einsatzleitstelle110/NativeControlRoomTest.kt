@@ -396,11 +396,21 @@ class NativeControlRoomTest {
                 invoke(a, "answerNext")
                 val active = PhoneDesk.active(g.state)!!
                 assertEquals(callId, active.id)
-                assertTrue(PhoneDesk.ask(g, active, "eingeklemmt"))
+                val screen = MainActivity::class.java.getDeclaredField("phoneScreen")
+                    .apply { isAccessible = true }.get(a) as PhoneScreen
+                val dialog = PhoneScreen::class.java.getDeclaredField("dialog")
+                    .apply { isAccessible = true }.get(screen) as android.app.Dialog
+                val phone = dialog.window!!.decorView
+                assertTrue(tapText(phone, "Fragen nach Thema"))
+                assertTrue(tapText(phone, "Verletzungen"))
+                val question = PhoneDesk.script(g, active).questions.first { it.id == "eingeklemmt" }
+                assertTrue(tapText(phone, question.label))
+                assertTrue(active.asked.contains(question.id))
                 val incident = PhoneDesk.linkedIncident(g, active)!!
                 assertEquals(incidentId, incident.id)
                 assertTrue(incident.requiredTypes.contains("FEUERWEHR"))
             }
+            screenshot("native-phone-question-topics.png")
         }
         MainActivity.phoneDeskDefault = false
     }

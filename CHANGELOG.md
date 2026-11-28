@@ -1,3 +1,8 @@
+## 0.20.0-rebuilt-preview.5
+
+- Notrufe nach acht Fragethemen befragen, mit weiterhin erreichbarer früher Alarmierung.
+- Unproduktive Gesprächsverläufe nachvollziehbar bewerten und die Fragehistorie speichern.
+
 ## 0.20.0-rebuilt-preview.4
 
 - Passende Besatzungen bearbeiten Aufgaben bei Mehrrollen-Einsätzen ab Ankunft parallel.

@@ -34,6 +34,7 @@ class PhoneScreen(
     private val transcript = ui.column()
     private val scroll = ScrollView(activity)
     private val actions = ui.column()
+    private val actionScroll = ScrollView(activity).apply { addView(actions) }
     private val status = ui.text("", 12f, ui.muted)
     private var shownLines = 0
     private var call: PhoneCall? = null
@@ -60,7 +61,6 @@ class PhoneScreen(
         outer.addView(head)
         outer.addView(status.apply { setPadding(0, ui.dp(4), 0, ui.dp(8)) })
         scroll.addView(transcript)
-        val actionScroll = ScrollView(activity).apply { addView(actions) }
         val landscape = activity.resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
         val panels = if (landscape) ui.row() else ui.column()
         if (landscape) {
@@ -143,11 +143,18 @@ class PhoneScreen(
         drain(shownLines > 0)
         actions.removeAllViews()
         val sc = PhoneDesk.script(game, c)
-        val open = sc.questions.filter { it.id !in c.asked }
-        if (PhoneDesk.needsCalming(game, c)) action("Beruhigen: „Ich bin da, atmen Sie tief durch.“") { PhoneDesk.calm(game, c); render() }
-        if (open.isNotEmpty()) section("FRAGEN")
-        open.forEach { q -> action(q.label) { PhoneDesk.ask(game, c, q.id); render() } }
-        if (sc.vague && !c.located) action("Mobilfunkortung (AML) abrufen") { PhoneDesk.locate(game, c); render() }
+        if (PhoneDesk.needsCalming(game, c)) action("Beruhigen: „Ich bin da, atmen Sie tief durch.“") {
+            PhoneDesk.calm(game, c)
+            render()
+        }
+        if (!c.located) {
+            val location = CallQuestions.forTopic(sc, QuestionTopic.LOCATION).first { it.id == "wo" || it.id == "general.location" }
+            if (location.id !in c.asked) action(location.label) { PhoneDesk.ask(game, c, location.id); render() }
+            if (sc.vague) action("Mobilfunkortung (AML) abrufen") { PhoneDesk.locate(game, c); render() }
+        }
+        addDispatchActions(c)
+        section("FRAGEN")
+        action("Fragen nach Thema") { showQuestionTopics(c) }
         val tips = sc.advice.filter { it.id !in c.advised }
         if (tips.isNotEmpty()) section("ANWEISUNG AN DEN ANRUFER")
         tips.forEach { a ->
@@ -156,6 +163,15 @@ class PhoneScreen(
                 if (a.id == "cpr") showCpr(c) else render()
             }
         }
+        section("GESPRÄCH")
+        action("Einsatzstichwort wählen") { renderCodes() }
+        action("In die Warteschleife legen") {
+            PhoneDesk.hold(game, c)
+            close()
+        }
+    }
+
+    private fun addDispatchActions(c: PhoneCall) {
         val incident = PhoneDesk.linkedIncident(game, c)
         section("DISPOSITION")
         if (incident != null) {
@@ -167,16 +183,37 @@ class PhoneScreen(
             if (c.located) action("Während des Gesprächs alarmieren", true) { renderDispatchCatalog(c) }
             else actions.addView(ui.text("Für die Alarmierung zuerst den Einsatzort erfassen.", 12f, ui.muted))
         }
-        section("GESPRÄCH")
-        action("Einsatzstichwort wählen") { renderCodes() }
-        action("In die Warteschleife legen") {
-            PhoneDesk.hold(game, c)
-            close()
+    }
+
+    private fun showQuestionTopics(c: PhoneCall) {
+        actions.removeAllViews()
+        actionScroll.scrollTo(0, 0)
+        action("Zurück zum Gespräch") { render() }
+        section("FRAGETHEMEN")
+        QuestionTopic.entries.forEach { topic ->
+            action(topic.label) { showQuestions(c, topic) }
+        }
+    }
+
+    private fun showQuestions(c: PhoneCall, topic: QuestionTopic, restoredScroll: Int = 0) {
+        actions.removeAllViews()
+        actionScroll.post { actionScroll.scrollTo(0, restoredScroll) }
+        drain()
+        action("Alle Fragethemen") { showQuestionTopics(c) }
+        action("Zurück zum Gespräch") { render() }
+        section(topic.label)
+        val open = CallQuestions.forTopic(PhoneDesk.script(game, c), topic).filter { it.id !in c.asked }
+        if (open.isEmpty()) actions.addView(ui.text("Alle Fragen in diesem Thema gestellt.", 12f, ui.muted))
+        for (question in open) action(question.label) {
+            val position = actionScroll.scrollY
+            PhoneDesk.ask(game, c, question.id)
+            showQuestions(c, topic, position)
         }
     }
 
     private fun renderDispatchCatalog(c: PhoneCall) {
         actions.removeAllViews()
+        actionScroll.scrollTo(0, 0)
         section("EINSATZSTICHWORT")
         val search = EditText(activity).apply {
             hint = "Stichwort suchen"

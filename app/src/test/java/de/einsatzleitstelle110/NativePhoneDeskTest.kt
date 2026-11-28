@@ -106,6 +106,46 @@ class NativePhoneDeskTest {
         assertTrue(c.located)
     }
 
+    @Test fun theCommonQuestionGuidePreservesScriptedRevelations() {
+        val (g, c) = started("einbrecher_daheim")
+        val script = script("einbrecher_daheim")
+        val beat = script.beats.getValue(2)
+        assertTrue(PhoneDesk.ask(g, c, "general.people"))
+        assertFalse(c.located)
+        assertTrue(c.lines.last().contains("nicht sicher"))
+        assertTrue(PhoneDesk.ask(g, c, "wo"))
+        assertTrue(c.lines.none { it.contains(beat) })
+        assertTrue(PhoneDesk.ask(g, c, "wieviel"))
+        assertEquals(1, c.lines.count { it.contains(beat) })
+        assertTrue(PhoneDesk.ask(g, c, "general.development"))
+        assertEquals(1, c.lines.count { it.contains(beat) })
+        assertFalse(PhoneDesk.ask(g, c, "general.people"))
+        PhoneDesk.hold(g, c)
+        assertFalse(PhoneDesk.ask(g, c, "general.callback"))
+    }
+
+    @Test fun unnecessaryQuestionsAffectTheEvaluationAndTheInterviewSurvivesSaving() {
+        val (focusedGame, focusedCall) = started("unfall_verletzt")
+        val (longGame, longCall) = started("unfall_verletzt")
+        for ((g, c) in listOf(focusedGame to focusedCall, longGame to longCall)) {
+            PhoneDesk.calm(g, c)
+            for (q in script("unfall_verletzt").questions) assertTrue(PhoneDesk.ask(g, c, q.id))
+            PhoneDesk.advise(g, c, "sichern")
+        }
+        for (topic in QuestionTopic.entries) {
+            val common = CallQuestions.forTopic(script("unfall_verletzt"), topic).last()
+            assertTrue(PhoneDesk.ask(longGame, longCall, common.id))
+        }
+        val restored = GameStore.fromJson(GameStore.toJson(longGame.state))
+        assertEquals(longCall.asked, PhoneDesk.active(restored)?.asked)
+        assertEquals(longCall.lines, PhoneDesk.active(restored)?.lines)
+        val focused = PhoneDesk.classify(focusedGame, focusedCall, PhoneDesk.codes(focusedGame, focusedCall).first { it.correct })
+        val long = PhoneDesk.classify(longGame, longCall, PhoneDesk.codes(longGame, longCall).first { it.correct })
+        assertEquals(focused.score - 15, long.score)
+        assertTrue(long.feedback.any { it.contains("Zusatzfragen") })
+        assertTrue(long.incident!!.requiredTypes.contains("FEUERWEHR"))
+    }
+
     @Test fun vagueCallerNeedsMobileLocation() {
         val (g, c) = started("autobahn_falschfahrer")
         PhoneDesk.ask(g, c, "wo")

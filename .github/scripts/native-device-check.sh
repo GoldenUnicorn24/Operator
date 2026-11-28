@@ -45,7 +45,7 @@ for name in ['phone-ringing','phone-call','phone-result','incident-desk','dispat
     p = Path(f'runtime/screens/native-{name}.png')
     assert p.read_bytes().startswith(b'\x89PNG\r\n\x1a\n'), f'Missing actual screenshot: {p}'
 if os.getenv("APP_APK"):
-    for name in ("radio-archive", "parallel-incident"):
+    for name in ("radio-archive", "parallel-incident", "phone-question-topics"):
         evidence = Path(f"runtime/screens/native-{name}.png")
         assert evidence.read_bytes().startswith(b'\x89PNG\r\n\x1a\n'), f'Missing actual screenshot: {evidence}'
 PY

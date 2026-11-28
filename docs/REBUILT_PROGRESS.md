@@ -5,9 +5,9 @@
 | Ausgangsbranch | `claude/operator-notruf` |
 | Ausgangscommit | `eb88d29e11977717771a61cdb0153a1723ad14c7` |
 | Entwicklungsbranch | `codex/operator-rebuilt-v020` |
-| App-Version | `0.20.0-rebuilt-preview.4`, VersionCode 121 |
+| App-Version | `0.20.0-rebuilt-preview.5`, VersionCode 122 |
 | Anwendung | `de.einsatzleitstelle110`, minSdk 26 |
-| Abnahme | Entwicklungsstand für Vorschau 4 |
+| Abnahme | Entwicklungsstand für Vorschau 5 |
 
 ## Implementierung
 
@@ -50,6 +50,12 @@ Der erste [CI-Lauf für Vorschau 4](https://github.com/GoldenUnicorn24/Operator/
 
 Bei 50, 100, 250 und 500 Fahrzeugen sowie 10, 25, 50 und 100 Mehrrollen-Einsätzen betrugen die P95-Zeiten 0,71, 1,43, 3,60 und 9,04 ms pro Tick. Pro Laststufe ergaben drei Läufe à 120 Spielminuten nach einem Aufwärmlauf die Messwerte. Gemessen wurde auf der JVM mit dem Hamburger Straßennetz, ohne Kartenrendering und ohne physisches Android-Gerät.
 
+## Vorschau 5
+
+- Acht Fragethemen stehen bei allen Notrufen zur Auswahl. Anlassbezogene Antworten, unangekündigte Gesprächsverläufe und die Entdeckung von Nachforderungen bleiben an die Originalskripte gekoppelt. Erfundene Zusatzinformationen werden durch glaubhafte Unsicherheit vermieden.
+- Standort und vorläufige Alarmierung bleiben im Hauptbild des Gesprächs. Unergiebige Zusatzfragen beeinflussen die Bewertung erst bei wiederholter Nachfrage. Gesprächsverlauf und gestellte Fragen bleiben im Spielstand.
+- Der bestehende Geräteablauf für parallele Alarmierung öffnet nach dem Wiederaufnehmen des Gesprächs die Fragegruppe „Verletzungen“ und weist die aus der Antwort folgende Nachforderung nach.
+
 ## Meilensteine
 
 | Meilenstein | Status |
@@ -57,7 +63,7 @@ Bei 50, 100, 250 und 500 Fahrzeugen sowie 10, 25, 50 und 100 Mehrrollen-Einsätz
 | M0 | [Ausgangsaudit](REBUILT_AUDIT.md) und Branchvergleich durchgeführt. |
 | M1 | Stabilitätskorrekturen und Regressionstests implementiert. Die Umstellung des Simulationsbesitzes und des vollständigen UI-Datenflusses steht aus. |
 | M2 | Hauptmenü, primäre Navigation, Telefonwarteschlange, größenverstellbare Einsatzakte und Querformat-Leitstelle umgesetzt. Ein einheitlicher Umbau der Verwaltungsansichten sowie animierter Menü-Hintergrund stehen aus. |
-| M3 | Vorläufige Alarmierung, Gesprächsfortsetzung, Einsatzprotokoll, priorisierte Wiedergabe und lokale dynamische Sprache umgesetzt. Das durchsuchbare Funkarchiv ist eingebaut. Breite Fragekategorien, Delegation und spielwirksame Funkantworten stehen aus. |
+| M3 | Vorläufige Alarmierung, Gesprächsfortsetzung, Einsatzprotokoll, priorisierte Wiedergabe und lokale dynamische Sprache umgesetzt. Das durchsuchbare Funkarchiv ist eingebaut. Die acht Fragekategorien sind eingebaut. Delegation, weitere Anruferzustände und spielwirksame Funkantworten stehen aus. |
 | M4 | Die vier Dispositionsmodi sind eingebaut. Mehrrollen-Einsätze nutzen speicherbare parallele Arbeiten und Teilabschlüsse. Die Erweiterung auf Einzelrollen, Welt-Ereignisse und weitere Abdeckungslogik stehen aus. |
 | M5 | Gruppen-Taskforces, Management- und Wirtschaftsumbau, neue Karriere und KI-Mitarbeiter stehen aus. |
 | M6 | Erweiterte Editoren, Inhaltspakete, Statistiken und vollständige Asset-Überarbeitung stehen aus. |

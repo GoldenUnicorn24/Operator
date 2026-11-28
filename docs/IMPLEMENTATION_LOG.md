@@ -182,3 +182,7 @@ Die ersten beiden Regressionstests reproduzierten die alte Wartezeit und den vol
 ### Freigabe Vorschau 3 und Karriereprüfung Vorschau 4
 
 Vorschau 3 wurde am Stand `e20ac5e` veröffentlicht. Der vollständige CI-Lauf 46133578431 bestand mit 169 JVM- und 13 Android-Tests. Eine Sichtprüfung des Funkarchiv-Screenshots bestätigte die Darstellung von Rufname, Priorität, Einsatznummer und Wiedergabe. Der erste CI-Lauf für Vorschau 4 fand eine Karriere-Regression. Die Aufgabenbewertung berücksichtigt seither Risikoverlauf und Ruf. Im angepassten Test kann auch eine bereits arbeitende Lage weitere Kräfte erhalten.
+
+## Operator Rebuilt · Vorschau 5 · Notrufgespräch
+
+Der Frageleitfaden zeigt acht allgemeine Themen und ordnet vorhandene Fragen zu. Rückfragen ohne nutzbare Antwort werden nach mehrmaliger Verwendung in der Bewertung erklärt. Sie verändern weder die Reihenfolge geskripteter Wendungen noch das Auffinden der Adresse. Der Geräteablauf öffnet nach früher Alarmierung die Fragegruppe „Verletzungen“ und prüft die ausgelöste Nachforderung über die native Telefonoberfläche.

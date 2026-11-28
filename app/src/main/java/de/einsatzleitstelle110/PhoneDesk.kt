@@ -262,8 +262,9 @@ object PhoneDesk {
     }
 
     fun ask(g: GameController, c: PhoneCall, id: String): Boolean {
+        if (g.state.phase != "RUNNING" || active(g.state) !== c) return false
         val sc = script(g, c)
-        val q = sc.questions.firstOrNull { it.id == id } ?: return false
+        val q = CallQuestions.answer(sc, id) ?: return false
         if (id in c.asked) return false
         talk(g, c, "D", q.label)
         if (needsCalming(g, c)) {
@@ -274,7 +275,8 @@ object PhoneDesk {
         talk(g, c, "C", q.answer)
         if (id == "wo" && !sc.vague) c.located = true
         if (id == "wo" && sc.vague) c.lines.add("S|Keine verwertbare Ortsangabe. Mobilfunkortung (AML) anfordern.")
-        sc.beats[c.asked.size]?.let { talk(g, c, "C", it) }
+        if (sc.questions.any { it.id == id })
+            sc.beats[sc.questions.count { it.id in c.asked }]?.let { talk(g, c, "C", it) }
         linkedIncident(g, c)?.let { incident ->
             if (id == sc.twistQuestion && incident.title == sc.correct && incident.status in openStatuses)
                 addKnownRoles(incident, template(g, sc.correct)?.requiredTypes.orEmpty() + sc.twistAdd)
@@ -459,6 +461,11 @@ object PhoneDesk {
             else notes.add("Keine hilfreiche Anweisung gegeben.")
             if (bad.isNotEmpty()) { score -= 25; notes.add("Gefährliche Anweisung: „${bad.first().label}“") }
             if (c.waited > 4) { score -= 5; notes.add("Anrufer wartete ${c.waited} Minuten in der Leitung.") }
+            val unproductive = c.asked.count(CallQuestions::isUnproductive)
+            if (unproductive > 2) {
+                score -= (unproductive - 2) * 3
+                notes.add("$unproductive Zusatzfragen blieben ohne verwertbare Angaben.")
+            }
             incident = reuseOrCreate(g, c, sc, code.title, !c.located)
             if (sc.cpr) {
                 if (c.cprQuality >= 60) { incident.riskDelta -= .25; notes.add("Telefonreanimation hielt den Kreislauf in Gang (${c.cprQuality} %).") }
