@@ -303,6 +303,7 @@ data class GameState(
     var shiftTakeTotal: Int = 0,
     var takeStreak: Int = 0,
     var dispatchMode: DispatchMode = DispatchMode.BALANCED,
+    val radioArchive: MutableList<RadioEntry> = mutableListOf(),
 )
 
 object GameContent {
@@ -467,6 +468,7 @@ object GameContent {
 
 class GameController(val state: GameState, val regions: List<GeoRegion>) {
     var notify: ((String, String) -> Unit)? = null
+    var transmit: ((List<RadioLine>) -> Unit)? = null
 
     /** Real towns of a state (population-weighted call locations). Set by the UI; tests use cities. */
     var placeProvider: (GeoRegion) -> List<MapPlace> = { r ->
@@ -536,7 +538,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         stage ?: return
         call.pending = stage.id
         call.pendingAge = call.age
-        if (trigger != "CALL") emit("Funkmeldung", "${call.title}: ${stage.text}")
+        if (trigger != "CALL") emit("Funkmeldung", "${call.title}: ${stage.text}", incident = call)
     }
 
     /** Whether an option's requirement (forces, equipment, training, earlier decision) is met. */
@@ -596,7 +598,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         if (!auto) state.shiftDecisions++
         // New requirements reopen the dispatch: the call waits for the requested forces.
         if (e.add.isNotEmpty() && call.status == "WORKING" && remainingTypes(call).isNotEmpty())
-            emit("Nachforderung", "${call.title}: ${e.add.joinToString()}")
+            emit("Nachforderung", "${call.title}: ${e.add.joinToString()}", incident = call)
         else emit("Entscheidung", "${call.title}: ${option.label}")
         return true
     }
@@ -665,7 +667,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
 
     fun fms(u: UnitState): Int = if (u.fmsStatus in listOf(1, 2) && !dispatchable(u)) 6 else u.fmsStatus
 
-    private fun radioStatus(u: UnitState) = emit("Funkstatus", "${u.callsign} an Leitstelle: Status ${fms(u)}")
+    private fun radioStatus(u: UnitState) = emit("Funkstatus", "${u.callsign} an Leitstelle: Status ${fms(u)}", unit = u)
 
     fun patrolPresence(scope: String = state.scope): Double =
         (state.units.count { it.region == state.region && it.patrolScope == scope && it.status in listOf("PATROLLING", "CHECKPOINT") && available(it) } * .06).coerceAtMost(.3)
@@ -1332,7 +1334,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         u.workLeft = call.duration
         u.readinessLeft = readiness
         if (type == "SEK" || type == "MEK") state.shiftSpecial++
-        emit("Einheit unterwegs", "${u.callsign} · ${eta+u.readinessLeft} Sim.-Min. · ${if (specialRights) "mit Sonderrechten: schneller, Unfall-/Lärmrisiko und Mehrverschleiß" else "ohne Sonderrechte"}")
+        emit("Einheit unterwegs", "${u.callsign} · ${eta+u.readinessLeft} Sim.-Min. · ${if (specialRights) "mit Sonderrechten: schneller, Unfall-/Lärmrisiko und Mehrverschleiß" else "ohne Sonderrechte"}", unit = u, incident = call)
         radioStatus(u)
         if (specialRights && rnd() < .025) {
             state.shiftSignalIncidents++
@@ -1354,7 +1356,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         if (call.status !in listOf("DRIVING", "WORKING")) return false
         detachUnit(call, u)
         sendHome(u)
-        emit("Einheit abgezogen", "${u.callsign} verlässt ${call.title}")
+        emit("Einheit abgezogen", "${u.callsign} verlässt ${call.title}", unit = u, incident = call)
         return true
     }
 
@@ -1467,10 +1469,10 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                 if (call != null) {
                     if (call.firstArrival < 0) {
                         call.firstArrival = call.age
-                        emit("Am Einsatzort", "${u.callsign} · ${call.title}")
+                        emit("Am Einsatzort", "${u.callsign} · ${call.title}", unit = u, incident = call)
                         PhoneDesk.onArrival(this, call)
                         trigger(call, "ARRIVAL")
-                    } else emit("Am Einsatzort", "${u.callsign} · ${call.title}")
+                    } else emit("Am Einsatzort", "${u.callsign} · ${call.title}", unit = u, incident = call)
                 }
             }
         }
@@ -1819,7 +1821,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                                 it.status = "WORKING"
                                 it.workLeft = shortened
                             }
-                        emit("Verstärkung eingetroffen", call.title)
+                        emit("Verstärkung eingetroffen", call.title, incident = call)
                     }
                     val working = assigned.filter { it.status == "WORKING" }
                     working.forEach { if (it.workLeft > 0) it.workLeft-- }
@@ -1872,6 +1874,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
                         emit(
                             if (success) "Einsatz beendet" else "Einsatz fehlgeschlagen",
                             "${call.title} – ${call.outcome}",
+                            incident = call,
                         )
                     }
                 }
@@ -2349,9 +2352,29 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         return true
     }
 
-    internal fun emit(title: String, message: String) {
-        state.logs.add(0, "[Tag ${state.day} · ${clock()}] $title · $message")
+    internal fun emit(title: String, message: String, unit: UnitState? = null, incident: IncidentState? = null) {
+        val time = clock()
+        state.logs.add(0, "[Tag ${state.day} · $time] $title · $message")
         while (state.logs.size > 250) state.logs.removeAt(state.logs.lastIndex)
+
+        val lines = RadioScript.event(title, message, unit?.callsign)
+        if (lines.isNotEmpty()) {
+            val organisation = unit?.let {
+                when (it.type) {
+                    "FEUERWEHR" -> "Feuerwehr"
+                    "RETTUNG" -> "Rettungsdienst"
+                    else -> "Polizei"
+                }
+            } ?: "Leitstelle"
+            state.radioArchive.add(
+                RadioEntry(
+                    state.day, time, title, message, lines.first().priority,
+                    unit?.callsign, organisation, incident?.id,
+                ),
+            )
+            if (state.radioArchive.size > RadioArchive.MAX_ENTRIES) state.radioArchive.removeAt(0)
+            transmit?.invoke(lines)
+        }
         notify?.invoke(title, message)
     }
 
@@ -2359,7 +2382,7 @@ class GameController(val state: GameState, val regions: List<GeoRegion>) {
         val min =
             if (state.phase == "PLANNING") state.startMinute
             else (state.absoluteMinute % 1440).toInt()
-        return "%02d:%02d".format(min / 60, min % 60)
+        return String.format(java.util.Locale.ROOT, "%02d:%02d", min / 60, min % 60)
     }
 
     companion object {

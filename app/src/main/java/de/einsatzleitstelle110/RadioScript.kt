@@ -42,8 +42,8 @@ object RadioScript {
     private fun announcement(text: String, priority: RadioPriority) =
         listOf(RadioLine(listOf(VoiceClip(CONTROL, text)), priority))
 
-    fun event(name: String, message: String): List<RadioLine> {
-        val who = message.substringBefore(" · ").substringBefore(" an Leitstelle").substringBefore(" verlässt ").trim()
+    fun event(name: String, message: String, callsign: String? = null): List<RadioLine> {
+        val who = callsign ?: message.substringBefore(" · ").substringBefore(" an Leitstelle").substringBefore(" verlässt ").trim()
         val incident = RadioPriority.INCIDENT
         val operations = RadioPriority.OPERATIONS
         return when (name) {

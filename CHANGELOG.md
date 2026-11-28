@@ -1,3 +1,8 @@
+## 0.20.0-rebuilt-preview.3
+
+- Tatsächliche Funkübertragungen speichern, durchsuchen, filtern und erneut anhören.
+- Spieltempo aus verstrichener Zeit berechnen und Drosselungen ausweisen.
+
 ## 0.20.0-rebuilt-preview.2
 
 - Autosaves am ersten Spieltag beim Neuanlegen einer Partie ausdrücklich schützen.

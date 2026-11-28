@@ -187,6 +187,13 @@ object GameStore {
             .put("depot", JSONObject().also { d -> s.depot.forEach { (k, v) -> d.put(k, v) } })
             .put("unlockedRegions", strings(s.unlockedRegions))
             .put("logs", strings(s.logs))
+            .put("radioArchive", JSONArray().also { archive ->
+                s.radioArchive.forEach { entry ->
+                    archive.put(JSONObject().put("day", entry.day).put("clock", entry.clock)
+                        .put("title", entry.title).put("message", entry.message).put("priority", entry.priority.name)
+                        .put("callsign", entry.callsign).put("organisation", entry.organisation).put("incidentId", entry.incidentId))
+                }
+            })
             .put("chief", PoliceChiefCodec.write(s.chief))
             .put("weather", s.weather)
             .put("shiftFuelCosts", s.shiftFuelCosts)
@@ -571,6 +578,20 @@ object GameStore {
                 dispatchMode = DispatchMode.entries.firstOrNull { it.name == root.optString("dispatchMode") }
                     ?: DispatchMode.BALANCED,
             )
+        val archive = array(root, "radioArchive", RadioArchive.MAX_ENTRIES)
+        val validClock = Regex("^(?:[01]\\d|2[0-3]):[0-5]\\d$")
+        for (index in 0 until archive.length()) {
+            val entry = archive.getJSONObject(index)
+            val clock = entry.getString("clock")
+            require(validClock.matches(clock)) { "Ungültige Funkzeit" }
+            s.radioArchive.add(RadioEntry(
+                n(entry, "day", 1, 1), clock, entry.getString("title").take(100),
+                entry.getString("message").take(4_000), RadioPriority.valueOf(entry.getString("priority")),
+                entry.optString("callsign").take(100).ifBlank { null },
+                entry.optString("organisation").take(100).ifBlank { null },
+                entry.optString("incidentId").take(30).ifBlank { null },
+            ))
+        }
         val phones = array(root, "phones", 128)
         for (j in 0 until phones.length()) {
             val v = phones.getJSONObject(j)

@@ -1,7 +1,9 @@
-# Operator Rebuilt 0.20.0 – Entwicklungsvorschau 2
+# Operator Rebuilt 0.20.0 – Entwicklungsvorschau 3
 
-Die native Offline-Vorschau verwendet VersionCode 119. Grundlage ist Operator 0.16 auf `eb88d29`. Ein nachgewiesener APK-Start ohne WLAN und mobile Daten ist Voraussetzung für diese Veröffentlichung.
+Die native Offline-Vorschau verwendet VersionCode 120. Grundlage ist Operator 0.16 auf `eb88d29`. Ein nachgewiesener APK-Start ohne WLAN und mobile Daten ist Voraussetzung für diese Veröffentlichung.
 
+- Das Funkarchiv filtert und durchsucht echte Simulationsmeldungen. Es zeigt Priorität, Rufnamen und Einsatzbezug und ermöglicht erneute Wiedergabe.
+- Spieluhr und Fahranimation stimmen ihre Zeitbasis ab. Die Anzeige weist die effektive Drosselung durch Telefonate und offene Entscheidungen aus.
 - Die Disposition bietet schnellste Hilfe, ausgewogene und wirtschaftliche Vorschläge sowie eine manuelle Auswahl. P1-Vorschläge priorisieren frühe Ankunft unter Berücksichtigung des Budgets.
 - Beim Neuanlegen einer Partie erscheint stets eine Sicherheitsabfrage. Personal- und Wachplanung am ersten Spieltag wird damit genauso berücksichtigt wie spätere Schichten.
 - Fahrbewegung und Karte teilen vorberechnete Streckenabschnitte. Umdisponierte Routen werden auch bei identischen Endpunkten neu dargestellt.

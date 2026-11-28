@@ -7,8 +7,8 @@ android {
         applicationId = "de.einsatzleitstelle110"
         minSdk = 26
         targetSdk = 35
-        versionCode = 119
-        versionName = "0.20.0-rebuilt-preview.2"
+        versionCode = 120
+        versionName = "0.20.0-rebuilt-preview.3"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     compileOptions {

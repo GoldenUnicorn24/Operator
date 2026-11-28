@@ -170,3 +170,7 @@ Ein Autosave mit ausschließlicher Verwaltungsarbeit konnte am ersten Tag in der
 ### Geräteprüfung und Veröffentlichung · Vorschau 2
 
 Vollständiger CI-Lauf 46132381958 auf `bf75b7c`: 163 JVM- und 12 Android-Tests, Paketprüfung, Offline-Kaltstart und 34 Emulatorbilder. Lint meldete 0 Fehler und 63 Warnungen. Die erste Android-Prüfung hatte vor dem Rückruf-Screenshot das Zeitlimit erreicht. Die Pausenmarkierung zeichnet seit dem Korrekturcommit keine fortlaufenden Pulse. Die Geräteprüfung verwendet eine Hauptthread-Barriere vor dem Screenshot und eine begrenzte Laufzeit je Test. Die App wurde als Vorschau 2 im Release-Bereich veröffentlicht.
+
+### Fortsetzung · Vorschau 3
+
+Eine monotone Uhr vereinheitlicht effektives Tempo und Fahranimation. Das persistierte Funkarchiv übernimmt tatsächliche Übertragungen durch den GameController vor der Audiowiedergabe. Schema 7 akzeptiert ältere Spielstände ohne das neue Archiv samt bisherigem Textprotokoll. Lokal 71 ausgewählte Tests erfolgreich, beide Android-APKs gebaut und Lint abgeschlossen. Der zusätzliche Geräteablauf überprüft die Anzeige einer tatsächlichen Entsendung und ihre Suche.

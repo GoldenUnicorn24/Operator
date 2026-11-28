@@ -560,7 +560,7 @@ object PhoneDesk {
             call.riskDelta += .06
             call.duration += 6
             call.notes.add("Adresse war ungenau: Kräfte mussten suchen.")
-            g.emit("Funkmeldung", "${call.title}: Einsatzort nicht gefunden, Nachsuche läuft (+6 Min.)")
+            g.emit("Funkmeldung", "${call.title}: Einsatzort nicht gefunden, Nachsuche läuft (+6 Min.)", incident = call)
         }
         if (call.surprise.isEmpty()) return
         val add = call.surprise.toList()
@@ -569,7 +569,7 @@ object PhoneDesk {
         call.riskDelta += .08
         call.deadline = (call.deadline + 15).coerceAtMost(1440)
         call.notes.add("Nachforderung vor Ort: ${add.joinToString { roleLabel(it) }}")
-        g.emit("Nachforderung", "${call.title}: ${call.surpriseText.ifBlank { add.joinToString { roleLabel(it) } }}")
+        g.emit("Nachforderung", "${call.title}: ${call.surpriseText.ifBlank { add.joinToString { roleLabel(it) } }}", incident = call)
     }
 
     /** Waiting makes it worse: at half of the deadline an unattended situation escalates. */
@@ -583,7 +583,7 @@ object PhoneDesk {
         call.requiredTypes.addAll(sc.worseAdd)
         call.riskDelta += .05
         call.notes.add("Lageverschärfung: ${sc.worse}")
-        g.emit("Lageverschärfung", "${call.title}: ${sc.worse}")
+        g.emit("Lageverschärfung", "${call.title}: ${sc.worse}", incident = call)
     }
 
     /** Graded like a German school mark: 1 is the best, 6 the worst. */
