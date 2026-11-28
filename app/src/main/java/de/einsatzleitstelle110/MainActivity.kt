@@ -13,11 +13,14 @@ import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.util.LruCache
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import de.einsatzleitstelle110.core.time.SimulationClock
+import de.einsatzleitstelle110.core.time.SimulationTempo
 import kotlin.math.max
 import org.json.JSONObject
 
@@ -62,7 +65,7 @@ class MainActivity : Activity() {
     private var phoneQueue: LinearLayout? = null
     private var phoneQueueVersion: List<String> = emptyList()
     private lateinit var phoneBar: TextView
-    private var simCarry = 0.0
+    private val simulationClock = SimulationClock()
     private var liveTick = 0
     private var ringTick = 0
     private var radioView: TextView? = null
@@ -376,6 +379,7 @@ class MainActivity : Activity() {
         phoneScreen = null
         map.close()
         game = next
+        simulationClock.reset()
         radio.reset()
         installNotifications()
         createMap()
@@ -438,21 +442,18 @@ class MainActivity : Activity() {
             override fun run() {
                 if (isFinishing) return
                 val old = game.state.phase
-                var moved = false
-                if (foreground && old == "RUNNING" && !game.state.paused) {
-                    val steps = simulationRate() * TICK_MS / 1000.0 + simCarry
-                    val whole = steps.toInt()
-                    simCarry = steps - whole
-                    if (whole > 0) {
-                        game.advance(whole)
-                        moved = true
-                    }
-                    map.glideMs = 1000.0 / simulationRate()
+                val running = foreground && old == "RUNNING" && !game.state.paused
+                val tempo = simulationTempo()
+                val minutes = simulationClock.poll(SystemClock.uptimeMillis(), running, tempo)
+                if (minutes > 0) game.advance(minutes)
+                if (running) map.glideMs = tempo.millisecondsPerMinute
+                if (old != game.state.phase) {
+                    simulationClock.reset()
+                    save()
                 }
-                if (old != game.state.phase) save()
                 updatePhone()
                 updateRadio()
-                if (moved || ++liveTick % 4 == 0) updateLive()
+                if (minutes > 0 || ++liveTick % 4 == 0) updateLive()
                 if (old == "RUNNING" && !game.state.paused && ++saveTick % 60 == 0) save()
                 if (
                     old == "RUNNING" &&
@@ -466,13 +467,13 @@ class MainActivity : Activity() {
             }
         }
 
-    /** Simulated minutes per real second. ×8 is the old minute per second, ×4 an 8h shift in 16 minutes. */
-    private fun simulationRate(): Double {
-        val s = game.state
-        if (PhoneDesk.active(s) != null) return 1 / 10.0
-        if (PhoneDesk.ringing(s).isNotEmpty()) return minOf(s.speed, 2) / SPEED_DIVISOR
-        return (if (game.pendingDecisions() > 0) minOf(s.speed, 4) else s.speed) / SPEED_DIVISOR
-    }
+    private fun simulationTempo() =
+        SimulationTempo.from(
+            selected = game.state.speed,
+            inConversation = PhoneDesk.active(game.state) != null,
+            callWaiting = PhoneDesk.ringing(game.state).isNotEmpty(),
+            decisionPending = game.pendingDecisions() > 0,
+        )
 
     /** Saves from a state that is still locked continue in Hamburg between shifts. */
     private fun moveToHamburg(s: GameState) {
@@ -542,6 +543,7 @@ class MainActivity : Activity() {
         if (::radio.isInitialized) radio.stop()
         if (::voice.isInitialized) voice.stop()
         foreground = false
+        simulationClock.pause()
         handler.removeCallbacks(ticker)
         if (::game.isInitialized) {
             game.state.paused = true
@@ -591,11 +593,15 @@ class MainActivity : Activity() {
     }
 
     private fun updateLive() {
+        val tempo = simulationTempo()
         clockView.text = "TAG ${game.state.day}\n${game.clock()} " + when (game.state.phase) {
-            "RUNNING" -> if (game.state.paused) "Pause" else effectiveTempo()
+            "RUNNING" -> if (game.state.paused) "Pause" else tempo.label
             "DEBRIEF" -> "Übergabe"
             else -> "Planung"
         }
+        val tempoLimit = tempo.limit?.description?.takeIf { game.state.phase == "RUNNING" && !game.state.paused }
+        clockView.tooltipText = tempoLimit
+        clockView.contentDescription = clockView.text.toString() + (tempoLimit?.let { " · $it" } ?: "")
         val left = (game.state.duration - game.state.elapsed).coerceAtLeast(0)
         val workload = "${game.openIncidents()} Einsätze · ${game.freeUnits()} frei"
         val waiting = PhoneDesk.ringing(game.state).size
@@ -616,7 +622,12 @@ class MainActivity : Activity() {
             map.invalidate()
             if (::dispatch.isInitialized && dispatch.isOpen) dispatch.refresh()
             updateQueue()
-            speedView?.text = speedLabel()
+            speedView?.apply {
+                text = "×${game.state.speed}"
+                val reason = tempo.limit?.description
+                tooltipText = if (game.state.phase == "RUNNING" && reason != null) "${tempo.label} · $reason" else null
+                contentDescription = "Spieltempo wechseln · $text" + (tooltipText?.let { " · $it" } ?: "")
+            }
         }
         val version =
             game.state.incidents.joinToString { it.id + it.status } +
@@ -758,14 +769,6 @@ class MainActivity : Activity() {
         rebuildMapChrome()
     }
 
-    private fun effectiveTempo(): String {
-        val multiplier = simulationRate() * SPEED_DIVISOR
-        return if (multiplier == .5) "×0,5" else "×${multiplier.roundToInt()}"
-    }
-
-    private fun speedLabel() =
-        if (game.state.phase == "RUNNING") effectiveTempo() else "×${game.state.speed}"
-
     private fun mapActionLabel() = when (game.state.phase) {
         "PLANNING" -> "Schicht planen"
         "RUNNING" -> if (game.state.paused) "Fortsetzen" else "Pause"
@@ -892,6 +895,7 @@ class MainActivity : Activity() {
                     "PLANNING" -> showShiftDialog()
                     "RUNNING" -> {
                         game.state.paused = !game.state.paused
+                        simulationClock.pause()
                         updateLive()
                         save()
                     }
@@ -900,8 +904,8 @@ class MainActivity : Activity() {
             }
         actions.addView(mapAction, LinearLayout.LayoutParams(0, dp(46), 1f))
         speedView =
-            ui.button(speedLabel()) {
-                val speeds = listOf(1, 4, 8, 16)
+            ui.button("×${game.state.speed}") {
+                val speeds = SimulationTempo.speeds
                 game.state.speed = speeds[(speeds.indexOf(game.state.speed) + 1).mod(speeds.size)]
                 updateLive()
                 save()
@@ -1614,7 +1618,7 @@ class MainActivity : Activity() {
             val controls = card(list)
             title(controls, "Spieltempo")
             val speeds = row()
-            for (n in listOf(1, 4, 8, 16)) speeds.addView(
+            for (n in SimulationTempo.speeds) speeds.addView(
                 action("${n}×") {
                     s.speed = n
                     refresh()
@@ -1636,6 +1640,7 @@ class MainActivity : Activity() {
                         )
                         .setPositiveButton("Übergeben") { _, _ ->
                             game.finishShift()
+                            simulationClock.reset()
                             refresh()
                             showDebrief()
                         }
@@ -2409,7 +2414,6 @@ class MainActivity : Activity() {
     companion object {
         const val TICK_MS = 250L
         /** Speed ÷ this = simulated minutes per real second. ×4 plays an 8h shift in 10 minutes. */
-        const val SPEED_DIVISOR = 5.0
         /** Only Hamburg can be played for now; device tests of other states switch this off. */
         @JvmField var hamburgOnly = true
         /** New games take calls by phone. Device tests of the map flow switch this off. */
